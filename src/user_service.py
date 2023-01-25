@@ -8,7 +8,7 @@ from src import models, security
 logger = logging.getLogger()
 
 
-def add_admin_user(s: Session) -> int:
+def add_superadmin(s: Session) -> int:
     with s:
         existing_admin = s.execute(
             select(models.User.id).where(models.User.username == "admin")

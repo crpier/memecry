@@ -4,10 +4,6 @@ import jose
 import jose.jwt
 import passlib.context
 
-# TODO: this is a dependency
-SECRET_KEY = "abcdef"
-ALGORITHM = "HS256"
-
 pwd_context = passlib.context.CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 

@@ -1,52 +1,29 @@
+from sqlalchemy.orm import Session
 import logging
-import sys
-import tempfile
-from pathlib import Path
 
 import fastapi
 import fastapi.security
-from fastapi import Depends, HTTPException
+from fastapi import Body, Depends, HTTPException
 
-from src import db, deps, posting_service, schema, security, user_service
+from src import deps, posting_service, schema, security, user_service, config
+
 
 app = fastapi.FastAPI()
 
 logger = logging.getLogger()
-logger.setLevel(logging.DEBUG)
-handler = logging.StreamHandler(sys.stdout)
-handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-handler.setFormatter(formatter)
-logger.addHandler(handler)
 
-UPLOAD_STORAGE = Path(tempfile.mkdtemp())
-logger.info("Uploading files to %s", UPLOAD_STORAGE)
-
-ADMIN_ID = user_service.add_admin_user(db.session)
-logger.info("First admin has id=%s", ADMIN_ID)
-
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
-
-fake_users_db = {
-    "johndoe": {
-        "username": "johndoe",
-        "email": "johndoe@example.com",
-        "hashed_password": "fakehashedsecret",
-        "admin": False,
-    },
-    "alice": {
-        "username": "alice",
-        "email": "alice@example.com",
-        "hashed_password": "fakehashedsecret2",
-        "admin": True,
-    },
-}
+# Initialize settings at the start,
+# so that we don't have to wait for request to see errors (if any)
+deps.get_settings()
 
 
 @app.post("/token")
-async def login(form_data: fastapi.security.OAuth2PasswordRequestForm = Depends()):
+async def login(
+    form_data: fastapi.security.OAuth2PasswordRequestForm = Depends(),
+    session: Session = Depends(deps.get_session),
+):
     user = user_service.authenticate_user(
-        db.session, form_data.username, form_data.password
+        session, form_data.username, form_data.password
     )
     if not user:
         raise HTTPException(
@@ -69,19 +46,34 @@ def check_health():
 
 
 @app.get("/top")
-def get_top_posts():
-    return posting_service.get_top_posts(db.session)
+def get_top_posts(
+    session: Session = Depends(deps.get_session),
+):
+    return posting_service.get_top_posts(session)
 
 
 @app.post("/post")
-async def upload_post(title: str, file: fastapi.UploadFile):
+async def upload_post(
+    file: fastapi.UploadFile,
+    title: str = Body(),
+    settings: config.Settings = Depends(deps.get_settings),
+    session: Session = Depends(deps.get_session),
+):
     res = await posting_service.upload_post(
-        db.session, title, file, content_dest=UPLOAD_STORAGE, user_id=ADMIN_ID
+        session,
+        title,
+        file,
+        content_dest=settings.UPLOAD_STORAGE,
+        user_id=settings.SUPER_ADMIN_ID,
+        settings=settings,
     )
     logger.info(res)
-    return res
+    return {"status": "success"}
 
 
 @app.get("/{user_id}/posts")
-def get_users_posts(user_id: int):
-    return posting_service.get_posts_by_user(user_id, db.session)
+def get_users_posts(
+    user_id: int,
+    session: Session = Depends(deps.get_session),
+):
+    return posting_service.get_posts_by_user(user_id, session)
