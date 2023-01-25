@@ -1,12 +1,12 @@
-from sqlalchemy.orm import Session
 import logging
+
+from src import deps, models, posting_service, schema, security, user_service, config
 
 import fastapi
 import fastapi.security
 from fastapi import Body, Depends, HTTPException
 
-from src import deps, posting_service, schema, security, user_service, config
-
+from sqlalchemy.orm import Session
 
 app = fastapi.FastAPI()
 
@@ -21,6 +21,7 @@ deps.get_settings()
 async def login(
     form_data: fastapi.security.OAuth2PasswordRequestForm = Depends(),
     session: Session = Depends(deps.get_session),
+    settings: config.Settings = Depends(deps.get_settings),
 ):
     user = user_service.authenticate_user(
         session, form_data.username, form_data.password
@@ -31,7 +32,9 @@ async def login(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token = security.create_access_token(data={"sub": user.username})
+    access_token = security.create_access_token(
+        data={"sub": user.username}, settings=settings
+    )
     return {"access_token": access_token, "token_type": "bearer"}
 
 
@@ -56,18 +59,33 @@ def get_top_posts(
 async def upload_post(
     file: fastapi.UploadFile,
     title: str = Body(),
+    current_user: schema.User = Depends(deps.get_current_user),
     settings: config.Settings = Depends(deps.get_settings),
     session: Session = Depends(deps.get_session),
 ):
-    res = await posting_service.upload_post(
-        session,
-        title,
-        file,
-        content_dest=settings.UPLOAD_STORAGE,
-        user_id=settings.SUPER_ADMIN_ID,
+    new_post = schema.PostCreate(title=title, user_id=current_user.id)
+    await posting_service.upload_post(
+        post_data=new_post,
+        s=session,
+        uploaded_file=file,
         settings=settings,
     )
-    logger.info(res)
+    return {"status": "success"}
+
+
+@app.put("/post/{id}/like")
+async def like_post(
+    id: int,
+    current_user: schema.User = Depends(deps.get_current_user),
+    settings: config.Settings = Depends(deps.get_settings),
+    session: Session = Depends(deps.get_session),
+):
+    posting_service.like_post(
+        session,
+        post_id=id,
+        user_id=current_user.id,
+        settings=settings,
+    )
     return {"status": "success"}
 
 

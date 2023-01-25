@@ -43,7 +43,7 @@ async def get_current_user(
     token: str = Depends(oauth2_scheme),
     session=Depends(get_session),
     settings: config.Settings = Depends(get_settings),
-):
+) -> schema.User:
     credentials_exception = HTTPException(
         status_code=fastapi.status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",

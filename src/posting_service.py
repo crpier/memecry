@@ -6,7 +6,7 @@ import fastapi
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
-from src import models, config
+from src import models, config, schema
 
 logger = logging.getLogger()
 
@@ -17,25 +17,48 @@ def get_top_posts(s: Session) -> list[models.Post]:
 
 
 async def upload_post(
-        s: Session, title: str, file: fastapi.UploadFile, content_dest: Path, user_id: int, settings: config.Settings
+    post_data: schema.PostCreate,
+    s: Session,
+    uploaded_file: fastapi.UploadFile,
+    settings: config.Settings,
 ):
     with s:
         logger.info(s)
-        new_post = models.Post(title=title, user_id=user_id)
         # all posts by super admin are top posts huehuehuehue
-        if user_id == settings.SUPER_ADMIN_ID:
-            new_post.top = True # type: ignore
+        if post_data.user_id == settings.SUPER_ADMIN_ID:
+            post_data.top = True
+        new_post = models.Post(**post_data.__dict__)
         s.add(new_post)
         s.commit()
-        dest = (content_dest / file.filename).with_stem(str(new_post.id))
+        # TODO Putting all files in one folder is probably a bad idea long term
+        dest = (settings.UPLOAD_STORAGE / uploaded_file.filename).with_stem(
+            str(new_post.id)
+        )
         logger.debug("Uploading content to %s", dest)
         async with aiofiles.open(dest, "wb") as f:
-            await f.write(await file.read())
+            await f.write(await uploaded_file.read())
         s.execute(
             update(models.Post)
             .where(models.Post.id == new_post.id)
             .values(source=str(dest))
         )
+        s.commit()
+
+
+def like_post(
+    s: Session,
+    user_id: int,
+    post_id: int,
+    settings: config.Settings,
+):
+    with s:
+        res = s.execute(
+            select(models.Post).where(models.Post.id == post_id)
+        ).one_or_none()
+        assert res
+        rated_post = res[0]
+        rated_post.likes += 1
+        s.add(rated_post)
         s.commit()
 
 

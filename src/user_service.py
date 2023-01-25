@@ -3,7 +3,7 @@ import logging
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from src import models, security
+from src import models, security, schema
 
 logger = logging.getLogger()
 
@@ -16,7 +16,7 @@ def add_superadmin(s: Session) -> int:
         if existing_admin is not None:
             return existing_admin.id
         new_admin_user = models.User(
-            email="admin@example.com", username="admin", admin=True
+            email="admin@example.com", username="admin", admin=True, pass_hash=security.get_password_hash("kek")
         )
         s.add(new_admin_user)
         s.commit()
@@ -33,19 +33,20 @@ def authenticate_user(s: Session, username: str, password: str) -> models.User |
         res = s.execute(
             select(models.User).where(models.User.username == username)
         ).one_or_none()
+        logger.debug("On login found user %s", res)
         if not res:
             return None
-        user = res[0]
-        if not security.verify_password(password, user.hashed_password):
+        user: models.User = res[0]
+        if not security.verify_password(password, user.pass_hash):
             return None
         return user
 
 
-def get_user_by_username(s: Session, username: str) -> models.User | None:
+def get_user_by_username(s: Session, username: str) -> schema.User | None:
     with s:
         res = s.execute(
             select(models.User).where(models.User.username == username)
         ).one_or_none()
         if not res:
             return None
-        return res[0]
+        return schema.User(**res[0].__dict__) # type: ignore

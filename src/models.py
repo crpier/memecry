@@ -53,7 +53,6 @@ class Post(Base):
 
     # comments = orm.relationship("Comment", back_populates="Post")
 
-
 class Comment(Base):
     __tablename__ = "comments"
     id = Column(Integer, autoincrement=True, primary_key=True)
