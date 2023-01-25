@@ -88,3 +88,13 @@ class Post(PostInDBBase):
 
 class PostInDB(PostInDBBase):
     pass
+
+
+# Misc
+class Like(pydantic.BaseModel):
+    user_id: int
+    post_id: int | None = None
+    comment_id: int | None = None
+
+    class Config:
+        orm_mode = True

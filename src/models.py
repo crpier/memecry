@@ -1,5 +1,18 @@
+import enum
 import sqlalchemy
-from sqlalchemy import JSON, Boolean, Column, ForeignKey, Integer, String, orm
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+    Enum,
+    func,
+    orm,
+)
 
 
 def get_engine(source: str | None = None) -> sqlalchemy.Engine:
@@ -52,6 +65,29 @@ class Post(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
 
     # comments = orm.relationship("Comment", back_populates="Post")
+
+
+class ReactionKind(enum.Enum):
+    Like = 0
+    Dislike = 1
+
+
+class Reaction(Base):
+    __tablename__ = "reactions"
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    created_at = Column(DateTime, default=func.current_timestamp())
+
+    user_id = Column(Integer, ForeignKey("users.id"))
+    post_id = Column(Integer, ForeignKey("posts.id"), nullable=True)
+    comment_id = Column(Integer, ForeignKey("comments.id"), nullable=True)
+    kind = Column(Integer, Enum(ReactionKind))
+
+    __table_args__ = (
+        UniqueConstraint(user_id, post_id, name="unique_post_like"),
+        UniqueConstraint(user_id, comment_id, name="unique_comment_like"),
+    )
+
 
 class Comment(Base):
     __tablename__ = "comments"

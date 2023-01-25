@@ -3,7 +3,7 @@ from pathlib import Path
 
 import aiofiles
 import fastapi
-from sqlalchemy import select, update
+from sqlalchemy import select, update, delete
 from sqlalchemy.orm import Session
 
 from src import models, config, schema
@@ -45,19 +45,148 @@ async def upload_post(
         s.commit()
 
 
-def like_post(
+def add_reaction(
+    s: Session, user_id: int, post_id: int, reaction_kind: models.ReactionKind
+):
+    with s:
+        # Check if there was an old reaction
+        res = s.execute(
+            select(models.Reaction).where(
+                models.Reaction.post_id == post_id, models.Reaction.user_id == user_id
+            )
+        ).one_or_none()
+        match reaction_kind, res:
+            # No previous reaction, continue as usual
+            case _, None:
+                logger.debug("No previous reaction, we add a new one")
+                new_reaction = models.Reaction(
+                    user_id=user_id, post_id=post_id, kind=reaction_kind.value
+                )
+                s.add(new_reaction)
+                reacted_post = s.execute(
+                    select(models.Post).where(models.Post.id == post_id)
+                ).one()[0]
+                if reaction_kind == models.ReactionKind.Like:
+                    reacted_post.likes += 1
+                else:
+                    reacted_post.dislikes += 1
+                s.commit()
+
+            # Duplicate, we don't proceed
+            case (
+                models.ReactionKind.Like,
+                (models.Reaction(kind=models.ReactionKind.Like),),
+            ) | (
+                models.ReactionKind.Dislike,
+                (models.Reaction(kind=models.ReactionKind.Dislike),),
+            ):
+                logger.debug("Duplicate reaction, we don't proceed")
+                raise ValueError(f"Already has a {reaction_kind.name} on {post_id=}")
+            # The Like overwrites the Dislike
+            case (
+                models.ReactionKind.Like,
+                (models.Reaction(kind=models.ReactionKind.Dislike),),
+            ):
+                logger.debug("Like reaction is overwriting dislike reaction")
+                res = s.execute(
+                    delete(models.Reaction).where(
+                        models.Reaction.post_id == post_id,
+                        models.Reaction.user_id == user_id,
+                    )
+                )
+                new_reaction = models.Reaction(
+                    user_id=user_id, post_id=post_id, kind=reaction_kind.value
+                )
+                s.add(new_reaction)
+                reacted_post = s.execute(
+                    select(models.Post).where(models.Post.id == post_id)
+                ).one()[0]
+                reacted_post.likes += 1
+                reacted_post.dislikes -= 1
+                s.commit()
+            # The Dislike overwrites the Like
+            case (
+                models.ReactionKind.Dislike,
+                (models.Reaction(kind=models.ReactionKind.Like),),
+            ):
+                logger.debug("Dislike reaction is overwriting like reaction")
+                res = s.execute(
+                    delete(models.Reaction).where(
+                        models.Reaction.post_id == post_id,
+                        models.Reaction.user_id == user_id,
+                    )
+                )
+                new_reaction = models.Reaction(
+                    user_id=user_id, post_id=post_id, kind=reaction_kind.value
+                )
+                s.add(new_reaction)
+                reacted_post = s.execute(
+                    select(models.Post).where(models.Post.id == post_id)
+                ).one()[0]
+                reacted_post.likes -= 1
+                reacted_post.dislikes += 1
+                s.commit()
+
+
+def remove_reaction(
     s: Session,
     user_id: int,
     post_id: int,
-    settings: config.Settings,
 ):
     with s:
         res = s.execute(
+            delete(models.Reaction).where(
+                models.Reaction.post_id == post_id, models.Reaction.user_id == user_id
+            )
+        )
+        assert res.rowcount > 0, f"Cannot unlike {post_id=}: there was no like before"  # type: ignore
+        res = s.execute(
             select(models.Post).where(models.Post.id == post_id)
         ).one_or_none()
-        assert res
+        assert res, f"{post_id=} cannot be liked: it does not exist"
+        rated_post = res[0]
+        rated_post.likes -= 1
+        s.add(rated_post)
+        s.commit()
+
+
+def dislike_post(
+    s: Session,
+    user_id: int,
+    post_id: int,
+):
+    with s:
+        new_like = models.Reaction(user_id=user_id, post_id=post_id)
+        # Will errrrror out if already liked this post
+        s.add(new_like)
+        res = s.execute(
+            select(models.Post).where(models.Post.id == post_id)
+        ).one_or_none()
+        assert res, f"{post_id=} cannot be liked: it does not exist"
         rated_post = res[0]
         rated_post.likes += 1
+        s.add(rated_post)
+        s.commit()
+
+
+def undislike_post(
+    s: Session,
+    user_id: int,
+    post_id: int,
+):
+    with s:
+        res = s.execute(
+            delete(models.Reaction).where(
+                models.Reaction.post_id == post_id, models.Reaction.user_id == user_id
+            )
+        )
+        assert res.rowcount > 0, f"Cannot unlike {post_id=}: there was no like before"  # type: ignore
+        res = s.execute(
+            select(models.Post).where(models.Post.id == post_id)
+        ).one_or_none()
+        assert res, f"{post_id=} cannot be liked: it does not exist"
+        rated_post = res[0]
+        rated_post.likes -= 1
         s.add(rated_post)
         s.commit()
 
