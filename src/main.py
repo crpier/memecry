@@ -79,7 +79,7 @@ async def like_post(
     current_user: schema.User = Depends(deps.get_current_user),
     session: Session = Depends(deps.get_session),
 ):
-    posting_service.add_reaction(
+    posting_service.react_to_post(
         session,
         post_id=id,
         user_id=current_user.id,
@@ -108,7 +108,7 @@ async def dislike_post(
     current_user: schema.User = Depends(deps.get_current_user),
     session: Session = Depends(deps.get_session),
 ):
-    posting_service.add_reaction(
+    posting_service.react_to_post(
         session,
         post_id=id,
         user_id=current_user.id,

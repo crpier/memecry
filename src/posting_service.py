@@ -45,87 +45,41 @@ async def upload_post(
         s.commit()
 
 
-def add_reaction(
+def react_to_post(
     s: Session, user_id: int, post_id: int, reaction_kind: models.ReactionKind
 ):
     with s:
-        # Check if there was an old reaction
         res = s.execute(
             select(models.Reaction).where(
                 models.Reaction.post_id == post_id, models.Reaction.user_id == user_id
             )
         ).one_or_none()
-        match reaction_kind, res:
-            # No previous reaction, continue as usual
-            case _, None:
-                logger.debug("No previous reaction, we add a new one")
-                new_reaction = models.Reaction(
-                    user_id=user_id, post_id=post_id, kind=reaction_kind.value
-                )
-                s.add(new_reaction)
-                reacted_post = s.execute(
-                    select(models.Post).where(models.Post.id == post_id)
-                ).one()[0]
-                if reaction_kind == models.ReactionKind.Like:
-                    reacted_post.likes += 1
-                else:
-                    reacted_post.dislikes += 1
-                s.commit()
 
-            # Duplicate, we don't proceed
-            case (
-                models.ReactionKind.Like,
-                (models.Reaction(kind=models.ReactionKind.Like),),
-            ) | (
-                models.ReactionKind.Dislike,
-                (models.Reaction(kind=models.ReactionKind.Dislike),),
-            ):
-                logger.debug("Duplicate reaction, we don't proceed")
+        if res:
+            if res[0].kind == reaction_kind.value:
+                logger.debug("The same reaction was given to the same post.")
                 raise ValueError(f"Already has a {reaction_kind.name} on {post_id=}")
-            # The Like overwrites the Dislike
-            case (
-                models.ReactionKind.Like,
-                (models.Reaction(kind=models.ReactionKind.Dislike),),
-            ):
-                logger.debug("Like reaction is overwriting dislike reaction")
-                res = s.execute(
-                    delete(models.Reaction).where(
-                        models.Reaction.post_id == post_id,
-                        models.Reaction.user_id == user_id,
-                    )
-                )
-                new_reaction = models.Reaction(
-                    user_id=user_id, post_id=post_id, kind=reaction_kind.value
-                )
-                s.add(new_reaction)
-                reacted_post = s.execute(
-                    select(models.Post).where(models.Post.id == post_id)
-                ).one()[0]
-                reacted_post.likes += 1
-                reacted_post.dislikes -= 1
-                s.commit()
-            # The Dislike overwrites the Like
-            case (
-                models.ReactionKind.Dislike,
-                (models.Reaction(kind=models.ReactionKind.Like),),
-            ):
-                logger.debug("Dislike reaction is overwriting like reaction")
-                res = s.execute(
-                    delete(models.Reaction).where(
-                        models.Reaction.post_id == post_id,
-                        models.Reaction.user_id == user_id,
-                    )
-                )
-                new_reaction = models.Reaction(
-                    user_id=user_id, post_id=post_id, kind=reaction_kind.value
-                )
-                s.add(new_reaction)
-                reacted_post = s.execute(
-                    select(models.Post).where(models.Post.id == post_id)
-                ).one()[0]
-                reacted_post.likes -= 1
-                reacted_post.dislikes += 1
-                s.commit()
+            else:
+                logger.debug("Old reaction will be replaced")
+                s.delete(res[0])
+                s.flush()
+
+        new_reaction = models.Reaction(
+            user_id=user_id, post_id=post_id, kind=reaction_kind.value
+        )
+        s.add(new_reaction)
+
+        reacted_post: models.Post = s.execute(
+            select(models.Post).where(models.Post.id == post_id)
+        ).one()[0]
+
+        reacted_post.add_reaction(reaction_kind)
+        if res is None:
+            logger.debug("No previous reaction")
+        else:
+            logger.debug("The new reaction is different from the old one")
+            reacted_post.remove_other_reaction(reaction_kind)
+        s.commit()
 
 
 def remove_reaction(

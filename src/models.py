@@ -65,6 +65,33 @@ class Post(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
 
     # comments = orm.relationship("Comment", back_populates="Post")
+    def add_reaction(self, reaction: "ReactionKind"):
+        match reaction:
+            case ReactionKind.Like:
+                self.likes += 1
+            case ReactionKind.Dislike:
+                self.dislikes += 1
+
+    def remove_reaction(self, reaction: "ReactionKind"):
+        match reaction:
+            case ReactionKind.Like:
+                self.likes -= 1
+            case ReactionKind.Dislike:
+                self.dislikes -= 1
+
+    def add_other_reaction(self, reaction: "ReactionKind"):
+        match reaction:
+            case ReactionKind.Like:
+                self.dislikes += 1
+            case ReactionKind.Dislike:
+                self.likes += 1
+
+    def remove_other_reaction(self, reaction: "ReactionKind"):
+        match reaction:
+            case ReactionKind.Like:
+                self.dislikes -= 1
+            case ReactionKind.Dislike:
+                self.likes -= 1
 
 
 class ReactionKind(enum.Enum):
