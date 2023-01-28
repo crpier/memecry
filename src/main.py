@@ -1,6 +1,15 @@
 import logging
 
-from src import deps, models, posting_service, schema, security, user_service, config
+from src import (
+    deps,
+    models,
+    posting_service,
+    schema,
+    security,
+    user_service,
+    config,
+    comment_service,
+)
 
 import fastapi
 import fastapi.security
@@ -139,3 +148,57 @@ def get_users_posts(
     session: Session = Depends(deps.get_session),
 ):
     return posting_service.get_posts_by_user(user_id, session)
+
+
+@app.post("/post/{post_id}/comment")
+async def comment_on_post(
+    post_id: int,
+    attachment: fastapi.UploadFile,
+    content: str = Body(),
+    current_user: schema.User = Depends(deps.get_current_user),
+    session: Session = Depends(deps.get_session),
+    settings: config.Settings = Depends(deps.get_settings),
+):
+    comment_create = schema.CommentCreate(
+        content=content, post_id=post_id, user_id=current_user.id
+    )
+    id = await comment_service.comment_on_post(
+        s=session,
+        comment_data=comment_create,
+        attachment=attachment,
+        settings=settings,
+    )
+    return {"status": "success", "result": id}
+
+
+@app.post("/comment/{comment_id}/comment")
+async def post_comment_reply(
+    comment_id: int,
+    attachment: fastapi.UploadFile,
+    content: str = Body(),
+    current_user: schema.User = Depends(deps.get_current_user),
+    session: Session = Depends(deps.get_session),
+    settings: config.Settings = Depends(deps.get_settings),
+):
+    comment_create = schema.CommentCreate(
+        content=content, parent_id=comment_id, user_id=current_user.id
+    )
+    id = await comment_service.comment_on_post(
+        s=session,
+        comment_data=comment_create,
+        attachment=attachment,
+        settings=settings,
+    )
+    return {"status": "success", "result": id}
+
+
+@app.get("/post/{post_id}/comment", response_model=list[schema.Comment])
+async def get_comments_on_post(
+    post_id: int,
+    session: Session = Depends(deps.get_session),
+):
+    comments = comment_service.get_comments_per_post(
+        s=session,
+        post_id=post_id,
+    )
+    return comments

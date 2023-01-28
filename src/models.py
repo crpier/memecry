@@ -119,12 +119,12 @@ class Reaction(Base):
 class Comment(Base):
     __tablename__ = "comments"
     id = Column(Integer, autoincrement=True, primary_key=True)
-    text = Column(String)
+    content = Column(String)
     # TODO: create special type for this too
     attachment_source = Column(String)
-    likes = Column(Integer)
-    dislikes = Column(Integer)
+    likes = Column(Integer, default=0)
+    dislikes = Column(Integer, default=0)
 
     user_id = Column(Integer, ForeignKey("users.id"))
     post_id = Column(Integer, ForeignKey("posts.id"))
-    parent_id = Column(Integer, ForeignKey("comments.id"))
+    parent_id = Column(Integer, ForeignKey("comments.id"), nullable=True)

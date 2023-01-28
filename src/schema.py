@@ -98,3 +98,43 @@ class Like(pydantic.BaseModel):
 
     class Config:
         orm_mode = True
+
+
+### Comment
+# Shared properties
+class CommentBase(pydantic.BaseModel):
+    content: str
+
+
+# Properties to receive via API on creation
+class CommentCreate(CommentBase):
+    parent_id: int | None = None
+    post_id: int | None = None
+    user_id: int
+
+
+# Properties to receive via API on update
+class CommentUpdate(CommentBase):
+    pass
+
+
+class CommentInDBBase(CommentBase):
+    attachment_source: str
+    dislikes: int
+    id: int
+    likes: int
+    parent_id: int | None = None
+    post_id: int
+    user_id: int
+
+    class Config:
+        orm_mode = True
+
+
+# Additional properites to return via API
+class Comment(CommentInDBBase):
+    pass
+
+
+class CommentInDB(CommentInDBBase):
+    pass

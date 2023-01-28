@@ -1,3 +1,4 @@
+import os
 import fastapi
 import fastapi.security
 import jose
@@ -28,6 +29,7 @@ def get_settings():
 
     logger.info("First admin has id=%s", settings.SUPER_ADMIN_ID)
     logger.info("Uploading files to %s", settings.UPLOAD_STORAGE)
+    os.mkdir(settings.UPLOAD_STORAGE / "comments")
     return settings
 
 
