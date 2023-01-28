@@ -79,7 +79,7 @@ async def like_post(
     current_user: schema.User = Depends(deps.get_current_user),
     session: Session = Depends(deps.get_session),
 ):
-    posting_service.react_to_post(
+    posting_service.add_reaction(
         session,
         post_id=id,
         user_id=current_user.id,
@@ -88,18 +88,19 @@ async def like_post(
     return {"status": "success"}
 
 
-# @app.put("/post/{id}/unlike")
-# async def unlike_post(
-#     id: int,
-#     current_user: schema.User = Depends(deps.get_current_user),
-#     session: Session = Depends(deps.get_session),
-# ):
-#     posting_service.remove_reaction(
-#         session,
-#         post_id=id,
-#         user_id=current_user.id,
-#     )
-#     return {"status": "success"}
+@app.put("/post/{id}/unlike")
+async def unlike_post(
+    id: int,
+    current_user: schema.User = Depends(deps.get_current_user),
+    session: Session = Depends(deps.get_session),
+):
+    posting_service.remove_reaction(
+        session,
+        post_id=id,
+        user_id=current_user.id,
+        reaction_kind=models.ReactionKind.Like,
+    )
+    return {"status": "success"}
 
 
 @app.put("/post/{id}/dislike")
@@ -108,7 +109,7 @@ async def dislike_post(
     current_user: schema.User = Depends(deps.get_current_user),
     session: Session = Depends(deps.get_session),
 ):
-    posting_service.react_to_post(
+    posting_service.add_reaction(
         session,
         post_id=id,
         user_id=current_user.id,
@@ -117,18 +118,19 @@ async def dislike_post(
     return {"status": "success"}
 
 
-# @app.put("/post/{id}/undislike")
-# async def undislike_post(
-#     id: int,
-#     current_user: schema.User = Depends(deps.get_current_user),
-#     session: Session = Depends(deps.get_session),
-# ):
-#     posting_service.undislike_post(
-#         session,
-#         post_id=id,
-#         user_id=current_user.id,
-#     )
-#     return {"status": "success"}
+@app.put("/post/{id}/undislike")
+async def undislike_post(
+    id: int,
+    current_user: schema.User = Depends(deps.get_current_user),
+    session: Session = Depends(deps.get_session),
+):
+    posting_service.remove_reaction(
+        session,
+        post_id=id,
+        user_id=current_user.id,
+        reaction_kind=models.ReactionKind.Dislike,
+    )
+    return {"status": "success"}
 
 
 @app.get("/{user_id}/posts")

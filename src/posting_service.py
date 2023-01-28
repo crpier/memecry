@@ -45,7 +45,7 @@ async def upload_post(
         s.commit()
 
 
-def react_to_post(
+def add_reaction(
     s: Session, user_id: int, post_id: int, reaction_kind: models.ReactionKind
 ):
     with s:
@@ -83,9 +83,7 @@ def react_to_post(
 
 
 def remove_reaction(
-    s: Session,
-    user_id: int,
-    post_id: int,
+    s: Session, user_id: int, post_id: int, reaction_kind: models.ReactionKind
 ):
     with s:
         res = s.execute(
@@ -98,8 +96,8 @@ def remove_reaction(
             select(models.Post).where(models.Post.id == post_id)
         ).one_or_none()
         assert res, f"{post_id=} cannot be liked: it does not exist"
-        rated_post = res[0]
-        rated_post.likes -= 1
+        rated_post: models.Post = res[0]
+        rated_post.remove_reaction(reaction_kind)
         s.add(rated_post)
         s.commit()
 
