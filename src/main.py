@@ -26,6 +26,7 @@ logger = logging.getLogger()
 deps.get_settings()
 
 
+### Login stuff ###
 @app.post("/token")
 async def login(
     form_data: fastapi.security.OAuth2PasswordRequestForm = Depends(),
@@ -47,21 +48,32 @@ async def login(
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-@app.get("/me")
-def get_me(current_user: schema.User = Depends(deps.get_current_user)):
-    return current_user
-
-
+### Misc ###
 @app.get("/health")
 def check_health():
     return {"message": "Everything OK"}
 
 
+### Users ###
+@app.get("/me")
+def get_me(current_user: schema.User = Depends(deps.get_current_user)):
+    return current_user
+
+
+### Posts-only ###
 @app.get("/top")
 def get_top_posts(
     session: Session = Depends(deps.get_session),
 ):
     return posting_service.get_top_posts(session)
+
+
+@app.get("/post/{post_id}")
+def get_post(
+    post_id: int,
+    session: Session = Depends(deps.get_session),
+):
+    return posting_service.get_post(post_id=post_id, s=session)
 
 
 @app.post("/post")
@@ -150,6 +162,7 @@ def get_users_posts(
     return posting_service.get_posts_by_user(user_id, session)
 
 
+### Comments ###
 @app.post("/post/{post_id}/comment")
 async def comment_on_post(
     post_id: int,

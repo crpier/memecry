@@ -74,7 +74,7 @@ class PostUpdate(PostBase):
 
 class PostInDBBase(PostBase):
     user_id: int
-    source: int
+    source: str
     top: bool
     likes: int
     dislikes: int

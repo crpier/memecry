@@ -16,6 +16,13 @@ def get_top_posts(s: Session) -> list[models.Post]:
     return list(s.scalars(select(models.Post).where(models.Post.top == True)).all())
 
 
+def get_post(post_id: int, s: Session) -> schema.Post:
+    with s:
+        logger.info(f"Looking for post {post_id}")
+        res = s.execute(select(models.Post).where(models.Post.id == post_id)).one()
+        return schema.Post(**res[0].__dict__)
+
+
 async def upload_post(
     post_data: schema.PostCreate,
     s: Session,
@@ -23,7 +30,6 @@ async def upload_post(
     settings: config.Settings,
 ):
     with s:
-        logger.info(s)
         # all posts by super admin are top posts huehuehuehue
         if post_data.user_id == settings.SUPER_ADMIN_ID:
             post_data.top = True
