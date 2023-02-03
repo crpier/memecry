@@ -8,7 +8,9 @@ import logging
 import sys
 
 import functools
-from src import db, schema, user_service, config, models
+
+from sqlmodel import SQLModel, Session
+from src import schema, user_service, config, models
 
 oauth2_scheme = fastapi.security.OAuth2PasswordBearer(tokenUrl="token")
 
@@ -36,8 +38,8 @@ def get_settings():
 @functools.lru_cache()
 def get_session():
     engine = models.get_engine()
-    models.Base.metadata.create_all(engine)
-    session = models.get_sessionmaker(engine)()
+    SQLModel.metadata.create_all(engine)
+    session = functools.partial(Session, engine)
     return session
 
 

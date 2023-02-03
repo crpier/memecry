@@ -1,5 +1,5 @@
 import logging
-from pathlib import Path
+from typing import Callable
 
 import aiofiles
 import fastapi
@@ -11,13 +11,13 @@ from src import models, config, schema
 logger = logging.getLogger()
 
 
-def get_top_posts(s: Session) -> list[models.Post]:
-    logger.info(s)
-    return list(s.scalars(select(models.Post).where(models.Post.top == True)).all())
+def get_top_posts(session: Callable[[], Session]) -> list[models.Post]:
+    with session() as s:
+        return list(s.scalars(select(models.Post).where(models.Post.top == True)).all())
 
 
-def get_post(post_id: int, s: Session) -> schema.Post:
-    with s:
+def get_post(post_id: int, session: Callable[[], Session]) -> schema.Post:
+    with session() as s:
         logger.info(f"Looking for post {post_id}")
         res = s.execute(select(models.Post).where(models.Post.id == post_id)).one()
         return schema.Post(**res[0].__dict__)
@@ -25,11 +25,11 @@ def get_post(post_id: int, s: Session) -> schema.Post:
 
 async def upload_post(
     post_data: schema.PostCreate,
-    s: Session,
+    session: Callable[[], Session],
     uploaded_file: fastapi.UploadFile,
     settings: config.Settings,
 ):
-    with s:
+    with session() as s:
         # all posts by super admin are top posts huehuehuehue
         if post_data.user_id == settings.SUPER_ADMIN_ID:
             post_data.top = True
@@ -52,9 +52,12 @@ async def upload_post(
 
 
 def add_reaction(
-    s: Session, user_id: int, post_id: int, reaction_kind: models.ReactionKind
+    session: Callable[[], Session],
+    user_id: int,
+    post_id: int,
+    reaction_kind: models.ReactionKind,
 ):
-    with s:
+    with session() as s:
         res = s.execute(
             select(models.Reaction).where(
                 models.Reaction.post_id == post_id, models.Reaction.user_id == user_id
@@ -89,9 +92,12 @@ def add_reaction(
 
 
 def remove_reaction(
-    s: Session, user_id: int, post_id: int, reaction_kind: models.ReactionKind
+    session: Callable[[], Session],
+    user_id: int,
+    post_id: int,
+    reaction_kind: models.ReactionKind,
 ):
-    with s:
+    with session() as s:
         res = s.execute(
             delete(models.Reaction).where(
                 models.Reaction.post_id == post_id, models.Reaction.user_id == user_id
@@ -109,11 +115,11 @@ def remove_reaction(
 
 
 def dislike_post(
-    s: Session,
+    session: Callable[[], Session],
     user_id: int,
     post_id: int,
 ):
-    with s:
+    with session() as s:
         new_like = models.Reaction(user_id=user_id, post_id=post_id)
         # Will errrrror out if already liked this post
         s.add(new_like)
@@ -128,11 +134,11 @@ def dislike_post(
 
 
 def undislike_post(
-    s: Session,
+    session: Callable[[], Session],
     user_id: int,
     post_id: int,
 ):
-    with s:
+    with session() as s:
         res = s.execute(
             delete(models.Reaction).where(
                 models.Reaction.post_id == post_id, models.Reaction.user_id == user_id
@@ -149,9 +155,10 @@ def undislike_post(
         s.commit()
 
 
-def get_posts_by_user(user_id: int, s: Session) -> list[models.Post]:
-    logger.info(s)
-    with s:
+def get_posts_by_user(
+    user_id: int, session: Callable[[], Session]
+) -> list[models.Post]:
+    with session() as s:
         res = s.execute(select(models.Post).where(models.Post.user_id == user_id)).all()
         if res is None:
             return []

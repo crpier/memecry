@@ -1,70 +1,60 @@
+from datetime import datetime
 import enum
-import sqlalchemy
-from sqlalchemy import (
-    JSON,
-    Boolean,
-    Column,
-    DateTime,
-    ForeignKey,
-    Integer,
-    String,
+from functools import partial
+from sqlmodel import (
+    Field,
+    SQLModel,
+    Relationship,
+    create_engine,
+    Session,
     UniqueConstraint,
-    Enum,
-    func,
-    orm,
+    Column,
+    JSON,
 )
+from pydantic import EmailStr
 
 
-def get_engine(source: str | None = None) -> sqlalchemy.Engine:
+def get_engine(source: str | None = None):
     if source is None:
-        return sqlalchemy.create_engine(
-            "sqlite+pysqlite:////home/crpier/lol.db", echo=True
-        )
+        return create_engine("sqlite+pysqlite:////home/crpier/lol.db", echo=True)
     else:
         raise NotImplementedError("Not allowing persistend DBs yet.")
 
 
-def get_sessionmaker(
-    engine: sqlalchemy.Engine, opts: dict | None = None
-) -> orm.sessionmaker[orm.Session]:
-    if opts is None:
-        return orm.sessionmaker(engine)
-    raise NotImplementedError("Not allowing session options yet")
-
-
-class Base(orm.DeclarativeBase):
-    pass
-
-
-class User(Base):
-    __tablename__ = "users"
-    id = Column(Integer, autoincrement=True, primary_key=True)
-    email = Column(String)
-    username = Column(String)
-    pass_hash = Column(String)
+class User(SQLModel, table=True):
+    __tablename__: str = "users"
+    id: int | None = Field(default=None, primary_key=True)
+    email: EmailStr
+    username: str
+    pass_hash: str
     # TODO: custom validator or smth
-    achievements = Column(JSON, default=[])
-    verified = Column(Boolean, default=False)
-    banned = Column(Boolean, default=False)
-    admin = Column(Boolean, default=False)
+    achievements: list[str] = Field(sa_column=Column(JSON), default=[])
+    verified: bool = Field(default=False)
+    banned: bool = Field(default=False)
+    admin: bool = Field(default=False)
 
-    # posts = orm.relationship("Post", back_populates="user")
-    # comments = orm.relationship("Comment", back_populates="user")
+    posts: list["Post"] = Relationship(back_populates="user")
+    comments: list["Comment"] = Relationship(back_populates="user")
+    reactions: list["Reaction"] = Relationship(back_populates="user")
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
-class Post(Base):
-    __tablename__ = "posts"
-    id = Column(Integer, autoincrement=True, primary_key=True)
-    title = Column(String)
+class Post(SQLModel, table=True):
+    __tablename__: str = "posts"
+    id: int | None = Field(default=None, primary_key=True)
+    title: str
     # TODO: create special type for this
-    source = Column(String)
-    top = Column(Boolean, default=False)
-    likes = Column(Integer, default=0)
-    dislikes = Column(Integer, default=0)
+    source: str | None = Field(default=None)
+    top: bool = Field(default=False)
+    likes: int = Field(default=0)
+    dislikes: int = Field(default=0)
 
-    user_id = Column(Integer, ForeignKey("users.id"))
+    user_id: int = Field(foreign_key="users.id")
+    user: User = Relationship(back_populates="posts")
+    comments: list["Comment"] = Relationship(back_populates="post")
 
-    # comments = orm.relationship("Comment", back_populates="Post")
     def add_reaction(self, reaction: "ReactionKind"):
         match reaction:
             case ReactionKind.Like:
@@ -94,37 +84,42 @@ class Post(Base):
                 self.likes -= 1
 
 
-class ReactionKind(enum.Enum):
-    Like = 0
-    Dislike = 1
+class ReactionKind(enum.StrEnum):
+    Like = "Like"
+    Dislike = "Dislike"
 
 
-class Reaction(Base):
-    __tablename__ = "reactions"
+class Reaction(SQLModel, table=True):
+    __tablename__: str = "reactions"
 
-    id = Column(Integer, autoincrement=True, primary_key=True)
-    created_at = Column(DateTime, default=func.current_timestamp())
+    id: int | None = Field(default=None, primary_key=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    user_id = Column(Integer, ForeignKey("users.id"))
-    post_id = Column(Integer, ForeignKey("posts.id"), nullable=True)
-    comment_id = Column(Integer, ForeignKey("comments.id"), nullable=True)
-    kind = Column(Integer, Enum(ReactionKind))
+    user_id: int = Field(foreign_key="users.id")
+    user: User = Relationship(back_populates="reactions")
+
+    post_id: int | None = Field(foreign_key="posts.id", default=None)
+    comment_id: int | None = Field(foreign_key="posts.id", default=None)
+    kind: ReactionKind
 
     __table_args__ = (
-        UniqueConstraint(user_id, post_id, name="unique_post_like"),
-        UniqueConstraint(user_id, comment_id, name="unique_comment_like"),
+        UniqueConstraint("user_id", "post_id", name="unique_post_like"),
+        UniqueConstraint("user_id", "comment_id", name="unique_comment_like"),
     )
 
 
-class Comment(Base):
-    __tablename__ = "comments"
-    id = Column(Integer, autoincrement=True, primary_key=True)
-    content = Column(String)
+class Comment(SQLModel, table=True):
+    __tablename__: str = "comments"
+    id: int | None = Field(default=None, primary_key=True)
+    content: str
     # TODO: create special type for this too
-    attachment_source = Column(String)
-    likes = Column(Integer, default=0)
-    dislikes = Column(Integer, default=0)
+    attachment_source: str | None = Field(default=None)
+    likes: int = Field(default=0)
+    dislikes: int = Field(default=0)
 
-    user_id = Column(Integer, ForeignKey("users.id"))
-    post_id = Column(Integer, ForeignKey("posts.id"))
-    parent_id = Column(Integer, ForeignKey("comments.id"), nullable=True)
+    user_id: int = Field(foreign_key="users.id")
+    user: User = Relationship(back_populates="comments")
+
+    post_id: int = Field(foreign_key="posts.id")
+    post: Post = Relationship(back_populates="comments")
+    parent_id: int | None = Field(foreign_key="comments.id", default=None)

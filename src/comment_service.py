@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 
+from typing import Callable
 import aiofiles
 import fastapi
 from sqlalchemy import select, update, delete
@@ -20,12 +21,12 @@ logger = logging.getLogger()
 
 
 async def comment_on_post(
-    s: Session,
+    session: Callable[[], Session],
     comment_data: schema.CommentCreate,
-    attachment: UploadFile,
+    attachment: UploadFile | None,
     settings: config.Settings,
 ) -> int:
-    with s:
+    with session() as s:
         # this is a reply
         if comment_data.post_id is None:
             res = s.execute(
@@ -43,23 +44,26 @@ async def comment_on_post(
         # TODO Putting all files in one folder is probably a bad idea long term
         # TODO: "comments" is a magic string
         new_id = new_comment.id
-        dest = (settings.UPLOAD_STORAGE / "comments" / attachment.filename).with_stem(
-            str(new_id)
-        )
-        logger.debug("Uploading content to %s", dest)
-        async with aiofiles.open(dest, "wb") as f:
-            await f.write(await attachment.read())
-        s.execute(
-            update(models.Comment)
-            .where(models.Comment.id == new_comment.id)
-            .values(attachment_source=str(dest))
-        )
+        if attachment:
+            dest = (settings.UPLOAD_STORAGE / "comments" / attachment.filename).with_stem(
+                str(new_id)
+            )
+            logger.debug("Uploading content to %s", dest)
+            async with aiofiles.open(dest, "wb") as f:
+                await f.write(await attachment.read())
+            s.execute(
+                update(models.Comment)
+                .where(models.Comment.id == new_comment.id)
+                .values(attachment_source=str(dest))
+            )
         s.commit()
         return int(str(new_id))
 
 
-def get_comments_per_post(s: Session, post_id: int) -> list[models.Comment]:
-    with s:
+def get_comments_per_post(
+    session: Callable[[], Session], post_id: int
+) -> list[models.Comment]:
+    with session() as s:
         results = s.execute(
             select(models.Comment).where(models.Comment.post_id == post_id)
         ).all()
