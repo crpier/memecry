@@ -50,6 +50,9 @@ class Post(SQLModel, table=True):
     top: bool = Field(default=False)
     likes: int = Field(default=0)
     dislikes: int = Field(default=0)
+    score: int = Field(default=0)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    comment_count: int = Field(default=0)
 
     user_id: int = Field(foreign_key="users.id")
     user: User = Relationship(back_populates="posts")

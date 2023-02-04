@@ -1,0 +1,61 @@
+<script>
+    function closeModal() {
+        var container = document.getElementById("upload-modal")
+
+        setTimeout(function () {
+            container.innerHTML = ""
+        }, 50)
+    }
+
+</script>
+<div class="absolute flex flex-col rounded border bg-gray-700 px-4 pb-4" style="left:20vw;top:5vh;width:60vw">
+    <div class="mt-2 flex justify-end">
+        <button class="w-max rounded border border bg-gray-900 px-2 text-right hover:bg-gray-700"
+            onclick="closeModal()">
+            X
+        </button>
+    </div>
+    <p class="mb-1 text-center text-3xl">Upload post</p>
+    <form id="upload-form" hx-encoding='multipart/form-data' hx-post='/upload'>
+        <div class="mb-4">
+            <label class="">Title</label>
+            <input class="w-full rounded border p-1" value="some title" name="title"/>
+        </div>
+        <input type="file" name='file'>
+        <div>Tags</div>
+        <div>
+            <input class="mr-2" type="checkbox" id="a" />
+            <label class="mr-8" htmlFor="a">
+                NSFW
+            </label>
+            <input class="mr-2" type="checkbox" id="b" />
+            <label class="mr-8" htmlFor="b">
+                Philosophy
+            </label>
+            <input class="mr-2" type="checkbox" id="c" />
+            <label class="mr-8" htmlFor="c">
+                History
+            </label>
+            <input class="mr-2" type="checkbox" id="d" />
+            <label class="mr-8" htmlFor="d">
+                Event
+            </label>
+        </div>
+        <div class="flex flex-row justify-start">
+            <button
+                class="mt-4 rounded border border-white px-4 py-1 text-sm font-semibold hover:border-transparent hover:bg-white hover:text-teal-500">
+                Cancel
+            </button>
+            <button
+                class="mt-4 ml-4 rounded border-white bg-blue-500 px-4 py-1 text-sm font-semibold hover:border-transparent hover:bg-white hover:text-teal-500"
+                type="submit">
+                Submit
+            </button>
+    </form>
+    <!-- <script> -->
+    <!--     htmx.on('#form', 'htmx:xhr:progress', function (evt) { -->
+    <!--         htmx.find('#progress').setAttribute('value', evt.detail.loaded / evt.detail.total * 100) -->
+    <!--     }); -->
+    <!-- </script> -->
+</div>
+</div>

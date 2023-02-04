@@ -31,7 +31,10 @@ def get_settings():
 
     logger.info("First admin has id=%s", settings.SUPER_ADMIN_ID)
     logger.info("Uploading files to %s", settings.UPLOAD_STORAGE)
-    os.mkdir(settings.UPLOAD_STORAGE / "comments")
+    try:
+        os.mkdir(settings.UPLOAD_STORAGE / "comments")
+    except FileExistsError:
+        logger.debug("Comment folder exists")
     return settings
 
 
@@ -53,17 +56,30 @@ async def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    current_user = get_current_user_optional(
+        token=token, session=session, settings=settings
+    )
+    if not current_user:
+        raise credentials_exception
+    return current_user
+
+
+def get_current_user_optional(
+    token: str = Depends(oauth2_scheme),
+    session=Depends(get_session),
+    settings: config.Settings = Depends(get_settings),
+) -> schema.User | None:
     try:
         payload = jose.jwt.decode(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
         if (res := payload.get("sub")) is None:
-            raise credentials_exception
+            return
         username: str = res
         token_data = schema.TokenData(username=username)
     except jose.JWTError:
-        raise credentials_exception
+        return
     user = user_service.get_user_by_username(session, username=token_data.username)
     if user is None:
-        raise credentials_exception
+        return
     return user

@@ -1,0 +1,12 @@
+{% import 'post.html' as post_template %}
+{% extends "main.html" %}
+{% block main_content %}
+
+<div>
+    {% for post in posts %}
+        {{ post_template.post(post=post) }}
+    {% endfor %}
+</div>
+
+
+{% endblock %}

@@ -3,8 +3,8 @@ from typing import Callable
 
 import aiofiles
 import fastapi
-from sqlalchemy import select, update, delete
-from sqlalchemy.orm import Session
+from sqlalchemy import update, delete
+from sqlmodel import select, Session, col
 
 from src import models, config, schema
 
@@ -13,7 +13,14 @@ logger = logging.getLogger()
 
 def get_top_posts(session: Callable[[], Session]) -> list[models.Post]:
     with session() as s:
-        return list(s.scalars(select(models.Post).where(models.Post.top == True)).all())
+        posts = s.exec(
+            select(models.Post).where(col(models.Post.top) == True).limit(10)
+        ).all()
+        res = []
+        for post in posts:
+            post.user
+            res.append(post)
+        return res
 
 
 def get_post(post_id: int, session: Callable[[], Session]) -> schema.Post:

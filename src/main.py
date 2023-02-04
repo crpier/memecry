@@ -1,5 +1,8 @@
 import logging
 
+from fastapi.responses import RedirectResponse
+
+
 from src import (
     deps,
     models,
@@ -13,7 +16,11 @@ from src import (
 
 import fastapi
 import fastapi.security
-from fastapi import Body, Depends, HTTPException
+import fastapi.templating
+import fastapi.staticfiles
+from fastapi import Body, Depends, HTTPException, Form, Request, Response
+
+from viewrender import render_login, render_post_upload, render_top_posts
 
 app = fastapi.FastAPI()
 
@@ -23,29 +30,9 @@ logger = logging.getLogger()
 # so that we don't have to wait for request to see errors (if any)
 deps.get_settings()
 
+templates = fastapi.templating.Jinja2Templates(directory="src/templates")
 
 ### Login stuff ###
-@app.post("/token")
-async def login(
-    form_data: fastapi.security.OAuth2PasswordRequestForm = Depends(),
-    session = Depends(deps.get_session),
-    settings: config.Settings = Depends(deps.get_settings),
-):
-    user = user_service.authenticate_user(
-        session, form_data.username, form_data.password
-    )
-    if not user:
-        raise HTTPException(
-            status_code=fastapi.status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token = security.create_access_token(
-        data={"sub": user.username}, settings=settings
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
-
-
 ### Misc ###
 @app.get("/health")
 def check_health():
@@ -58,45 +45,19 @@ def get_me(current_user: schema.User = Depends(deps.get_current_user)):
     return current_user
 
 
-### Posts-only ###
-@app.get("/top")
-def get_top_posts(
-    session= Depends(deps.get_session),
-):
-    return posting_service.get_top_posts(session)
-
-
 @app.get("/post/{post_id}")
 def get_post(
     post_id: int,
-    session= Depends(deps.get_session),
+    session=Depends(deps.get_session),
 ):
     return posting_service.get_post(post_id=post_id, session=session)
-
-
-@app.post("/post")
-async def upload_post(
-    file: fastapi.UploadFile,
-    title: str = Body(),
-    current_user: schema.User = Depends(deps.get_current_user),
-    settings: config.Settings = Depends(deps.get_settings),
-    session= Depends(deps.get_session),
-):
-    new_post = schema.PostCreate(title=title, user_id=current_user.id)
-    await posting_service.upload_post(
-        post_data=new_post,
-        session=session,
-        uploaded_file=file,
-        settings=settings,
-    )
-    return {"status": "success"}
 
 
 @app.put("/post/{id}/like")
 async def like_post(
     id: int,
     current_user: schema.User = Depends(deps.get_current_user),
-    session= Depends(deps.get_session),
+    session=Depends(deps.get_session),
 ):
     posting_service.add_reaction(
         session,
@@ -111,7 +72,7 @@ async def like_post(
 async def unlike_post(
     id: int,
     current_user: schema.User = Depends(deps.get_current_user),
-    session= Depends(deps.get_session),
+    session=Depends(deps.get_session),
 ):
     posting_service.remove_reaction(
         session,
@@ -126,7 +87,7 @@ async def unlike_post(
 async def dislike_post(
     id: int,
     current_user: schema.User = Depends(deps.get_current_user),
-    session= Depends(deps.get_session),
+    session=Depends(deps.get_session),
 ):
     posting_service.add_reaction(
         session,
@@ -141,7 +102,7 @@ async def dislike_post(
 async def undislike_post(
     id: int,
     current_user: schema.User = Depends(deps.get_current_user),
-    session= Depends(deps.get_session),
+    session=Depends(deps.get_session),
 ):
     posting_service.remove_reaction(
         session,
@@ -155,7 +116,7 @@ async def undislike_post(
 @app.get("/{user_id}/posts")
 def get_users_posts(
     user_id: int,
-    session= Depends(deps.get_session),
+    session=Depends(deps.get_session),
 ):
     return posting_service.get_posts_by_user(user_id, session)
 
@@ -167,7 +128,7 @@ async def comment_on_post(
     attachment: fastapi.UploadFile | None = None,
     content: str = Body(),
     current_user: schema.User = Depends(deps.get_current_user),
-    session= Depends(deps.get_session),
+    session=Depends(deps.get_session),
     settings: config.Settings = Depends(deps.get_settings),
 ):
     comment_create = schema.CommentCreate(
@@ -188,7 +149,7 @@ async def post_comment_reply(
     attachment: fastapi.UploadFile | None = None,
     content: str = Body(),
     current_user: schema.User = Depends(deps.get_current_user),
-    session= Depends(deps.get_session),
+    session=Depends(deps.get_session),
     settings: config.Settings = Depends(deps.get_settings),
 ):
     comment_create = schema.CommentCreate(
@@ -206,10 +167,120 @@ async def post_comment_reply(
 @app.get("/post/{post_id}/comment", response_model=list[schema.Comment])
 async def get_comments_on_post(
     post_id: int,
-    session= Depends(deps.get_session),
+    session=Depends(deps.get_session),
 ):
     comments = comment_service.get_comments_per_post(
         session=session,
         post_id=post_id,
     )
     return comments
+
+
+#### HTML endpoints ####
+app.mount("/static", fastapi.staticfiles.StaticFiles(directory="static"), name="static")
+app.mount("/media", fastapi.staticfiles.StaticFiles(directory="media"), name="static")
+
+
+@app.middleware("http")
+async def create_auth_header(request: Request, call_next):
+    """
+    Check if there are cookies set for authorization. If so, construct the
+    Authorization header and modify the request (unless the header already
+    exists!)
+    """
+    if "Authorization" not in request.headers and "Authorization" in request.cookies:
+        access_token = request.cookies["Authorization"]
+
+        request.headers.__dict__["_list"].append(
+            (
+                "authorization".encode(),
+                f"Bearer {access_token}".encode(),
+            )
+        )
+    elif (
+        "Authorization" not in request.headers
+        and "Authorization" not in request.cookies
+    ):
+        request.headers.__dict__["_list"].append(
+            (
+                "authorization".encode(),
+                f"Bearer 12345".encode(),
+            )
+        )
+
+    response = await call_next(request)
+    return response
+
+
+@app.post("/token")
+async def login(
+    response: Response,
+    # form_data: fastapi.security.OAuth2PasswordRequestForm = Depends(),
+    session=Depends(deps.get_session),
+    settings: config.Settings = Depends(deps.get_settings),
+):
+    user = user_service.authenticate_user(session, "admin", "kek")
+    if not user:
+        raise HTTPException(
+            status_code=fastapi.status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    access_token = security.create_access_token(
+        data={"sub": user.username}, settings=settings
+    )
+    response.set_cookie(key="Authorization", value=access_token, httponly=True)
+    # response.headers["HX-Redirect"] = "/"
+    response.headers["HX-Refresh"] = "true"
+    response.status_code = 303
+    return response
+
+
+@app.get("/upload-form")
+def open_upload_form():
+    return render_post_upload()
+
+
+@app.get("/login-form")
+def open_login_form():
+    return render_login()
+
+
+@app.post("/upload")
+async def upload_post(
+    response: Response,
+    file: fastapi.UploadFile,
+    title: str = Form(),
+    settings: config.Settings = Depends(deps.get_settings),
+    session=Depends(deps.get_session),
+    current_user: schema.User = Depends(deps.get_current_user),
+):
+    new_post = schema.PostCreate(title=title, user_id=current_user.id)
+    await posting_service.upload_post(
+        post_data=new_post,
+        session=session,
+        uploaded_file=file,
+        settings=settings,
+    )
+    response.status_code = 303
+    response.headers["HX-Redirect"] = "/"
+    return response
+
+
+@app.post("/logout")
+def log_out(response: Response):
+    response.delete_cookie(key="Authorization")
+    response.headers["HX-Refresh"] = "true"
+    response.status_code = 303
+    return response
+
+
+@app.get("/")
+def get_index(
+    session=Depends(deps.get_session),
+    current_user: schema.User | None = Depends(deps.get_current_user_optional),
+):
+    authenticated = True if current_user else False
+    return render_top_posts(
+        posting_service.get_top_posts(session), authenticated=authenticated
+    )
