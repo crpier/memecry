@@ -1,8 +1,5 @@
 import logging
 
-from fastapi.responses import RedirectResponse
-
-
 from src import (
     deps,
     models,
@@ -32,6 +29,11 @@ deps.get_settings()
 
 templates = fastapi.templating.Jinja2Templates(directory="src/templates")
 
+#### HTML endpoints ####
+app.mount("/static", fastapi.staticfiles.StaticFiles(directory="static"), name="static")
+app.mount("/media", fastapi.staticfiles.StaticFiles(directory="media"), name="static")
+
+
 ### Login stuff ###
 ### Misc ###
 @app.get("/health")
@@ -48,9 +50,15 @@ def get_me(current_user: schema.User = Depends(deps.get_current_user)):
 @app.get("/post/{post_id}")
 def get_post(
     post_id: int,
+    user: schema.User = Depends(deps.get_current_user_optional),
     session=Depends(deps.get_session),
 ):
-    return posting_service.get_post(post_id=post_id, session=session)
+    return render_post(
+        post_id=post_id,
+        user_id=user.id if user else None,
+        session=session,
+        partial=False,
+    )
 
 
 @app.get("/{user_id}/posts")
@@ -175,11 +183,6 @@ async def undislike_post(
         reaction_kind=models.ReactionKind.Dislike,
     )
     return render_post(post_id=id, session=session, user_id=current_user.id)
-
-
-#### HTML endpoints ####
-app.mount("/static", fastapi.staticfiles.StaticFiles(directory="static"), name="static")
-app.mount("/media", fastapi.staticfiles.StaticFiles(directory="media"), name="static")
 
 
 @app.middleware("http")

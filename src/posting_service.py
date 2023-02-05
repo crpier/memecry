@@ -53,7 +53,7 @@ async def upload_post(
         s.execute(
             update(models.Post)
             .where(models.Post.id == new_post.id)
-            .values(source=str(dest))
+            .values(source="/"+str(dest))
         )
         s.commit()
 

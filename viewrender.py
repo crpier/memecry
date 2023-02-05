@@ -46,13 +46,20 @@ def render_top_posts(session: Callable[[], Session], user: User | None):
         )
 
 
-def render_post(post_id: int, session: Callable[[], Session], user_id: int):
+def render_post(
+    post_id: int,
+    session: Callable[[], Session],
+    user_id: int | None = None,
+    partial=True,
+):
     s = session()
     with s.no_autoflush:
         post = s.exec(select(Post).where(Post.id == post_id)).one()
         prepare_post_for_viewing(post=post, session=session, user_id=user_id)
+        template_name = "only_post.html" if partial else "post_page.html"
         return templates.TemplateResponse(
-            "only_post.html", {"request": {}, "post": post}
+            template_name,
+            {"request": {}, "post": post, "authenticated": True if user_id else None},
         )
 
 
