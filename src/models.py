@@ -1,17 +1,15 @@
 from datetime import datetime
 import enum
-from functools import partial
 from sqlmodel import (
     Field,
     SQLModel,
     Relationship,
     create_engine,
-    Session,
     UniqueConstraint,
     Column,
-    JSON,
+    JSON
 )
-from pydantic import EmailStr
+from pydantic import EmailStr, PrivateAttr
 
 
 def get_engine(source: str | None = None):
@@ -57,6 +55,9 @@ class Post(SQLModel, table=True):
     user_id: int = Field(foreign_key="users.id")
     user: User = Relationship(back_populates="posts")
     comments: list["Comment"] = Relationship(back_populates="post")
+
+    _liked: bool | None = PrivateAttr(default=None)
+    _disliked: bool | None = PrivateAttr(default=None)
 
     def add_reaction(self, reaction: "ReactionKind"):
         match reaction:

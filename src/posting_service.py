@@ -23,11 +23,11 @@ def get_top_posts(session: Callable[[], Session]) -> list[models.Post]:
         return res
 
 
-def get_post(post_id: int, session: Callable[[], Session]) -> schema.Post:
+def get_post(post_id: int, session: Callable[[], Session]) -> models.Post:
     with session() as s:
         logger.info(f"Looking for post {post_id}")
-        res = s.execute(select(models.Post).where(models.Post.id == post_id)).one()
-        return schema.Post(**res[0].__dict__)
+        res = s.exec(select(models.Post).where(models.Post.id == post_id)).one()
+        return res
 
 
 async def upload_post(
@@ -171,3 +171,15 @@ def get_posts_by_user(
             return []
         else:
             return [post[0] for post in res]
+
+
+def get_user_reaction_on_post(
+    user_id: int, post_id: int, session: Callable[[], Session]
+) -> models.ReactionKind | None:
+    with session() as s:
+        res = s.exec(
+            select(models.Reaction).where(
+                models.Reaction.user_id == user_id, models.Reaction.post_id == post_id
+            )
+        ).one_or_none()
+        return res.kind if res else None

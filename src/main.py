@@ -20,7 +20,7 @@ import fastapi.templating
 import fastapi.staticfiles
 from fastapi import Body, Depends, HTTPException, Form, Request, Response
 
-from viewrender import render_login, render_post_upload, render_top_posts
+from viewrender import render_login, render_post, render_post_upload, render_top_posts
 
 app = fastapi.FastAPI()
 
@@ -39,35 +39,7 @@ def check_health():
     return {"message": "Everything OK"}
 
 
-### Users ###
-@app.get("/me")
-def get_me(current_user: schema.User = Depends(deps.get_current_user)):
-    return current_user
-
-
-@app.get("/post/{post_id}")
-def get_post(
-    post_id: int,
-    session=Depends(deps.get_session),
-):
-    return posting_service.get_post(post_id=post_id, session=session)
-
-
-@app.put("/post/{id}/like")
-async def like_post(
-    id: int,
-    current_user: schema.User = Depends(deps.get_current_user),
-    session=Depends(deps.get_session),
-):
-    posting_service.add_reaction(
-        session,
-        post_id=id,
-        user_id=current_user.id,
-        reaction_kind=models.ReactionKind.Like,
-    )
-    return {"status": "success"}
-
-
+### Should I keep or remove these?
 @app.put("/post/{id}/unlike")
 async def unlike_post(
     id: int,
@@ -95,22 +67,21 @@ async def dislike_post(
         user_id=current_user.id,
         reaction_kind=models.ReactionKind.Dislike,
     )
-    return {"status": "success"}
+    return render_post(post_id=id, session=session, user_id=current_user.id)
 
 
-@app.put("/post/{id}/undislike")
-async def undislike_post(
-    id: int,
-    current_user: schema.User = Depends(deps.get_current_user),
+### Users ###
+@app.get("/me")
+def get_me(current_user: schema.User = Depends(deps.get_current_user)):
+    return current_user
+
+
+@app.get("/post/{post_id}")
+def get_post(
+    post_id: int,
     session=Depends(deps.get_session),
 ):
-    posting_service.remove_reaction(
-        session,
-        post_id=id,
-        user_id=current_user.id,
-        reaction_kind=models.ReactionKind.Dislike,
-    )
-    return {"status": "success"}
+    return posting_service.get_post(post_id=post_id, session=session)
 
 
 @app.get("/{user_id}/posts")
@@ -174,6 +145,37 @@ async def get_comments_on_post(
         post_id=post_id,
     )
     return comments
+
+
+#### REST endpoints for html ####
+@app.put("/post/{id}/like")
+async def like_post(
+    id: int,
+    current_user: schema.User = Depends(deps.get_current_user),
+    session=Depends(deps.get_session),
+):
+    posting_service.add_reaction(
+        session,
+        post_id=id,
+        user_id=current_user.id,
+        reaction_kind=models.ReactionKind.Like,
+    )
+    return render_post(post_id=id, session=session, user_id=current_user.id)
+
+
+@app.put("/post/{id}/undislike")
+async def undislike_post(
+    id: int,
+    current_user: schema.User = Depends(deps.get_current_user),
+    session=Depends(deps.get_session),
+):
+    posting_service.remove_reaction(
+        session,
+        post_id=id,
+        user_id=current_user.id,
+        reaction_kind=models.ReactionKind.Dislike,
+    )
+    return {"status": "success"}
 
 
 #### HTML endpoints ####
@@ -278,9 +280,6 @@ def log_out(response: Response):
 @app.get("/")
 def get_index(
     session=Depends(deps.get_session),
-    current_user: schema.User | None = Depends(deps.get_current_user_optional),
+    optional_current_user: schema.User | None = Depends(deps.get_current_user_optional),
 ):
-    authenticated = True if current_user else False
-    return render_top_posts(
-        posting_service.get_top_posts(session), authenticated=authenticated
-    )
+    return render_top_posts(session, user=optional_current_user)

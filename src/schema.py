@@ -1,6 +1,8 @@
 import pydantic
 import enum
 
+from src import models
+
 ### User
 
 # Shared properties
