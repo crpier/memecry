@@ -10,6 +10,7 @@
 </script>
 <div class="absolute flex flex-col rounded border bg-gray-700 px-4 pb-4" style="left:20vw;top:5vh;width:60vw">
     <div class="mt-2 flex justify-end">
+        <!-- TODO: this modal should stay in the viewport -->
         <button class="w-max rounded border border bg-gray-900 px-2 text-right hover:bg-gray-700"
             onclick="closeModal()">
             X
@@ -19,7 +20,7 @@
     <form id="upload-form" hx-encoding='multipart/form-data' hx-post='/upload'>
         <div class="mb-4">
             <label class="">Title</label>
-            <input class="w-full rounded border p-1" value="some title" name="title"/>
+            <input class="w-full rounded border p-1" name="title"/>
         </div>
         <input type="file" name='file'>
         <div>Tags</div>

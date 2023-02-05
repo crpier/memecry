@@ -3,8 +3,7 @@ from typing import Callable
 
 import aiofiles
 import fastapi
-from sqlalchemy import update, delete
-from sqlmodel import select, Session, col
+from sqlmodel import select, Session, col, update, delete
 
 from src import models, config, schema
 
@@ -35,7 +34,7 @@ async def upload_post(
     session: Callable[[], Session],
     uploaded_file: fastapi.UploadFile,
     settings: config.Settings,
-):
+) -> int:
     with session() as s:
         # all posts by super admin are top posts huehuehuehue
         if post_data.user_id == settings.SUPER_ADMIN_ID:
@@ -50,12 +49,13 @@ async def upload_post(
         logger.debug("Uploading content to %s", dest)
         async with aiofiles.open(dest, "wb") as f:
             await f.write(await uploaded_file.read())
-        s.execute(
-            update(models.Post)
-            .where(models.Post.id == new_post.id)
-            .values(source="/"+str(dest))
-        )
+        new_post.source="/"+str(dest)
+        new_post_id = new_post.id
+        if not new_post_id:
+            raise ValueError("We created a post with no id??")
+        s.add(new_post)
         s.commit()
+        return new_post_id
 
 
 def add_reaction(
