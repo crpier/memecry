@@ -63,15 +63,19 @@ class Post(SQLModel, table=True):
         match reaction:
             case ReactionKind.Like:
                 self.likes += 1
+                self.score += 1
             case ReactionKind.Dislike:
                 self.dislikes += 1
+                self.score -= 1
 
     def remove_reaction(self, reaction: "ReactionKind"):
         match reaction:
             case ReactionKind.Like:
                 self.likes -= 1
+                self.score -= 1
             case ReactionKind.Dislike:
                 self.dislikes -= 1
+                self.score += 1
 
     def add_other_reaction(self, reaction: "ReactionKind"):
         match reaction:

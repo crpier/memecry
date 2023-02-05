@@ -39,37 +39,6 @@ def check_health():
     return {"message": "Everything OK"}
 
 
-### Should I keep or remove these?
-@app.put("/post/{id}/unlike")
-async def unlike_post(
-    id: int,
-    current_user: schema.User = Depends(deps.get_current_user),
-    session=Depends(deps.get_session),
-):
-    posting_service.remove_reaction(
-        session,
-        post_id=id,
-        user_id=current_user.id,
-        reaction_kind=models.ReactionKind.Like,
-    )
-    return {"status": "success"}
-
-
-@app.put("/post/{id}/dislike")
-async def dislike_post(
-    id: int,
-    current_user: schema.User = Depends(deps.get_current_user),
-    session=Depends(deps.get_session),
-):
-    posting_service.add_reaction(
-        session,
-        post_id=id,
-        user_id=current_user.id,
-        reaction_kind=models.ReactionKind.Dislike,
-    )
-    return render_post(post_id=id, session=session, user_id=current_user.id)
-
-
 ### Users ###
 @app.get("/me")
 def get_me(current_user: schema.User = Depends(deps.get_current_user)):
@@ -163,6 +132,36 @@ async def like_post(
     return render_post(post_id=id, session=session, user_id=current_user.id)
 
 
+@app.put("/post/{id}/unlike")
+async def unlike_post(
+    id: int,
+    current_user: schema.User = Depends(deps.get_current_user),
+    session=Depends(deps.get_session),
+):
+    posting_service.remove_reaction(
+        session,
+        post_id=id,
+        user_id=current_user.id,
+        reaction_kind=models.ReactionKind.Like,
+    )
+    return render_post(post_id=id, session=session, user_id=current_user.id)
+
+
+@app.put("/post/{id}/dislike")
+async def dislike_post(
+    id: int,
+    current_user: schema.User = Depends(deps.get_current_user),
+    session=Depends(deps.get_session),
+):
+    posting_service.add_reaction(
+        session,
+        post_id=id,
+        user_id=current_user.id,
+        reaction_kind=models.ReactionKind.Dislike,
+    )
+    return render_post(post_id=id, session=session, user_id=current_user.id)
+
+
 @app.put("/post/{id}/undislike")
 async def undislike_post(
     id: int,
@@ -175,7 +174,7 @@ async def undislike_post(
         user_id=current_user.id,
         reaction_kind=models.ReactionKind.Dislike,
     )
-    return {"status": "success"}
+    return render_post(post_id=id, session=session, user_id=current_user.id)
 
 
 #### HTML endpoints ####
