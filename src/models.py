@@ -7,7 +7,7 @@ from sqlmodel import (
     create_engine,
     UniqueConstraint,
     Column,
-    JSON
+    JSON,
 )
 from pydantic import EmailStr, PrivateAttr
 

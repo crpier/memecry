@@ -1,0 +1,29 @@
+<div class="flex flex-col rounded border bg-gray-700 px-4 pb-4">
+    <div class="flex justify-end">
+        <button class="w-max rounded border border bg-gray-900 px-2 text-right hover:bg-gray-700"
+            onclick="closeModal()">
+            X
+        </button>
+    </div>
+    <form id="upload-form" hx-encoding='multipart/form-data' hx-post="{{ post_url }}">
+        <div class="mb-4">
+            <label class="">Title</label>
+            <input class="w-full rounded border p-1" name="title" />
+        </div>
+        <label for="content"></label>
+        <textarea name="content"></textarea>
+        <label for="file">
+            <input type="file" name='file'>
+            <div class="flex flex-row justify-start">
+                <button
+                    class="mt-4 rounded border border-white px-4 py-1 text-sm font-semibold hover:border-transparent hover:bg-white hover:text-teal-500">
+                    Cancel
+                </button>
+                <button
+                    class="mt-4 ml-4 rounded border-white bg-blue-500 px-4 py-1 text-sm font-semibold hover:border-transparent hover:bg-white hover:text-teal-500"
+                    type="submit">
+                    Submit
+                </button>
+            </div>
+    </form>
+</div>

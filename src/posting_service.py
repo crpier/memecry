@@ -17,6 +17,7 @@ def get_top_posts(session: Callable[[], Session]) -> list[models.Post]:
         ).all()
         res = []
         for post in posts:
+            # TODO: is this needed?
             post.user
             res.append(post)
         return res

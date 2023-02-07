@@ -17,7 +17,14 @@ import fastapi.templating
 import fastapi.staticfiles
 from fastapi import Body, Depends, HTTPException, Form, Request, Response
 
-from viewrender import render_login, render_post, render_post_upload, render_top_posts
+from viewrender import (
+    render_comment,
+    render_comment_partial,
+    render_login,
+    render_post,
+    render_post_upload,
+    render_top_posts,
+)
 
 app = fastapi.FastAPI()
 
@@ -82,13 +89,13 @@ async def comment_on_post(
     comment_create = schema.CommentCreate(
         content=content, post_id=post_id, user_id=current_user.id
     )
-    id = await comment_service.comment_on_post(
+    new_comment = await comment_service.comment_on_post(
         session=session,
         comment_data=comment_create,
         attachment=attachment,
         settings=settings,
     )
-    return {"status": "success", "result": id}
+    return new_comment
 
 
 @app.post("/comment/{comment_id}/comment")
@@ -117,11 +124,8 @@ async def get_comments_on_post(
     post_id: int,
     session=Depends(deps.get_session),
 ):
-    comments = comment_service.get_comments_per_post(
-        session=session,
-        post_id=post_id,
-    )
-    return comments
+    # return render_post_comments(post_id=post_id, session=session)
+    return comment_service.get_comment_ids_tree(post_id=post_id, session=session)
 
 
 #### REST endpoints for html ####
@@ -248,6 +252,16 @@ def open_upload_form():
 @app.get("/login-form")
 def open_login_form():
     return render_login()
+
+
+@app.get("/comment-form")
+def open_comment_for():
+    return render_comment_partial()
+
+@app.get("/test-comment")
+def get_test_comment():
+    return render_comment()
+
 
 
 @app.post("/upload")

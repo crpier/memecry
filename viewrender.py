@@ -5,13 +5,14 @@ from typing import Callable
 from fastapi.templating import Jinja2Templates
 import babel.dates
 from sqlmodel import Session
-from src import posting_service
+from src import posting_service, comment_service
 
 from src.models import Post, ReactionKind
 from src.schema import User
 
-templates = Jinja2Templates(directory="src/templates")
+from jinja2 import Template
 
+templates = Jinja2Templates(directory="src/templates")
 
 def prepare_post_for_viewing(
     post: Post, session: Callable[[], Session], user_id: int | None = None
@@ -69,3 +70,10 @@ def render_post_upload():
 
 def render_login():
     return templates.TemplateResponse("login.html", {"request": {}})
+
+
+def render_comment_partial():
+    pass
+
+def render_comment():
+    return templates.TemplateResponse("comment.html", {"request": {}})
