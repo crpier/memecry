@@ -14,6 +14,7 @@ from jinja2 import Template
 
 templates = Jinja2Templates(directory="src/templates")
 
+
 def prepare_post_for_viewing(
     post: Post, session: Callable[[], Session], user_id: int | None = None
 ):
@@ -75,5 +76,11 @@ def render_login():
 def render_comment_partial():
     pass
 
-def render_comment():
-    return templates.TemplateResponse("comment.html", {"request": {}})
+
+def render_comment(post_id: int, session: Callable[[], Session]):
+    comments_dict, ids_tree = comment_service.get_comment_tree(
+        post_id=post_id, session=session
+    )
+    from pprint import pprint
+    pprint(ids_tree)
+    return templates.TemplateResponse("comment_tree.html", {"request": {}, "ids_tree": ids_tree})

@@ -1,83 +1,36 @@
-{% extends "main.html" %}
-{% block main_content %}
-<div class="flex flex-col justify-start items-start m-4 border-2 border-gray-600 p-8 items-stretch">
-    <div class="flex flex-col mb-4">
-        <div class="flex flex-row">
-            <div class="mr-4">
-                <img src="https://misc-personal-projects.s3.eu-west-1.amazonaws.com/memecry/13.jpg" alt="funny meme"
-                    width="64" height="64"></img>
-            </div>
-                <textarea class="border px-2 pt-1 flex-grow" rows="3"></textarea>
+{% macro comment(id) -%}
+<div class="flex flex-col mb-4 border-b pb-4">
+    <div class="flex flex-row">
+        <div class="mr-4">
+            <img src="https://misc-personal-projects.s3.eu-west-1.amazonaws.com/memecry/122.jpg" alt="funny meme"
+                width="64" height="64"></img>
         </div>
-        <div class="flex flex-row mt-1">
-            <div class="flex-grow"></div>
-            <button class="mr-2 bg-gray-600 px-2">Attach</button>
-            <button class="bg-blue-500 px-2">Submit</button>
-        </div>
-    </div>
-    <div class="flex flex-col mb-4 border-b pb-4">
-        <div class="flex flex-row">
-            <div class="mr-4">
-                <img src="https://misc-personal-projects.s3.eu-west-1.amazonaws.com/memecry/122.jpg" alt="funny meme"
-                    width="64" height="64"></img>
-            </div>
-            <div class="flex flex-col">
-                <div class="flex flex-row">
-                    <a href="." class="text-blue-500 mr-2 font-bold">
+        <div class="flex flex-col">
+            <div class="flex flex-row">
+                <a href="." class="text-blue-500 mr-2 font-bold">
                     MrCommenter
-                    </a>
-                    <div class="text-sm text-gray-400 mr-1">10 claps</div>
-                    <div class="text-sm text-gray-400 mr-1">-</div>
-                    <div class="text-sm text-gray-400 mr-1">15 boos</div>
-                    <div class="text-sm text-gray-400 mr-1">-</div>
-                    <div class="text-sm text-gray-400 mr-1">6 hours ago</div>
-                </div>
-                <div>
-                    Hello this is a pretty big comment on my side. I like to post big
-                    comments all the time.
-                    <br /> LMAO
-                </div>
-                <div class="flex flex-row">
-                    <button class="mr-2">
-                        <i class="fa fa-arrow-up"></i>
-                    </button>
-                    <button class="mr-4">
-                        <i class="fa fa-arrow-down"></i>
-                    </button>
-                    <button class="text-blue-500 font-bold text-lg">Reply</button>
-                </div>
+                </a>
+                <div class="text-sm text-gray-400 mr-1">10 claps</div>
+                <div class="text-sm text-gray-400 mr-1">-</div>
+                <div class="text-sm text-gray-400 mr-1">15 boos</div>
+                <div class="text-sm text-gray-400 mr-1">-</div>
+                <div class="text-sm text-gray-400 mr-1">6 hours ago</div>
             </div>
-        </div>
-    </div>
-    <div class="flex flex-col mb-2 pl-16 border-b pb-4">
-        <div class="flex flex-row">
-            <div class="mr-4">
-                <img src="https://misc-personal-projects.s3.eu-west-1.amazonaws.com/memecry/122.jpg" alt="funny meme"
-                    width="64" height="64"></img>
+            <div>
+                Hi I am comment id {{ id }} this is a pretty big comment on my side. I like to post big
+                comments all the time.
+                <br /> LMAO
             </div>
-            <div class="flex flex-col">
-                <div class="flex flex-row">
-                    <a href="." class="text-blue-500 mr-2 font-bold">
-                    MrCommenter
-                    </a>
-                    <div class="text-sm text-gray-400 mr-1">10 claps</div>
-                    <div class="text-sm text-gray-400 mr-1">-</div>
-                    <div class="text-sm text-gray-400 mr-1">15 boos</div>
-                    <div class="text-sm text-gray-400 mr-1">-</div>
-                    <div class="text-sm text-gray-400 mr-1">6 hours ago</div>
-                </div>
-                <div>Yes this is a good comment.</div>
-                <div class="flex flex-row">
-                    <button class="mr-2">
-                        <BsArrowUpSquareFill size="1.5rem" />
-                    </button>
-                    <button class="mr-4">
-                        <BsArrowDownSquareFill size="1.5rem" />
-                    </button>
-                    <button class="text-blue-500 font-bold text-lg">Reply</button>
-                </div>
+            <div class="flex flex-row">
+                <button class="mr-2">
+                    <i class="fa fa-arrow-up"></i>
+                </button>
+                <button class="mr-4">
+                    <i class="fa fa-arrow-down"></i>
+                </button>
+                <button class="text-blue-500 font-bold text-lg">Reply</button>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
+{%- endmacro %}
