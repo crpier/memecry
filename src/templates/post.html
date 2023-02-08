@@ -1,7 +1,8 @@
 {% macro post(post) -%}
-<div class="mb-8 border-2 border-gray-600 px-6 pb-6 text-center" style="background:#181B1D" id="post-{{post.id}}">
-    <p class="my-4 text-xl font-bold" style="width: 500px;">{{ post.title }}</p>
-    <div style="width: 500px">
+<div class="mb-8 border-2 border-gray-600 px-6 pb-6 text-center" style="background:#181B1D;width:640px;"
+    id="post-{{post.id}}">
+    <p class="my-4 text-xl font-bold">{{ post.title }}</p>
+    <div>
         <a href="/post/{{ post.id }}">
             <img src="{{ post.source }}" />
         </a>
@@ -32,10 +33,12 @@
             <i class="fa fa-arrow-down"></i>
         </button>
         <div class="flex-grow"></div>
-        <a href="." class="flex flex-row rounded-md border border-gray-600 p-2 hover:border-gray-500">
+        <button class="flex flex-row rounded-md border border-gray-600 p-2 hover:border-gray-500"
+            hx-get="/post/{{ post.id }}/comments" hx-target="#post-comments-{{post.id}}">
             <i class="fa fa-comment fa-lg mt-1 mr-2"></i>
             <div>{{ post.comment_count }} comments</div>
-        </a>
+        </button>
     </div>
+    <div id="post-comments-{{ post.id }}"></div>
 </div>
 {%- endmacro %}

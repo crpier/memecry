@@ -119,13 +119,12 @@ async def post_comment_reply(
     return {"status": "success", "result": id}
 
 
-@app.get("/post/{post_id}/comment")
+@app.get("/post/{post_id}/comments")
 async def get_comments_on_post(
     post_id: int,
     session=Depends(deps.get_session),
 ):
-    return render_post_comments(post_id=post_id, session=session)
-    return comment_service.get_comment_ids_tree(post_id=post_id, session=session)
+    return render_comment(post_id=post_id, session=session)
 
 
 #### REST endpoints for html ####
@@ -257,11 +256,6 @@ def open_login_form():
 @app.get("/comment-form")
 def open_comment_for():
     return render_comment_partial()
-
-
-@app.get("/test-comment")
-def get_test_comment(session=Depends(deps.get_session)):
-    return render_comment(post_id=1, session=session)
 
 
 @app.post("/upload")
