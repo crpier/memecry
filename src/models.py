@@ -1,15 +1,16 @@
-from datetime import datetime
 import enum
-from sqlmodel import (
-    Field,
-    SQLModel,
-    Relationship,
-    create_engine,
-    UniqueConstraint,
-    Column,
-    JSON,
-)
+from datetime import datetime
+
 from pydantic import EmailStr, PrivateAttr
+from sqlmodel import (
+    JSON,
+    Column,
+    Field,
+    Relationship,
+    SQLModel,
+    UniqueConstraint,
+    create_engine,
+)
 
 
 def get_engine(source: str | None = None):

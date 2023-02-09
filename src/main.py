@@ -1,22 +1,21 @@
 import logging
 
+import fastapi
+import fastapi.security
+import fastapi.staticfiles
+import fastapi.templating
+from fastapi import Body, Depends, Form, HTTPException, Request, Response
+
 from src import (
+    comment_service,
+    config,
     deps,
     models,
     posting_service,
     schema,
     security,
     user_service,
-    config,
-    comment_service,
 )
-
-import fastapi
-import fastapi.security
-import fastapi.templating
-import fastapi.staticfiles
-from fastapi import Body, Depends, HTTPException, Form, Request, Response
-
 from viewrender import (
     render_comment,
     render_comment_partial,

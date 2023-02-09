@@ -1,16 +1,14 @@
 from datetime import datetime
-from sqlmodel import select, Session, col
 from typing import Callable
 
-from fastapi.templating import Jinja2Templates
 import babel.dates
-from sqlmodel import Session
-from src import posting_service, comment_service
+from fastapi.templating import Jinja2Templates
+from jinja2 import Template
+from sqlmodel import Session, col, select
 
+from src import comment_service, posting_service
 from src.models import Post, ReactionKind
 from src.schema import User
-
-from jinja2 import Template
 
 templates = Jinja2Templates(directory="src/templates")
 
@@ -82,5 +80,8 @@ def render_comment(post_id: int, session: Callable[[], Session]):
         post_id=post_id, session=session
     )
     from pprint import pprint
+
     pprint(ids_tree)
-    return templates.TemplateResponse("comment_tree.html", {"request": {}, "ids_tree": ids_tree})
+    return templates.TemplateResponse(
+        "comment_tree.html", {"request": {}, "ids_tree": ids_tree}
+    )

@@ -1,12 +1,12 @@
 import logging
-from pydantic import EmailStr
-from sqlalchemy.orm import load_only
-
-from sqlmodel import select, Session
 from functools import partial
 from typing import Callable
 
-from src import models, security, schema
+from pydantic import EmailStr
+from sqlalchemy.orm import load_only
+from sqlmodel import Session, select
+
+from src import models, schema, security
 
 logger = logging.getLogger()
 

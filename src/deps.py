@@ -1,16 +1,16 @@
+import functools
+import logging
 import os
+import sys
+
 import fastapi
 import fastapi.security
 import jose
 import jose.jwt
 from fastapi import Depends, HTTPException
-import logging
-import sys
+from sqlmodel import Session, SQLModel
 
-import functools
-
-from sqlmodel import SQLModel, Session
-from src import schema, user_service, config, models
+from src import config, models, schema, user_service
 
 oauth2_scheme = fastapi.security.OAuth2PasswordBearer(tokenUrl="token")
 

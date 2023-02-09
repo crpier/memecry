@@ -3,9 +3,9 @@ from typing import Callable
 
 import aiofiles
 import fastapi
-from sqlmodel import select, Session, col, update, delete
+from sqlmodel import Session, col, delete, select, update
 
-from src import models, config, schema
+from src import config, models, schema
 
 logger = logging.getLogger()
 
@@ -50,7 +50,7 @@ async def upload_post(
         logger.debug("Uploading content to %s", dest)
         async with aiofiles.open(dest, "wb") as f:
             await f.write(await uploaded_file.read())
-        new_post.source="/"+str(dest)
+        new_post.source = "/" + str(dest)
         new_post_id = new_post.id
         if not new_post_id:
             raise ValueError("We created a post with no id??")
