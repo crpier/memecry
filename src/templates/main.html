@@ -23,14 +23,19 @@
         <button class="">
             <i class="fa fa-search fa-lg h-6 mr-4"></i>
         </button>
-        {% if not authenticated %}
+        {% if not user %}
+        <button
+            class="mr-4 inline-block rounded border border-white px-4 py-2 text-sm leading-none hover:border-transparent hover:bg-white hover:text-teal-500"
+            hx-get="/signup-form" hx-target="#signup-modal" hx-trigger="click">
+            Sign Up
+        </button>
         <button
             class="mr-4 inline-block rounded border border-white px-4 py-2 text-sm leading-none hover:border-transparent hover:bg-white hover:text-teal-500"
             hx-get="/login-form" hx-target="#login-modal" hx-trigger="click">
             Sign in
         </button>
         {% endif %}
-        {% if authenticated %}
+        {% if user %}
         <button hx-get="/upload-form" hx-target="#upload-modal" hx-trigger="click"
             class="mr-4 inline-block rounded border-white bg-blue-500 px-4 py-2 text-sm font-semibold leading-none hover:border-transparent hover:bg-white hover:text-teal-500 ">
             Upload
@@ -40,7 +45,7 @@
                 <img alt="profile-picture" class="m-auto w-8 h-8 rounded-lg"
                     src="https://misc-personal-projects.s3.eu-west-1.amazonaws.com/memecry/13.jpg" />
             </button>
-            <span>todousername</span>
+            <span>{{ user.username }}</span>
         </a>
         <!-- TODO: can i remove hx-trigger="click"? -->
         <button
@@ -62,6 +67,7 @@
     </div>
     <div id="upload-modal"></div>
     <div id="login-modal"></div>
+    <div id="signup-modal"></div>
 </body>
 
 </html>

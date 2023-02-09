@@ -1,6 +1,7 @@
 import logging
 from functools import partial
 from typing import Callable
+from fastapi import HTTPException
 
 from pydantic import EmailStr
 from sqlalchemy.orm import load_only
@@ -62,3 +63,30 @@ def get_user_by_username(
         if not res:
             return None
         return schema.User(**res.__dict__)  # type: ignore
+
+
+SENTINEL_NO_EMAIL = EmailStr("sentinel_no_email@example.com")
+
+
+def add_user(
+    session: Callable[[], Session],
+    username: str,
+    password: str,
+    email: EmailStr | None = None,
+):
+    if email is None:
+        email = SENTINEL_NO_EMAIL
+
+    with session() as s:
+        existing_user = get_user_by_username(session=session, username=username)
+        if existing_user:
+            raise HTTPException(
+                status_code=400, detail=f"User with name {username} already exists"
+            )
+        new_user = models.User(
+            email=email,
+            username=username,
+            pass_hash=security.get_password_hash(password),
+        )
+        s.add(new_user)
+        s.commit()

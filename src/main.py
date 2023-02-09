@@ -5,6 +5,7 @@ import fastapi.security
 import fastapi.staticfiles
 import fastapi.templating
 from fastapi import Body, Depends, Form, HTTPException, Request, Response
+from pydantic import EmailStr
 
 from src import (
     comment_service,
@@ -20,6 +21,7 @@ from viewrender import (
     render_comment,
     render_comment_partial,
     render_login,
+    render_signup,
     render_post,
     render_post_upload,
     render_top_posts,
@@ -61,10 +63,38 @@ def get_post(
 ):
     return render_post(
         post_id=post_id,
-        user_id=user.id if user else None,
+        user=user,
         session=session,
         partial=False,
     )
+
+
+@app.get("/signup-form")
+def get_signup_form():
+    return render_signup()
+
+
+@app.post("/signup")
+async def create_new_user(
+    response: Response,
+    password: str = Form(),
+    username: str = Form(),
+    # Maybe make email optional only for dev?
+    email: EmailStr | None = Form(),
+    session=Depends(deps.get_session),
+    settings=Depends(deps.get_settings),
+):
+    user_service.add_user(
+        username=username, password=password, email=email, session=session
+    )
+    access_token = security.create_access_token(
+        data={"sub": username}, settings=settings
+    )
+    response.set_cookie(key="Authorization", value=access_token, httponly=True)
+    # response.headers["HX-Redirect"] = "/"
+    response.headers["HX-Refresh"] = "true"
+    response.status_code = 303
+    return response
 
 
 @app.get("/{user_id}/posts")
@@ -139,7 +169,7 @@ async def like_post(
         user_id=current_user.id,
         reaction_kind=models.ReactionKind.Like,
     )
-    return render_post(post_id=id, session=session, user_id=current_user.id)
+    return render_post(post_id=id, session=session, user=current_user)
 
 
 @app.put("/post/{id}/unlike")
@@ -154,7 +184,7 @@ async def unlike_post(
         user_id=current_user.id,
         reaction_kind=models.ReactionKind.Like,
     )
-    return render_post(post_id=id, session=session, user_id=current_user.id)
+    return render_post(post_id=id, session=session, user=current_user)
 
 
 @app.put("/post/{id}/dislike")
@@ -169,7 +199,7 @@ async def dislike_post(
         user_id=current_user.id,
         reaction_kind=models.ReactionKind.Dislike,
     )
-    return render_post(post_id=id, session=session, user_id=current_user.id)
+    return render_post(post_id=id, session=session, user=current_user)
 
 
 @app.put("/post/{id}/undislike")
@@ -184,7 +214,7 @@ async def undislike_post(
         user_id=current_user.id,
         reaction_kind=models.ReactionKind.Dislike,
     )
-    return render_post(post_id=id, session=session, user_id=current_user.id)
+    return render_post(post_id=id, session=session, user=current_user)
 
 
 @app.middleware("http")
@@ -221,11 +251,13 @@ async def create_auth_header(request: Request, call_next):
 @app.post("/token")
 async def login(
     response: Response,
-    # form_data: fastapi.security.OAuth2PasswordRequestForm = Depends(),
+    form_data: fastapi.security.OAuth2PasswordRequestForm = Depends(),
     session=Depends(deps.get_session),
     settings: config.Settings = Depends(deps.get_settings),
 ):
-    user = user_service.authenticate_user(session, "admin", "kek")
+    user = user_service.authenticate_user(
+        session, form_data.username, form_data.password
+    )
     if not user:
         raise HTTPException(
             status_code=fastapi.status.HTTP_401_UNAUTHORIZED,
