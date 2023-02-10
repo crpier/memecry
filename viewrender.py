@@ -33,17 +33,27 @@ def prepare_post_for_viewing(
             post._disliked = True
 
 
-def render_top_posts(session: Callable[[], Session], user: User | None):
-    with session() as s:
-        posts = posting_service.get_top_posts(session)
-        for post in posts:
-            prepare_post_for_viewing(
-                post=post, session=session, user_id=user.id if user else None
-            )
+def render_posts(session: Callable[[], Session], top:bool, user: User | None, offset=0, limit=5):
+    if top:
+        posts = posting_service.get_top_posts(session, offset=offset, limit=limit)
+    else:
+        posts = posting_service.get_newest_posts(session, offset=offset, limit=limit)
+    for post in posts:
+        prepare_post_for_viewing(
+            post=post, session=session, user_id=user.id if user else None
+        )
+    if offset==0:
         return templates.TemplateResponse(
             "top.html",
-            {"request": {}, "posts": posts, "user": user},
+            {"request": {}, "posts": posts, "user": user, "page_number": 0},
         )
+    else:
+        return templates.TemplateResponse(
+            "posts_partial.html",
+            {"request": {}, "posts": posts, "user": user, "page_number": offset*limit},
+        )
+
+
 
 def render_newest_posts(session: Callable[[], Session], user: User | None):
     with session() as s:
@@ -67,7 +77,9 @@ def render_post(
     s = session()
     with s.no_autoflush:
         post = s.exec(select(Post).where(Post.id == post_id)).one()
-        prepare_post_for_viewing(post=post, session=session, user_id=user.id if user else None)
+        prepare_post_for_viewing(
+            post=post, session=session, user_id=user.id if user else None
+        )
         template_name = "only_post.html" if partial else "post_page.html"
         return templates.TemplateResponse(
             template_name,
@@ -82,9 +94,9 @@ def render_post_upload():
 def render_login():
     return templates.TemplateResponse("login.html", {"request": {}})
 
+
 def render_signup():
     return templates.TemplateResponse("signup.html", {"request": {}})
-
 
 
 def render_comment_partial():

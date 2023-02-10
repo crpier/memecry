@@ -1,6 +1,12 @@
-{% macro post(post) -%}
+{% macro post(post, next_page_number) -%}
 <div class="mb-8 border-2 border-gray-600 px-6 pb-6 text-center" style="background:#181B1D;width:640px;"
-    id="post-{{post.id}}">
+    id="post-{{post.id}}"
+    {% if next_page_number %}
+        hx-get="/?offset={{ next_page_number }}"
+        hx-trigger="revealed"
+        hx-swap="afterend"
+    {% endif %}
+    >
     <p class="my-4 text-xl font-bold">{{ post.title }}</p>
     <a href="/post/{{ post.id }}">
         <!-- TODO: use custom filter, check starlette docs -->

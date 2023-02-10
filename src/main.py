@@ -25,7 +25,7 @@ from viewrender import (
     render_signup,
     render_post,
     render_post_upload,
-    render_top_posts,
+    render_posts,
 )
 
 app = fastapi.FastAPI()
@@ -320,15 +320,23 @@ def log_out(response: Response):
 
 @app.get("/")
 def get_index(
+    limit: int = 5,
+    offset: int = 0,
     session=Depends(deps.get_session),
     optional_current_user: schema.User | None = Depends(deps.get_current_user_optional),
 ):
-    return render_top_posts(session, user=optional_current_user)
+    return render_posts(
+        session, user=optional_current_user, top=True, limit=limit, offset=offset
+    )
 
 
 @app.get("/new")
 def show_newest_posts(
+    limit: int = 5,
+    offset: int = 0,
     session=Depends(deps.get_session),
     optional_current_user: schema.User | None = Depends(deps.get_current_user_optional),
 ):
-    return render_newest_posts(session, user=optional_current_user)
+    return render_posts(
+        session, user=optional_current_user, top=False, limit=limit, offset=offset
+    )

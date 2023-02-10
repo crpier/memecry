@@ -10,9 +10,16 @@ from src import config, models, schema
 logger = logging.getLogger()
 
 
-def get_top_posts(session: Callable[[], Session]) -> list[models.Post]:
+def get_top_posts(
+    session: Callable[[], Session], limit=5, offset=0
+) -> list[models.Post]:
     with session() as s:
-        posts = s.exec(select(models.Post).where(col(models.Post.top) == True)).all()
+        posts = s.exec(
+            select(models.Post)
+            .where(col(models.Post.top) == True)
+            .offset(offset * limit)
+            .limit(limit)
+        ).all()
         res = []
         for post in posts:
             # TODO: is this needed?
@@ -21,15 +28,22 @@ def get_top_posts(session: Callable[[], Session]) -> list[models.Post]:
         return res
 
 
-def get_newest_posts(session: Callable[[], Session]) -> list[models.Post]:
+def get_newest_posts(
+    session: Callable[[], Session], limit=5, offset=0
+) -> list[models.Post]:
     with session() as s:
-        posts = s.exec(select(models.Post)).all()
+        posts = s.exec(
+            select(models.Post)
+            .offset(offset * limit)
+            .limit(limit)
+        ).all()
         res = []
         for post in posts:
             # TODO: is this needed?
             post.user
             res.append(post)
         return res
+
 
 
 def get_post(post_id: int, session: Callable[[], Session]) -> models.Post:

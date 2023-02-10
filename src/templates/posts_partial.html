@@ -1,7 +1,4 @@
 {% import 'post.html' as post_template %}
-{% extends "main.html" %}
-{% block main_content %}
-
 <div>
     {% for post in posts %}
         {% if loop.revindex0 == 0 %}
@@ -11,6 +8,3 @@
         {% endif %}
     {% endfor %}
 </div>
-
-
-{% endblock %}
