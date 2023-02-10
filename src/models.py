@@ -91,7 +91,7 @@ class Post(SQLModel, table=True):
                 self.likes -= 1
 
 
-class ReactionKind(enum.StrEnum):
+class ReactionKind(str, enum.Enum):
     Like = "Like"
     Dislike = "Dislike"
 
