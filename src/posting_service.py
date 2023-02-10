@@ -12,9 +12,18 @@ logger = logging.getLogger()
 
 def get_top_posts(session: Callable[[], Session]) -> list[models.Post]:
     with session() as s:
-        posts = s.exec(
-            select(models.Post).where(col(models.Post.top) == True).limit(10)
-        ).all()
+        posts = s.exec(select(models.Post).where(col(models.Post.top) == True)).all()
+        res = []
+        for post in posts:
+            # TODO: is this needed?
+            post.user
+            res.append(post)
+        return res
+
+
+def get_newest_posts(session: Callable[[], Session]) -> list[models.Post]:
+    with session() as s:
+        posts = s.exec(select(models.Post)).all()
         res = []
         for post in posts:
             # TODO: is this needed?

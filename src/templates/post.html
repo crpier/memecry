@@ -2,13 +2,18 @@
 <div class="mb-8 border-2 border-gray-600 px-6 pb-6 text-center" style="background:#181B1D;width:640px;"
     id="post-{{post.id}}">
     <p class="my-4 text-xl font-bold">{{ post.title }}</p>
-    <div>
-        <a href="/post/{{ post.id }}">
-            <img src="{{ post.source }}" />
-        </a>
-    </div>
+    <a href="/post/{{ post.id }}">
+        <!-- TODO: use custom filter, check starlette docs -->
+        {% set extension = post.source.rsplit(".", 1)[1] -%}
+        {% if extension in ["png", "jpg", "jpeg"] %}
+        <img src="{{ post.source }}" />
+        {% else %}
+        <video class="w-full" src={{post.source}} controls={true} />
+        {% endif %}
+
+    </a>
     <div class="flex flex-grow-0 flex-row items-center justify-start">
-        <a href="." class="my-2 mr-2 font-semibold">
+        <a href="." class="my-2 mr-2 font-semibold w-max">
             {{ post.score }} good boi points
         </a>
         <div class="flex-grow"></div>

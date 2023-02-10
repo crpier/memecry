@@ -31,6 +31,7 @@ class User(SQLModel, table=True):
     verified: bool = Field(default=False)
     banned: bool = Field(default=False)
     admin: bool = Field(default=False)
+    pfp_src: str | None = Field(default=None)
 
     posts: list["Post"] = Relationship(back_populates="user")
     comments: list["Comment"] = Relationship(back_populates="user")

@@ -21,6 +21,7 @@ from viewrender import (
     render_comment,
     render_comment_partial,
     render_login,
+    render_newest_posts,
     render_signup,
     render_post,
     render_post_upload,
@@ -268,7 +269,6 @@ async def login(
         data={"sub": user.username}, settings=settings
     )
     response.set_cookie(key="Authorization", value=access_token, httponly=True)
-    # response.headers["HX-Redirect"] = "/"
     response.headers["HX-Refresh"] = "true"
     response.status_code = 303
     return response
@@ -324,3 +324,11 @@ def get_index(
     optional_current_user: schema.User | None = Depends(deps.get_current_user_optional),
 ):
     return render_top_posts(session, user=optional_current_user)
+
+
+@app.get("/new")
+def show_newest_posts(
+    session=Depends(deps.get_session),
+    optional_current_user: schema.User | None = Depends(deps.get_current_user_optional),
+):
+    return render_newest_posts(session, user=optional_current_user)

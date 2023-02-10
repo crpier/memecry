@@ -45,6 +45,18 @@ def render_top_posts(session: Callable[[], Session], user: User | None):
             {"request": {}, "posts": posts, "user": user},
         )
 
+def render_newest_posts(session: Callable[[], Session], user: User | None):
+    with session() as s:
+        posts = posting_service.get_newest_posts(session)
+        for post in posts:
+            prepare_post_for_viewing(
+                post=post, session=session, user_id=user.id if user else None
+            )
+        return templates.TemplateResponse(
+            "top.html",
+            {"request": {}, "posts": posts, "user": user},
+        )
+
 
 def render_post(
     post_id: int,
