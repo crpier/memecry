@@ -34,7 +34,7 @@ logger = logging.getLogger()
 
 # Initialize settings at the start,
 # so that we don't have to wait for request to see errors (if any)
-deps.get_settings()
+deps.get_session()
 
 templates = fastapi.templating.Jinja2Templates(directory="src/templates")
 

@@ -33,7 +33,7 @@ class UserInDBBase(UserBase):
     verified: bool
     banned: bool
     admin: bool
-    pfp_src: str
+    pfp_src: str | None = None
 
     class Config:
         orm_mode = True

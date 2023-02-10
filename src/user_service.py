@@ -8,11 +8,12 @@ from sqlalchemy.orm import load_only
 from sqlmodel import Session, select
 
 from src import models, schema, security
+from src.config import Settings
 
 logger = logging.getLogger()
 
 
-def add_superadmin(session: Callable[[], Session]) -> int:
+def add_superadmin(session: Callable[[], Session], settings: Settings) -> int:
     with session() as s:
         existing_admin = s.exec(
             select(models.User)
@@ -22,10 +23,10 @@ def add_superadmin(session: Callable[[], Session]) -> int:
         if existing_admin and existing_admin.id:
             return existing_admin.id
         new_admin_user = models.User(
-            email=EmailStr("admin@example.com"),
-            username="admin",
+            email=settings.SUPER_ADMIN_EMAIL,
+            username=settings.SUPER_ADMIN_USERNAME,
             admin=True,
-            pass_hash=security.get_password_hash("kek"),
+            pass_hash=security.get_password_hash(settings.SUPER_ADMIN_PASSWORD),
         )
         s.add(new_admin_user)
         s.commit()

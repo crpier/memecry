@@ -4,6 +4,7 @@ from typing import Callable
 import babel.dates
 from fastapi.templating import Jinja2Templates
 from jinja2 import Template
+import jinja2
 from sqlmodel import Session, col, select
 
 from src import comment_service, posting_service
@@ -76,7 +77,9 @@ def render_post(
 ):
     s = session()
     with s.no_autoflush:
-        post = s.exec(select(Post).where(Post.id == post_id)).one()
+        post = s.exec(select(Post).where(Post.id == post_id)).one_or_none()
+        if not post:
+            return jinja2.Environment().from_string("<div></div>")
         prepare_post_for_viewing(
             post=post, session=session, user_id=user.id if user else None
         )

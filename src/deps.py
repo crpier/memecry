@@ -14,14 +14,14 @@ from src import config, models, schema, user_service
 
 oauth2_scheme = fastapi.security.OAuth2PasswordBearer(tokenUrl="token")
 
+logger = logging.getLogger()
+
 
 @functools.lru_cache()
 def get_settings():
-    settings = config.Settings()
-    settings.SUPER_ADMIN_ID = user_service.add_superadmin(get_session())
+    settings = config.Settings()  # type: ignore
 
     # Bootstrapping
-    logger = logging.getLogger()
     logger.setLevel(logging.DEBUG)
     handler = logging.StreamHandler(sys.stdout)
     handler.setLevel(logging.DEBUG)
@@ -30,7 +30,6 @@ def get_settings():
     logger.addHandler(handler)
 
     logger.info("First admin has id=%s", settings.SUPER_ADMIN_ID)
-    logger.info("Uploading files to %s", settings.UPLOAD_STORAGE)
     try:
         os.mkdir(settings.UPLOAD_STORAGE / "comments")
     except FileExistsError:
@@ -40,9 +39,13 @@ def get_settings():
 
 @functools.lru_cache()
 def get_session():
-    engine = models.get_engine()
+    # TODO: why can't I use get_settings in Depends?
+    settings = get_settings()
+    engine = models.get_engine(settings.DB_URL)
+    logger.info("Uploading files to %s", settings.UPLOAD_STORAGE)
     SQLModel.metadata.create_all(engine)
     session = functools.partial(Session, engine)
+    settings.SUPER_ADMIN_ID = user_service.add_superadmin(session, settings)
     return session
 
 

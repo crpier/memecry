@@ -13,11 +13,8 @@ from sqlmodel import (
 )
 
 
-def get_engine(source: str | None = None):
-    if source is None:
-        return create_engine("sqlite+pysqlite:////home/crpier/lol.db", echo=True)
-    else:
-        raise NotImplementedError("Not allowing persistend DBs yet.")
+def get_engine(source: str):
+    return create_engine("sqlite+pysqlite:////home/crpier/lol.db", echo=True)
 
 
 class User(SQLModel, table=True):
