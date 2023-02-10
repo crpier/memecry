@@ -18,7 +18,7 @@ def add_superadmin(session: Callable[[], Session], settings: Settings) -> int:
         existing_admin = s.exec(
             select(models.User)
             .options(load_only("id"))
-            .where(models.User.username == "admin")
+            .where(models.User.username ==settings.SUPER_ADMIN_USERNAME)
         ).one_or_none()
         if existing_admin and existing_admin.id:
             return existing_admin.id

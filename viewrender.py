@@ -46,12 +46,12 @@ def render_posts(session: Callable[[], Session], top:bool, user: User | None, of
     if offset==0:
         return templates.TemplateResponse(
             "top.html",
-            {"request": {}, "posts": posts, "user": user, "page_number": 0},
+            {"request": {}, "posts": posts, "user": user, "next_offset": limit},
         )
     else:
         return templates.TemplateResponse(
             "posts_partial.html",
-            {"request": {}, "posts": posts, "user": user, "page_number": offset*limit},
+            {"request": {}, "posts": posts, "user": user, "next_offset": limit+offset},
         )
 
 

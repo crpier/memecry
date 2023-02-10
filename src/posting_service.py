@@ -17,7 +17,7 @@ def get_top_posts(
         posts = s.exec(
             select(models.Post)
             .where(col(models.Post.top) == True)
-            .offset(offset * limit)
+            .offset(offset)
             .limit(limit)
         ).all()
         res = []
@@ -34,7 +34,7 @@ def get_newest_posts(
     with session() as s:
         posts = s.exec(
             select(models.Post)
-            .offset(offset * limit)
+            .offset(offset)
             .limit(limit)
         ).all()
         res = []
