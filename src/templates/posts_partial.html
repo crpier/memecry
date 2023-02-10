@@ -1,8 +1,9 @@
+<!-- TODO: this page and `top.html` could be one page, with a variable like partial: bool -->
 {% import 'post.html' as post_template %}
 <div>
     {% for post in posts %}
         {% if loop.revindex0 == 0 %}
-            {{ post_template.post(post=post, next_page_number=next_offset) }}
+            {{ post_template.post(post=post, next_page_number=next_offset, base_url=base_url) }}
         {% else %}
             {{ post_template.post(post=post, next_page_number=0) }}
         {% endif %}

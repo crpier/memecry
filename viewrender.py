@@ -34,7 +34,9 @@ def prepare_post_for_viewing(
             post._disliked = True
 
 
-def render_posts(session: Callable[[], Session], top:bool, user: User | None, offset=0, limit=5):
+def render_posts(
+    session: Callable[[], Session], top: bool, user: User | None, offset=0, limit=5
+):
     if top:
         posts = posting_service.get_top_posts(session, offset=offset, limit=limit)
     else:
@@ -43,17 +45,28 @@ def render_posts(session: Callable[[], Session], top:bool, user: User | None, of
         prepare_post_for_viewing(
             post=post, session=session, user_id=user.id if user else None
         )
-    if offset==0:
+    if offset == 0:
         return templates.TemplateResponse(
             "top.html",
-            {"request": {}, "posts": posts, "user": user, "next_offset": limit},
+            {
+                "request": {},
+                "posts": posts,
+                "user": user,
+                "next_offset": limit,
+                "base_url": "" if top else "/new",
+            },
         )
     else:
         return templates.TemplateResponse(
             "posts_partial.html",
-            {"request": {}, "posts": posts, "user": user, "next_offset": limit+offset},
+            {
+                "request": {},
+                "posts": posts,
+                "user": user,
+                "next_offset": limit + offset,
+                "base_url": "" if top else "/new",
+            },
         )
-
 
 
 def render_newest_posts(session: Callable[[], Session], user: User | None):

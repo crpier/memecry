@@ -5,7 +5,7 @@
 <div>
     {% for post in posts %}
         {% if loop.revindex0 == 0 %}
-            {{ post_template.post(post=post, next_page_number=next_offset) }}
+            {{ post_template.post(post=post, next_page_number=next_offset, base_url=base_url) }}
         {% else %}
             {{ post_template.post(post=post, next_page_number=0) }}
         {% endif %}
