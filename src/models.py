@@ -14,7 +14,7 @@ from sqlmodel import (
 
 
 def get_engine(source: str):
-    return create_engine("sqlite+pysqlite:////home/crpier/lol.db", echo=True)
+    return create_engine(source, echo=False)
 
 
 class User(SQLModel, table=True):

@@ -12,7 +12,7 @@ class Settings(pydantic.BaseSettings):
     SUPER_ADMIN_EMAIL: pydantic.EmailStr = pydantic.EmailStr("admin@example.com")
     SUPER_ADMIN_USERNAME: str = "admin"
     SUPER_ADMIN_PASSWORD: str
-    DB_URL: str = "sqlite+pysqlite:///~/lol.db"
+    DB_URL: str = "sqlite+pysqlite:///lol.db"
 
     class Config:
         env_file = ".env"
