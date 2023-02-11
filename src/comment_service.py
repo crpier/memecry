@@ -6,6 +6,7 @@ from fastapi import UploadFile
 from sqlmodel import Session, select
 import babel.dates
 from datetime import datetime
+from sqlalchemy.orm import selectinload
 
 from src import config, models, schema
 
@@ -82,6 +83,7 @@ def get_comment_tree(
     with session() as s:
         all_comments = s.exec(
             select(models.Comment)
+            .options(selectinload(models.Comment.user))
             .where(models.Comment.post_id == post_id)
             .order_by(models.Comment.created_at.desc()) # type: ignore
         ).all()

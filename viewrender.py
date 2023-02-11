@@ -123,9 +123,6 @@ def render_comment(post_id: int, session: Callable[[], Session]):
     comments_dict, ids_tree = comment_service.get_comment_tree(
         post_id=post_id, session=session
     )
-    from pprint import pprint
-
-    pprint(ids_tree)
     return templates.TemplateResponse(
         "comment_tree.html",
         {

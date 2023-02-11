@@ -7,13 +7,13 @@
     <li class="flex flex-col text-sm">
         <div class="flex flex-row mb-4">
             <div>
-                <img class="mt-1" src="https://misc-personal-projects.s3.eu-west-1.amazonaws.com/memecry/122.jpg"
-                    alt="funny meme" width="64" height="64"></img>
+                <img class="mt-1" src={{ comment.user.pfp_src or "https://avatars.githubusercontent.com/u/31815875?v=4"
+                    }} alt="funny meme" width="45" height="45"></img>
             </div>
             <div class="flex flex-col ml-2">
                 <div class="flex flex-row">
                     <a href="." class="text-blue-500 mr-2 font-bold">
-                        MrCommenter
+                        {{ comment.user.username }}
                     </a>
                     <div class="text-sm text-gray-400 mr-1">{{ comment.likes }} Ws</div>
                     <div class="text-sm text-gray-400 mr-1">-</div>
