@@ -1,10 +1,11 @@
 import logging
-from collections import defaultdict
 from typing import Callable
 
 import aiofiles
 from fastapi import UploadFile
-from sqlmodel import Session, null, select
+from sqlmodel import Session, select
+import babel.dates
+from datetime import datetime
 
 from src import config, models, schema
 
@@ -44,7 +45,7 @@ async def comment_on_post(
             new_comment.attachment_source = attachment_source = str(dest)
             s.add(new_comment)
             s.commit()
-        return new_comment.parent_id
+        return new_comment.post_id # type: ignore
 
 
 def get_comments_per_post(
@@ -54,7 +55,7 @@ def get_comments_per_post(
         results = s.exec(
             select(models.Comment)
             .where(models.Comment.post_id == post_id)
-            .order_by(models.Comment.created_at.desc())
+            .order_by(models.Comment.created_at.desc()) # type: ignore
         ).all()
         return results
 
@@ -77,16 +78,21 @@ def get_comment_tree(
     session: Callable[[], Session], post_id: int
 ) -> tuple[dict[int, models.Comment], dict]:
     tree = {}
+    now = datetime.utcnow()
     with session() as s:
         all_comments = s.exec(
             select(models.Comment)
             .where(models.Comment.post_id == post_id)
-            .order_by(models.Comment.created_at.desc())
+            .order_by(models.Comment.created_at.desc()) # type: ignore
         ).all()
+        for comment in all_comments:
+            comment.created_at = babel.dates.format_timedelta(  # type: ignore
+                comment.created_at - now, add_direction=True, locale="en_US"
+            )
         root_comments_ids = [
             comment.id for comment in all_comments if comment.parent_id is None
         ]
         for comment_id in root_comments_ids:
             tree[comment_id] = get_children_comment_tree(session=session, parent_id=comment_id, all_comments=all_comments)  # type: ignore
         comments_dict = {comment.id: comment for comment in all_comments}
-        return comments_dict, tree
+        return comments_dict, tree # type: ignore

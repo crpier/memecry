@@ -140,13 +140,13 @@ async def post_comment_reply(
     comment_create = schema.CommentCreate(
         content=content, parent_id=comment_id, user_id=current_user.id
     )
-    parent_id = await comment_service.comment_on_post(
+    post_id = await comment_service.comment_on_post(
         session=session,
         comment_data=comment_create,
         attachment=attachment,
         settings=settings,
     )
-    return render_comment(post_id=parent_id, session=session)
+    return render_comment(post_id=post_id, session=session)
 
 
 @app.get("/post/{post_id}/comments")

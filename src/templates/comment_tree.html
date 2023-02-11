@@ -1,8 +1,9 @@
 {% import 'post_comment.html' as post_comment %}
-<div class="flex flex-col justify-start items-start mt-4 pt-4 border-t border-gray-600 items-stretch"
+<div class="flex flex-col justify-start items-start mt-4 pt-4 border-gray-600 items-stretch"
     id="post-{{post_id}}-comments">
     {{ post_comment.comment_form(post_url=comment_post_url, post_id=post_id) }}
     {%- for key, value in ids_tree.items() recursive %}
+    {% set comment = comments_dict[key] -%}
     <li class="flex flex-col text-sm">
         <div class="flex flex-row mb-4">
             <div>
@@ -14,14 +15,14 @@
                     <a href="." class="text-blue-500 mr-2 font-bold">
                         MrCommenter
                     </a>
-                    <div class="text-sm text-gray-400 mr-1">10 claps</div>
+                    <div class="text-sm text-gray-400 mr-1">{{ comment.likes }} Ws</div>
                     <div class="text-sm text-gray-400 mr-1">-</div>
-                    <div class="text-sm text-gray-400 mr-1">15 Ls</div>
+                    <div class="text-sm text-gray-400 mr-1"> {{ comment.likes }} 15 Ls</div>
                     <div class="text-sm text-gray-400 mr-1">-</div>
-                    <div class="text-sm text-gray-400 mr-1">6 hours ago</div>
+                    <div class="text-sm text-gray-400 mr-1">{{ comment.created_at }}</div>
                 </div>
                 <div class="text-left">
-                    comment id {{ key }}: {{ comments_dict[key].content }}
+                    {{ comment.content }}
                 </div>
                 <div class="flex flex-row">
                     <button class="mr-2">

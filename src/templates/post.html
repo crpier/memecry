@@ -41,7 +41,7 @@
         </button>
         <div class="flex-grow"></div>
         <button class="flex flex-row rounded-md border border-gray-600 p-2 hover:border-gray-500"
-            hx-get="/post/{{ post.id }}/comments" hx-target="#post-comments-{{post.id}}">
+            hx-get="/post/{{ post.id }}/comments" hx-target="#post-comments-{{post.id}}" hx-swap="replace">
             <i class="fa fa-comment fa-lg mt-1 mr-2"></i>
             <div>{{ post.comment_count }} comments</div>
         </button>
