@@ -52,7 +52,9 @@ def get_comments_per_post(
 ) -> list[models.Comment]:
     with session() as s:
         results = s.exec(
-            select(models.Comment).where(models.Comment.post_id == post_id)
+            select(models.Comment)
+            .where(models.Comment.post_id == post_id)
+            .order_by(models.Comment.created_at.desc())
         ).all()
         return results
 
@@ -77,7 +79,9 @@ def get_comment_tree(
     tree = {}
     with session() as s:
         all_comments = s.exec(
-            select(models.Comment).where(models.Comment.post_id == post_id)
+            select(models.Comment)
+            .where(models.Comment.post_id == post_id)
+            .order_by(models.Comment.created_at.desc())
         ).all()
         root_comments_ids = [
             comment.id for comment in all_comments if comment.parent_id is None
