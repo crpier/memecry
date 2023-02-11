@@ -30,13 +30,26 @@
                     <button class="mr-4">
                         <i class="fa fa-arrow-down"></i>
                     </button>
-                    <button class="text-blue-500 font-bold">Reply</button>
+                    <button class="text-blue-500 font-bold" onclick="toggleReplyBar({{ key }})">Reply</button>
                 </div>
             </div>
+        </div>
+        <div id="comment-{{ key }}" class="border-b pb-2" style="display: none;">
+            {{ post_comment.comment_form(post_url="/comment/" ~ key ~ "/comment", post_id=post_id) }}
         </div>
     </li>
     <ul class="ml-16">{{ loop(value.items())}}</ul>
     </li>
     {%- endfor %}
-
 </div>
+<script>
+    function toggleReplyBar(post_id) {
+        const reply_form_id = `comment-${post_id}`
+        let old_display = document.getElementById(reply_form_id).style.display
+        if (old_display === "none") {
+            document.getElementById(reply_form_id).style.display = "block"
+        } else if (old_display === "block") {
+            document.getElementById(reply_form_id).style.display = "none"
+        }
+    }
+</script>

@@ -16,7 +16,7 @@ async def comment_on_post(
     comment_data: schema.CommentCreate,
     attachment: UploadFile | None,
     settings: config.Settings,
-) -> models.Comment:
+) -> int:
     with session() as s:
         # this is a reply
         if comment_data.post_id is None:
@@ -44,7 +44,7 @@ async def comment_on_post(
             new_comment.attachment_source = attachment_source = str(dest)
             s.add(new_comment)
             s.commit()
-        return new_comment
+        return new_comment.parent_id
 
 
 def get_comments_per_post(

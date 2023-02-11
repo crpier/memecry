@@ -119,7 +119,7 @@ async def comment_on_post(
     comment_create = schema.CommentCreate(
         content=content, post_id=post_id, user_id=current_user.id
     )
-    new_comment = await comment_service.comment_on_post(
+    await comment_service.comment_on_post(
         session=session,
         comment_data=comment_create,
         attachment=attachment,
@@ -140,13 +140,13 @@ async def post_comment_reply(
     comment_create = schema.CommentCreate(
         content=content, parent_id=comment_id, user_id=current_user.id
     )
-    id = await comment_service.comment_on_post(
+    parent_id = await comment_service.comment_on_post(
         session=session,
         comment_data=comment_create,
         attachment=attachment,
         settings=settings,
     )
-    return {"status": "success", "result": id}
+    return render_comment(post_id=parent_id, session=session)
 
 
 @app.get("/post/{post_id}/comments")
