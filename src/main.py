@@ -125,7 +125,7 @@ async def comment_on_post(
         attachment=attachment,
         settings=settings,
     )
-    return new_comment
+    return render_comment(post_id=post_id, session=session)
 
 
 @app.post("/comment/{comment_id}/comment")

@@ -26,6 +26,7 @@
         </div>
     </div>
     <div class="flex flex-grow-0 flex-row items-center justify-start mt-2">
+        <!-- TODO: only show these buttons for authenticated users -->
         <button class="mr-3 rounded-md border border-gray-600 px-2 py-1 hover:border-gray-900" {% if post._liked %}
             style="background-color: #ae7040;" hx-put="/post/{{post.id}}/unlike" {% else %}
             hx-put="/post/{{post.id}}/like" {% endif %} hx-target="#post-{{post.id}}" hx-trigger="click"

@@ -1,6 +1,4 @@
-{% macro comment_form(post_url, post_id) -%}
-<form class="mb-2 pb-2" id="upload-form" hx-encoding='multipart/form-data' hx-post="{{ post_url }}"
-    hx-target="#post-{{post_id}}-comments">
+<form id="upload-form" hx-encoding='multipart/form-data' hx-post="{{ post_comment_url }}">
     <div class="mb-2">
         <input class="w-full rounded border p-1" name="content" placeholder="write comment pls" />
     </div>
@@ -11,4 +9,3 @@
         Submit
     </button>
 </form>
-{%- endmacro %}

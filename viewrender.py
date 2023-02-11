@@ -127,5 +127,12 @@ def render_comment(post_id: int, session: Callable[[], Session]):
 
     pprint(ids_tree)
     return templates.TemplateResponse(
-        "comment_tree.html", {"request": {}, "ids_tree": ids_tree}
+        "comment_tree.html",
+        {
+            "request": {},
+            "ids_tree": ids_tree,
+            "comment_post_url": f"/post/{post_id}/comment",
+            "comments_dict": comments_dict,
+            "post_id": post_id,
+        },
     )
