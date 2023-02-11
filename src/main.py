@@ -21,7 +21,6 @@ from viewrender import (
     render_comment,
     render_comment_partial,
     render_login,
-    render_newest_posts,
     render_signup,
     render_post,
     render_post_upload,
@@ -119,7 +118,7 @@ async def comment_on_post(
     comment_create = schema.CommentCreate(
         content=content, post_id=post_id, user_id=current_user.id
     )
-    await comment_service.comment_on_post(
+    await comment_service.post_comment(
         session=session,
         comment_data=comment_create,
         attachment=attachment,
@@ -140,7 +139,7 @@ async def post_comment_reply(
     comment_create = schema.CommentCreate(
         content=content, parent_id=comment_id, user_id=current_user.id
     )
-    post_id = await comment_service.comment_on_post(
+    post_id = await comment_service.post_comment(
         session=session,
         comment_data=comment_create,
         attachment=attachment,

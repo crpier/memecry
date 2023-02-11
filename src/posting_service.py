@@ -3,7 +3,7 @@ from typing import Callable
 
 import aiofiles
 import fastapi
-from sqlmodel import Session, col, delete, select, update
+from sqlmodel import Session, col, delete, select
 
 from src import config, models, schema
 
@@ -151,7 +151,7 @@ def dislike_post(
     post_id: int,
 ):
     with session() as s:
-        new_like = models.Reaction(user_id=user_id, post_id=post_id)
+        new_like = models.Reaction(user_id=user_id, post_id=post_id) # type: ignore
         # Will errrrror out if already liked this post
         s.add(new_like)
         res = s.execute(

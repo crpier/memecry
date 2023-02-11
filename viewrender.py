@@ -3,9 +3,8 @@ from typing import Callable
 
 import babel.dates
 from fastapi.templating import Jinja2Templates
-from jinja2 import Template
 import jinja2
-from sqlmodel import Session, col, select
+from sqlmodel import Session, select
 
 from src import comment_service, posting_service
 from src.models import Post, ReactionKind
@@ -66,19 +65,6 @@ def render_posts(
                 "next_offset": limit + offset,
                 "base_url": "" if top else "/new",
             },
-        )
-
-
-def render_newest_posts(session: Callable[[], Session], user: User | None):
-    with session() as s:
-        posts = posting_service.get_newest_posts(session)
-        for post in posts:
-            prepare_post_for_viewing(
-                post=post, session=session, user_id=user.id if user else None
-            )
-        return templates.TemplateResponse(
-            "top.html",
-            {"request": {}, "posts": posts, "user": user},
         )
 
 

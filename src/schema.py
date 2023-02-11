@@ -1,8 +1,4 @@
-import enum
-
 import pydantic
-
-from src import models
 
 ### User
 

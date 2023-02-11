@@ -13,7 +13,7 @@ from src import config, models, schema
 logger = logging.getLogger()
 
 
-async def comment_on_post(
+async def post_comment(
     session: Callable[[], Session],
     comment_data: schema.CommentCreate,
     attachment: UploadFile | None,
@@ -34,6 +34,8 @@ async def comment_on_post(
         new_comment = models.Comment(**comment_data.__dict__)
         s.add(new_comment)
         s.commit()
+        new_comment.post.comment_count += 1
+        s.commit()
         # TODO Putting all files in one folder is probably a bad idea long term
         # TODO: "comments" is a magic string
         if attachment:
@@ -43,7 +45,7 @@ async def comment_on_post(
             logger.debug("Uploading content to %s", dest)
             async with aiofiles.open(dest, "wb") as f:
                 await f.write(await attachment.read())
-            new_comment.attachment_source = attachment_source = str(dest)
+            new_comment.attachment_source = str(dest)
             s.add(new_comment)
             s.commit()
         return new_comment.post_id # type: ignore
