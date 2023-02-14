@@ -21,6 +21,7 @@ from viewrender import (
     render_comment,
     render_comment_partial,
     render_login,
+    render_profile_page,
     render_signup,
     render_post,
     render_post_upload,
@@ -52,7 +53,7 @@ def check_health():
 ### Users ###
 @app.get("/me")
 def get_me(current_user: schema.User = Depends(deps.get_current_user)):
-    return current_user
+    return render_profile_page(current_user)
 
 
 @app.get("/post/{post_id}")

@@ -119,3 +119,7 @@ def render_comment(post_id: int, session: Callable[[], Session]):
             "post_id": post_id,
         },
     )
+
+
+def render_profile_page(user: User):
+    return templates.TemplateResponse("me.html", {"request": {}, "user": user})
