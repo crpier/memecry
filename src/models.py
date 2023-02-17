@@ -55,9 +55,6 @@ class Post(SQLModel, table=True):
     user: User = Relationship(back_populates="posts")
     comments: list["Comment"] = Relationship(back_populates="post")
 
-    _liked: bool | None = PrivateAttr(default=None)
-    _disliked: bool | None = PrivateAttr(default=None)
-
     def add_reaction(self, reaction: "ReactionKind"):
         match reaction:
             case ReactionKind.Like:

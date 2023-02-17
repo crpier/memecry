@@ -1,3 +1,4 @@
+from datetime import datetime
 import pydantic
 
 ### User
@@ -73,12 +74,20 @@ class PostUpdate(PostBase):
 
 
 class PostInDBBase(PostBase):
+    id: int
     user_id: int
     source: str
     top: bool
     likes: int
     dislikes: int
-    user_id: int
+    created_at: datetime
+    user: User
+    liked: bool | None = None
+    disliked: bool | None = None
+    score: int
+
+    class Config:
+        orm_mode = True
 
 
 # Additional properites to return via API

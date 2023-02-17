@@ -1,8 +1,8 @@
-<button class="mr-3 rounded-md border border-gray-600 px-2 py-1 hover:border-gray-900" {% if post._liked %}
+<button class="mr-3 rounded-md border border-gray-600 px-2 py-1 hover:border-gray-900" {% if post.liked %}
     style="background-color: #ae7040;" {% endif %} hx-put="/post/{{post.id}}/like" hx-swap="none" hx-trigger="click">
     <i class="fa fa-arrow-up"></i>
 </button>
-<button class="rounded-md border border-gray-600 px-2 py-1 hover:border-gray-500" {% if post._disliked %}
+<button class="rounded-md border border-gray-600 px-2 py-1 hover:border-gray-500" {% if post.disliked %}
     style="background-color: #40408e;" {% endif %} hx-put="/post/{{post.id}}/dislike" hx-trigger="click" hx-swap="none">
     <i class="fa fa-arrow-down"></i>
 </button>

@@ -27,13 +27,13 @@
     </div>
     <div class="flex flex-grow-0 flex-row items-center justify-start mt-2">
         <!-- TODO: only show these buttons for authenticated users -->
-        <button class="mr-3 rounded-md border border-gray-600 px-2 py-1 hover:border-gray-900" {% if post._liked %}
+        <button class="mr-3 rounded-md border border-gray-600 px-2 py-1 hover:border-gray-900" {% if post.liked %}
             style="background-color: #ae7040;" hx-put="/post/{{post.id}}/unlike" {% else %}
             hx-put="/post/{{post.id}}/like" {% endif %} hx-target="#post-{{post.id}}" hx-trigger="click"
             hx-swap="outerHTML">
             <i class="fa fa-arrow-up"></i>
         </button>
-        <button class="rounded-md border border-gray-600 px-2 py-1 hover:border-gray-500" {% if post._disliked %}
+        <button class="rounded-md border border-gray-600 px-2 py-1 hover:border-gray-500" {% if post.disliked %}
             style="background-color: #40408e;" hx-put="/post/{{post.id}}/undislike" {% else %}
             hx-put="/post/{{post.id}}/dislike" {% endif %} hx-trigger="click" hx-target="#post-{{post.id}}"
             hx-swap="outerHTML">

@@ -10,9 +10,10 @@ from src import config, models, schema
 logger = logging.getLogger()
 
 
+# TODO: one function for posts, with a param
 def get_top_posts(
     session: Callable[[], Session], limit=5, offset=0
-) -> list[models.Post]:
+) -> list[schema.Post]:
     with session() as s:
         posts = s.exec(
             select(models.Post)
@@ -20,37 +21,22 @@ def get_top_posts(
             .offset(offset)
             .limit(limit)
         ).all()
-        res = []
-        for post in posts:
-            # TODO: is this needed?
-            post.user
-            res.append(post)
-        return res
+        return [schema.Post.from_orm(post) for post in posts]
 
 
 def get_newest_posts(
     session: Callable[[], Session], limit=5, offset=0
-) -> list[models.Post]:
+) -> list[schema.Post]:
     with session() as s:
-        posts = s.exec(
-            select(models.Post)
-            .offset(offset)
-            .limit(limit)
-        ).all()
-        res = []
-        for post in posts:
-            # TODO: is this needed?
-            post.user
-            res.append(post)
-        return res
+        posts = s.exec(select(models.Post).offset(offset).limit(limit)).all()
+        return [schema.Post.from_orm(post) for post in posts]
 
 
-
-def get_post(post_id: int, session: Callable[[], Session]) -> models.Post:
+def get_post(post_id: int, session: Callable[[], Session]) -> schema.Post:
     with session() as s:
         logger.info(f"Looking for post {post_id}")
         res = s.exec(select(models.Post).where(models.Post.id == post_id)).one()
-        return res
+        return schema.Post.from_orm(res)
 
 
 async def upload_post(
@@ -63,6 +49,9 @@ async def upload_post(
         # all posts by super admin are top posts huehuehuehue
         if post_data.user_id == settings.SUPER_ADMIN_ID:
             post_data.top = True
+        # TODO: some tests that guarantee compatibility between models and schemas
+        # for example, to guarantee that a valid models.Post can be created from a valid schema.PostCreate
+        # also the reverse: models.Post -> schema.Post
         new_post = models.Post(**post_data.__dict__)
         s.add(new_post)
         s.commit()
@@ -87,7 +76,7 @@ def add_reaction(
     user_id: int,
     post_id: int,
     reaction_kind: models.ReactionKind,
-):
+) -> None:
     with session() as s:
         res = s.execute(
             select(models.Reaction).where(
@@ -127,7 +116,7 @@ def remove_reaction(
     user_id: int,
     post_id: int,
     reaction_kind: models.ReactionKind,
-):
+) -> None:
     with session() as s:
         res = s.execute(
             delete(models.Reaction).where(
@@ -149,9 +138,9 @@ def dislike_post(
     session: Callable[[], Session],
     user_id: int,
     post_id: int,
-):
+) -> None:
     with session() as s:
-        new_like = models.Reaction(user_id=user_id, post_id=post_id) # type: ignore
+        new_like = models.Reaction(user_id=user_id, post_id=post_id)  # type: ignore
         # Will errrrror out if already liked this post
         s.add(new_like)
         res = s.execute(
@@ -168,7 +157,7 @@ def undislike_post(
     session: Callable[[], Session],
     user_id: int,
     post_id: int,
-):
+) -> None:
     with session() as s:
         res = s.execute(
             delete(models.Reaction).where(
@@ -187,14 +176,21 @@ def undislike_post(
 
 
 def get_posts_by_user(
-    user_id: int, session: Callable[[], Session]
-) -> list[models.Post]:
+    username: str, session: Callable[[], Session]
+) -> list[schema.Post]:
     with session() as s:
-        res = s.execute(select(models.Post).where(models.Post.user_id == user_id)).all()
+        owner = s.exec(
+            select(models.User).where(models.User.username == username)
+        ).one_or_none()
+        if not owner or not owner.id:
+            return []
+        res = s.execute(
+            select(models.Post).where(models.Post.user_id == owner.id)
+        ).all()
         if res is None:
             return []
         else:
-            return [post[0] for post in res]
+            return [schema.Post.from_orm(post[0]) for post in res]
 
 
 def get_user_reaction_on_post(

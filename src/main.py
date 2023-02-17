@@ -98,12 +98,12 @@ async def create_new_user(
     return response
 
 
-@app.get("/{user_id}/posts")
+@app.get("/users/{username}/posts")
 def get_users_posts(
-    user_id: int,
+    username: str,
     session=Depends(deps.get_session),
 ):
-    return posting_service.get_posts_by_user(user_id, session)
+    return posting_service.get_posts_by_user(username, session)
 
 
 ### Comments ###
