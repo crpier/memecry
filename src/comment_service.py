@@ -53,19 +53,19 @@ async def post_comment(
 
 def get_comments_per_post(
     session: Callable[[], Session], post_id: int
-) -> list[models.Comment]:
+) -> list[schema.Comment]:
     with session() as s:
         results = s.exec(
             select(models.Comment)
             .where(models.Comment.post_id == post_id)
             .order_by(models.Comment.created_at.desc()) # type: ignore
         ).all()
-        return results
+        return [schema.Comment.from_orm(comment) for comment in results]
 
 
 def get_children_comment_tree(
-    session: Callable[[], Session], parent_id: int, all_comments: list[models.Comment]
-) -> dict[models.Comment, dict]:
+    session: Callable[[], Session], parent_id: int, all_comments: list[schema.Comment]
+) -> dict[schema.Comment, dict]:
     tree = {}
     direct_children_ids = [
         comment.id for comment in all_comments if comment.parent_id == parent_id
@@ -79,7 +79,7 @@ def get_children_comment_tree(
 
 def get_comment_tree(
     session: Callable[[], Session], post_id: int
-) -> tuple[dict[int, models.Comment], dict]:
+) -> tuple[dict[int, schema.Comment], dict]:
     tree = {}
     now = datetime.utcnow()
     with session() as s:

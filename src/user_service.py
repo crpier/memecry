@@ -17,7 +17,7 @@ def add_superadmin(session: Callable[[], Session], settings: Settings) -> int:
         existing_admin = s.exec(
             select(models.User)
             .options(load_only("id"))
-            .where(models.User.username ==settings.SUPER_ADMIN_USERNAME)
+            .where(models.User.username == settings.SUPER_ADMIN_USERNAME)
         ).one_or_none()
         if existing_admin and existing_admin.id:
             return existing_admin.id
@@ -39,7 +39,7 @@ def add_superadmin(session: Callable[[], Session], settings: Settings) -> int:
 
 def authenticate_user(
     session: Callable[[], Session], username: str, password: str
-) -> models.User | None:
+) -> schema.User | None:
     with session() as s:
         res = s.exec(
             select(models.User).where(models.User.username == username)
@@ -50,7 +50,7 @@ def authenticate_user(
         user: models.User = res
         if not security.verify_password(password, user.pass_hash):
             return None
-        return user
+        return schema.User.from_orm(user)
 
 
 def get_user_by_username(
@@ -62,7 +62,7 @@ def get_user_by_username(
         ).one_or_none()
         if not res:
             return None
-        return schema.User(**res.__dict__)  # type: ignore
+        return schema.User.from_orm(res)
 
 
 SENTINEL_NO_EMAIL = EmailStr("sentinel_no_email@example.com")
