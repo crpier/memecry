@@ -70,11 +70,14 @@ def render_post(
         prepare_post_for_viewing(
             post=post, session=session, user_id=user.id if user else None
         )
-        template_name = "only_post.html" if partial else "post_page.html"
-        return templates.TemplateResponse(
-            template_name,
-            {"request": {}, "post": post, "user": user},
-        )
+        if partial:
+            template_name = "post_page.html"
+            return templates.TemplateResponse(
+                template_name,
+                {"request": {}, "post": post, "user": user},
+            )
+
+        return HTMLResponse(render(post_views.single_post(user=user, post=post)))
 
 
 def render_post_upload():

@@ -85,6 +85,7 @@ class PostInDBBase(PostBase):
     liked: bool | None = None
     disliked: bool | None = None
     score: int
+    comment_count: int
 
     class Config:
         orm_mode = True

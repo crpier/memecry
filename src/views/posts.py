@@ -34,7 +34,7 @@ def single_post_partial(post: schema.Post):
         post_content = video.attrs(src=post.source, controls="true", _class="w-full")
 
     return div.attrs(
-        _class("mb-8 border-2 border-gray-600 px-6 pb-6 text-center"),
+        _class("mb-8 border-2 border-gray-600 px-6 pb-2 text-center"),
         style="background:#181B1D;width:640px;",
         id=f"post-{post.id}",
     )(
@@ -57,23 +57,30 @@ def single_post_partial(post: schema.Post):
         div.attrs(_class("flex flex-grow-0 flex-row items-center justify-start mt-2"))(
             button.attrs(
                 _class(
-                    "mr-3 rounded-md border border-gray-600 px-2 py-1 hover:border-gray-900"
+                    "mr-3 rounded-md border border-gray-600 px-2 py-2 hover:border-gray-900"
                 )
-            )(i.attrs(_class("fa fa-arrow-up"))),
+            )(i.attrs(_class("fa fa-arrow-up fa-lg"))),
             button.attrs(
                 _class(
-                    "mr-3 rounded-md border border-gray-600 px-2 py-1 hover:border-gray-900"
+                    "mr-3 rounded-md border border-gray-600 px-2 py-2 hover:border-gray-900"
                 )
-            )(i.attrs(_class("fa fa-arrow-down"))),
+            )(i.attrs(_class("fa fa-arrow-down fa-lg"))),
             div.attrs(_class("flex-grow")),
             button.attrs(
                 _class(
                     "flex flex-row rounded-md border border-gray-600 p-2 hover:border-gray-500"
                 )
-            )(i.attrs(_class("fa fa-comment fa-lg mt-1 mr-2"))),
+            )(
+                i.attrs(_class("fa fa-comment fa-lg mt-1 mr-2")),
+                div(f"{post.comment_count} comments"),
+            ),
         ),
         div.attrs(id=f"post-comments-{post.id}"),
     )
+
+
+def single_post(user: schema.User | None, post: schema.Post):
+    return page_root(user=user, partial=single_post_partial(post))
 
 
 def post_list_partial(posts: list[schema.Post], user: schema.User | None):
