@@ -52,7 +52,9 @@ def render_posts(
             post=post, session=session, user_id=user.id if user else None
         )
 
-    return HTMLResponse(render(post_views.post_list_partial(user=user, posts=posts)))
+    return HTMLResponse(
+        render(post_views.post_list(user=user, posts=posts, partial=offset != 0))
+    )
 
 
 def render_post(
@@ -71,13 +73,9 @@ def render_post(
             post=post, session=session, user_id=user.id if user else None
         )
         if partial:
-            template_name = "post_page.html"
-            return templates.TemplateResponse(
-                template_name,
-                {"request": {}, "post": post, "user": user},
-            )
-
-        return HTMLResponse(render(post_views.single_post(user=user, post=post)))
+            return HTMLResponse(render(post_views.single_post_partial(post=post)))
+        else:
+            return HTMLResponse(render(post_views.single_post(user=user, post=post)))
 
 
 def render_post_upload():

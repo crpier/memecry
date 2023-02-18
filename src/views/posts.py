@@ -1,5 +1,5 @@
 from src import schema
-from src.views.common import page_root, _class
+from src.views.common import page_root, _class, hx_get, hx_trigger, hx_swap
 
 from simple_html.nodes import (
     body,
@@ -34,7 +34,7 @@ def single_post_partial(post: schema.Post):
         post_content = video.attrs(src=post.source, controls="true", _class="w-full")
 
     return div.attrs(
-        _class("mb-8 border-2 border-gray-600 px-6 pb-2 text-center"),
+        _class("mb-8 border-2 border-gray-600 px-6 pb-4 text-center"),
         style="background:#181B1D;width:640px;",
         id=f"post-{post.id}",
     )(
@@ -83,9 +83,15 @@ def single_post(user: schema.User | None, post: schema.Post):
     return page_root(user=user, partial=single_post_partial(post))
 
 
-def post_list_partial(posts: list[schema.Post], user: schema.User | None):
-    posts_views = div(*[single_post_partial(post=post) for post in posts])
-    return page_root(
-        user=user,
-        partial=posts_views,
-    )
+def post_list(posts: list[schema.Post], user: schema.User | None, partial=False):
+    post_partials = [single_post_partial(post=post) for post in posts]
+    post_partials[-1] = div.attrs(
+        hx_get("/?offset=2"), hx_trigger("revealed"), hx_swap("afterend")
+    )(post_partials[-1])
+    if not partial:
+        return page_root(
+            user=user,
+            partial=div(*post_partials),
+        )
+    else:
+        return div(*post_partials)
