@@ -11,7 +11,9 @@ from src import comment_service, posting_service
 from src.models import Post, ReactionKind
 from src.schema import User
 from src import schema
-from src.views import root
+from src.views import posts as post_views
+from simple_html.render import render
+
 
 templates = Jinja2Templates(directory="src/templates")
 
@@ -50,7 +52,7 @@ def render_posts(
             post=post, session=session, user_id=user.id if user else None
         )
 
-    return HTMLResponse(root.render(root.get_nav(user=user)))
+    return HTMLResponse(render(post_views.post_list_partial(user=user, posts=posts)))
 
 
 def render_post(

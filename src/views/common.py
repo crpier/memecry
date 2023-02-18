@@ -1,6 +1,6 @@
 from simple_html.attributes import str_attr
 from simple_html.nodes import (
-    TagBase,
+    Tag,
     body,
     head,
     html,
@@ -15,6 +15,7 @@ from simple_html.nodes import (
     i,
     button,
     img,
+    main,
 )
 from simple_html.render import render
 
@@ -23,8 +24,8 @@ from src import schema
 _class = str_attr("class")
 
 
-def get_nav(user: schema.User | None, child: TagBase | None = None):
-    head_element = head(
+def page_head():
+    return head(
         meta.attrs(charset="UTF-8"),
         title("Memecry"),
         link.attrs(
@@ -38,6 +39,8 @@ def get_nav(user: schema.User | None, child: TagBase | None = None):
         script.attrs(src="/static/js/htmx.min.js?v=1.5.0"),
     )
 
+
+def page_nav(user: schema.User | None):
     nav_container = nav.attrs(
         _class("flex flex-row items-center bg-gray-900 p-3 fixed w-full h-14")
     )
@@ -95,21 +98,34 @@ def get_nav(user: schema.User | None, child: TagBase | None = None):
             "hover:border-transparent hover:bg-white hover:text-teal-500"
         )
     )("Sign out")
+    return nav_container(
+        app_logo,
+        new_link,
+        div.attrs(_class("lg:flex-grow")),
+        search_button,
+        signup_button if not user else None,
+        signin_button if not user else None,
+        upload_button if user else None,
+        profile_section if user else None,
+        signout_button if user else None,
+    )
 
+
+def page_root(user: schema.User | None, partial: Tag | None = None):
     return html(
-        head_element,
+        page_head(),
         body.attrs(_class("bg-black text-white h-screen"))(
-            nav_container(
-                app_logo,
-                new_link,
-                div.attrs(_class("lg:flex-grow")),
-                search_button,
-                signup_button if not user else None,
-                signin_button if not user else None,
-                upload_button if user else None,
-                profile_section if user else None,
-                signout_button if user else None,
+            page_nav(user),
+            div.attrs(
+                _class(
+                    "flex flex-grow-0 flex-row items-start justify-center justify-center"
+                )
+            )(
+                main.attrs(
+                    _class(
+                        "m-16 flex flex-col items-center justify-center justify-items-center"
+                    )
+                )(partial)
             ),
-            child,
         ),
     )
