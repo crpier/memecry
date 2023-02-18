@@ -5,11 +5,13 @@ import babel.dates
 from fastapi.templating import Jinja2Templates
 import jinja2
 from sqlmodel import Session, select
+from starlette.responses import HTMLResponse
 
 from src import comment_service, posting_service
 from src.models import Post, ReactionKind
 from src.schema import User
 from src import schema
+from src.views import root
 
 templates = Jinja2Templates(directory="src/templates")
 
@@ -47,28 +49,8 @@ def render_posts(
         prepare_post_for_viewing(
             post=post, session=session, user_id=user.id if user else None
         )
-    if offset == 0:
-        return templates.TemplateResponse(
-            "top.html",
-            {
-                "request": {},
-                "posts": posts,
-                "user": user,
-                "next_offset": limit,
-                "base_url": "" if top else "/new",
-            },
-        )
-    else:
-        return templates.TemplateResponse(
-            "posts_partial.html",
-            {
-                "request": {},
-                "posts": posts,
-                "user": user,
-                "next_offset": limit + offset,
-                "base_url": "" if top else "/new",
-            },
-        )
+
+    return HTMLResponse(root.render(root.get_nav(user=user)))
 
 
 def render_post(
