@@ -31,7 +31,7 @@ def single_post_partial(post: schema.Post):
     if content_is_image(post.source):
         post_content = img.attrs(src=post.source)
     else:
-        post_content = video.attrs(src=post.source, controls="true", _class="w-full")
+        post_content = video.attrs(_class("w-full"), src=post.source, controls="true")
 
     return div.attrs(
         _class("mb-8 border-2 border-gray-600 px-6 pb-4 text-center"),
@@ -41,7 +41,7 @@ def single_post_partial(post: schema.Post):
         p.attrs(_class("my-4 text-xl font-bold"))(post.title),
         a.attrs(href=f"/post/{post.id}")(post_content),
         div.attrs(_class("flex flex-grow-0 flex-row items-center justify-start mt-4"))(
-            a.attrs(_class="my-2 mr-2 font-semibold w-max", href=".")(
+            a.attrs(_class("my-2 mr-2 font-semibold w-max"), href=".")(
                 f"{post.score} good boi points"
             ),
             div.attrs(_class("flex-grow")),

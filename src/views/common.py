@@ -1,5 +1,6 @@
 from simple_html.attributes import str_attr
 from simple_html.nodes import (
+    TagBase,
     Tag,
     body,
     head,
@@ -16,6 +17,11 @@ from simple_html.nodes import (
     button,
     img,
     main,
+    p,
+    form,
+    label,
+    script,
+    FlatGroup,
 )
 from simple_html.render import render
 
@@ -28,6 +34,10 @@ hx_put = str_attr("hx-put")
 hx_target = str_attr("hx-target")
 hx_trigger = str_attr("hx-trigger")
 hx_swap = str_attr("hx-swap")
+hx_encoding = str_attr("hx-encoding")
+
+input = TagBase("input")
+DOCTYPE = TagBase("!DOCTYPE html")
 
 
 def page_head():
@@ -43,6 +53,11 @@ def page_head():
             rel="stylesheet",
         ),
         script.attrs(src="/static/js/htmx.min.js?v=1.5.0"),
+        script.attrs(src="/static/js/close_modals.js"),
+        script(
+            """
+           """
+        ),
     )
 
 
@@ -126,20 +141,160 @@ def page_nav(user: schema.User | None):
 
 
 def page_root(user: schema.User | None, partial: Tag | None = None):
-    return html(
-        page_head(),
-        body.attrs(_class("bg-black text-white h-screen"))(
-            page_nav(user),
-            div.attrs(
-                _class(
-                    "flex flex-grow-0 flex-row items-start justify-center justify-center"
-                )
-            )(
-                main.attrs(
+    return FlatGroup(
+        DOCTYPE,
+        html.attrs(lang="en")(
+            page_head(),
+            body.attrs(_class("bg-black text-white h-screen"))(
+                page_nav(user),
+                div.attrs(
                     _class(
-                        "m-16 flex flex-col items-center justify-center justify-items-center"
+                        "flex flex-grow-0 flex-row items-start justify-center justify-center"
                     )
-                )(partial)
+                )(
+                    main.attrs(
+                        _class(
+                            "m-16 flex flex-col items-center justify-center justify-items-center"
+                        )
+                    )(partial)
+                ),
+            ),
+        ),
+    )
+
+
+def login_form():
+    return div.attrs(
+        _class("fixed flex flex-col rounded border bg-gray-700 px-4 pb-2"),
+        style="left:35vw;top:20vh;width:30vw",
+    )(
+        div.attrs(_class("mt-2 flex justify-end items-end"))(
+            button.attrs(
+                _class(
+                    "w-max rounded border border bg-gray-900 px-2 text-right hover:bg-gray-700"
+                ),
+                onclick="closeLoginModal()",
+            )("X"),
+        ),
+        p.attrs(_class("mb-1 text-center text-2xl"))("Login"),
+        form.attrs(
+            hx_encoding("multipart/form-data"), hx_post("/token"), id="upload-form"
+        )(
+            div.attrs(_class("mb-4"))(
+                label.attrs(("for", "username"))("Username"),
+                input.attrs(
+                    _class("w-full rounded border p-1"),
+                    name="username",
+                ),
+            ),
+            div.attrs(_class("mb-4"))(
+                label.attrs(("for", "password"))("Password"),
+                input.attrs(
+                    _class("w-full rounded border p-1"),
+                    name="password",
+                    type="password",
+                ),
+            ),
+            div.attrs(_class("m-auto flex flex-col justify-center items-center"))(
+                button.attrs(
+                    _class(
+                        "m-auto rounded border border bg-gray-900 px-2 py-1 text-right hover:bg-gray-700"
+                    ),
+                    type="submit",
+                )("Sign in")
+            ),
+        ),
+    )
+
+
+def signup_form():
+    return div.attrs(
+        _class("fixed flex flex-col rounded border bg-gray-700 px-4 pb-4"),
+        style="left:35vw;top:20vh;width:30vw",
+    )(
+        div.attrs(_class("mt-2 flex justify-end items-end"))(
+            button.attrs(
+                _class(
+                    "w-max rounded border border bg-gray-900 px-2 text-right hover:bg-gray-700"
+                ),
+                onclick="closeSignupModal()",
+            )("X"),
+        ),
+        p.attrs(_class("mb-1 text-center text-2xl"))("Signup"),
+        form.attrs(
+            hx_encoding("multipart/form-data"), hx_post("/signup"), id="upload-form"
+        )(
+            div.attrs(_class("mb-4"))(
+                label.attrs(("for", "username"))("Username"),
+                input.attrs(
+                    _class("w-full rounded border p-1"),
+                    name="username",
+                ),
+            ),
+            div.attrs(_class("mb-4"))(
+                label.attrs(("for", "email"))("Email"),
+                input.attrs(
+                    _class("w-full rounded border p-1"),
+                    name="email",
+                ),
+            ),
+            div.attrs(_class("mb-4"))(
+                label.attrs(("for", "password"))("Password"),
+                input.attrs(
+                    _class("w-full rounded border p-1"),
+                    name="password",
+                    type="password",
+                ),
+            ),
+            div.attrs(_class("m-auto flex flex-col justify-center items-center"))(
+                button.attrs(
+                    _class(
+                        "m-auto rounded border border bg-gray-900 px-2 py-1 text-right hover:bg-gray-700"
+                    ),
+                    type="submit",
+                )("Sign up")
+            ),
+        ),
+    )
+
+
+def post_upload_form():
+    return div.attrs(
+        _class("fixed flex flex-col rounded border bg-gray-700 px-4 pb-4"),
+        style="left:20vw;top:10vh;width:60vw",
+    )(
+        div.attrs(_class("mt-2 flex justify-end items-end"))(
+            button.attrs(
+                _class(
+                    "w-max rounded border border bg-gray-900 px-2 text-right hover:bg-gray-700"
+                ),
+                onclick="closeUploadModal()",
+            )("X"),
+        ),
+        p.attrs(_class("mb-1 text-center text-2xl"))("Upload"),
+        form.attrs(
+            hx_encoding("multipart/form-data"), hx_post("/upload"), id="upload-form"
+        )(
+            div.attrs(_class("mb-4"))(
+                label.attrs(("for", "title"))("Title"),
+                input.attrs(
+                    _class("w-full rounded border p-1"),
+                    name="title",
+                ),
+            ),
+            input.attrs(type="file", name="file"),
+            div.attrs(_class("flex flex-row justify-start"))(
+                button.attrs(
+                    _class(
+                        "mt-4 rounded border border-white px-4 py-1 text-sm font-semibold hover:border-transparent hover:bg-white hover:text-teal-500"
+                    )
+                )("Cancel"),
+                button.attrs(
+                    _class(
+                        "mt-4 ml-4 rounded border-white bg-blue-500 px-4 py-1 text-sm font-semibold hover:border-transparent hover:bg-white hover:text-teal-500"
+                    ),
+                    type="submit",
+                )("Submit"),
             ),
         ),
     )

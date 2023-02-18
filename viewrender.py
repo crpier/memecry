@@ -11,7 +11,7 @@ from src import comment_service, posting_service
 from src.models import Post, ReactionKind
 from src.schema import User
 from src import schema
-from src.views import posts as post_views
+from src.views import common, posts as post_views
 from simple_html.render import render
 
 
@@ -79,15 +79,16 @@ def render_post(
 
 
 def render_post_upload():
-    return templates.TemplateResponse("upload.html", {"request": {}})
+    return HTMLResponse(render(common.post_upload_form()))
 
 
 def render_login():
-    return templates.TemplateResponse("login.html", {"request": {}})
+    return HTMLResponse(render(common.login_form()))
 
 
 def render_signup():
-    return templates.TemplateResponse("signup.html", {"request": {}})
+    # return templates.TemplateResponse("signup.html", {"request": {}})
+    return HTMLResponse(render(common.signup_form()))
 
 
 def render_comment_partial():
