@@ -1,4 +1,3 @@
-import pyxl.codec.register
 import logging
 
 import fastapi

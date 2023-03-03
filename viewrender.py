@@ -87,7 +87,6 @@ def render_login():
 
 
 def render_signup():
-    # return templates.TemplateResponse("signup.html", {"request": {}})
     return HTMLResponse(render(common.signup_form()))
 
 

@@ -63,7 +63,7 @@ def page_head():
 
 def page_nav(user: schema.User | None):
     nav_container = nav.attrs(
-        _class("flex flex-row items-center bg-gray-900 p-3 fixed w-full h-14")
+        _class("flex flex-row items-center justify-start bg-gray-900 p-3 fixed w-full h-14")
     )
     app_logo = a.attrs(_class("mr-6 flex flex-shrink-0 items-center"), href="/")(
         span.attrs(_class("text-xl font-semibold tracking-tight"))("Memecry")
@@ -124,16 +124,18 @@ def page_nav(user: schema.User | None):
         ),
         hx_post("/logout"),
     )("Sign out")
-    return nav_container(
-        app_logo,
-        new_link,
-        div.attrs(_class("lg:flex-grow")),
-        search_button,
-        signup_button if not user else None,
-        signin_button if not user else None,
-        upload_button if user else None,
-        profile_section if user else None,
-        signout_button if user else None,
+    return FlatGroup(
+        nav_container(
+            app_logo,
+            new_link,
+            div.attrs(_class("flex-grow")),
+            search_button,
+            signup_button if not user else None,
+            signin_button if not user else None,
+            upload_button if user else None,
+            profile_section if user else None,
+            signout_button if user else None,
+        ),
         div.attrs(id="upload-modal"),
         div.attrs(id="login-modal"),
         div.attrs(id="signup-modal"),
