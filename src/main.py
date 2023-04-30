@@ -19,7 +19,7 @@ from src import (
 )
 from viewrender import (
     render_comment,
-    render_comment_partial,
+    render_new_comment_form,
     render_login,
     render_profile_page,
     render_signup,
@@ -147,6 +147,11 @@ async def post_comment_reply(
         settings=settings,
     )
     return render_comment(post_id=post_id, session=session)
+
+@app.get("/comment/{comment_id}/{post_id}/form")
+def open_comment_form(comment_id: int, post_id: int):
+    return render_new_comment_form(comment_id=comment_id, post_id=post_id)
+
 
 
 @app.get("/post/{post_id}/comments")
@@ -283,11 +288,6 @@ def open_upload_form():
 @app.get("/login-form")
 def open_login_form():
     return render_login()
-
-
-@app.get("/comment-form")
-def open_comment_for():
-    return render_comment_partial()
 
 
 @app.post("/upload")

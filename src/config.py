@@ -10,7 +10,7 @@ class Settings(pydantic.BaseSettings):
     UPLOAD_STORAGE = Path("media")
     SUPER_ADMIN_ID: int = -1
     SUPER_ADMIN_EMAIL: pydantic.EmailStr = pydantic.EmailStr("admin@example.com")
-    SUPER_ADMIN_USERNAME: str = "admin"
+    SUPER_ADMIN_USERNAME: str = "cristi"
     SUPER_ADMIN_PASSWORD: str
     DB_URL: str = "sqlite+pysqlite:///lol.db"
 

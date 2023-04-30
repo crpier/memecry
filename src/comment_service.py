@@ -79,7 +79,7 @@ def get_children_comment_tree(
 
 def get_comment_tree(
     session: Callable[[], Session], post_id: int
-) -> tuple[dict[int, schema.Comment], dict]:
+) -> tuple[dict[int, models.Comment], dict]:
     tree = {}
     now = datetime.utcnow()
     with session() as s:

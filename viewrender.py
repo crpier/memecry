@@ -90,28 +90,24 @@ def render_signup():
     return HTMLResponse(render(common.signup_form()))
 
 
-def render_comment_partial():
-    pass
+def render_new_comment_form(comment_id: int, post_id: int):
+    post_url = f"/comment/{comment_id}/comment"
+    return HTMLResponse(
+        render(post_views.new_comment_form(post_url=post_url, post_id=post_id))
+    )
 
 
-def render_comment(post_id: int, session: Callable[[], Session], experimental=True):
+def render_comment(post_id: int, session: Callable[[], Session]):
     comments_dict, ids_tree = comment_service.get_comment_tree(
         post_id=post_id, session=session
     )
-    if experimental:
-        return HTMLResponse(render(post_views.comment_tree(comments_dict=comments_dict, ids_tree=ids_tree, post_id=post_id)))
-
-    return templates.TemplateResponse(
-        "comment_tree.html",
-        {
-            "request": {},
-            "ids_tree": ids_tree,
-            "comment_post_url": f"/post/{post_id}/comment",
-            "comments_dict": comments_dict,
-            "post_id": post_id,
-        },
+    return HTMLResponse(
+        render(
+            post_views.comment_tree(
+                comments_dict=comments_dict, ids_tree=ids_tree, post_id=post_id
+            )
+        )
     )
-
 
 def render_profile_page(user: User):
     return templates.TemplateResponse("me.html", {"request": {}, "user": user})

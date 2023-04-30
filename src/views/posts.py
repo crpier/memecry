@@ -8,6 +8,7 @@ from src.views.common import (
     hx_swap,
     hx_target,
     hx_post,
+    hx_put,
     hx_encoding,
     input,
     div,
@@ -58,15 +59,23 @@ def single_post_partial(post: schema.Post):
         div.attrs(_class("flex flex-grow-0 flex-row items-center justify-start mt-2"))(
             button.attrs(
                 _class(
-                    "mr-3 px-2 py-2 rounded-md border border-gray-600"
-                    "hover:border-gray-900"
-                )
+                    "mr-3 px-2 py-2 rounded-md border border-gray-600 "
+                    "hover:border-gray-900 "
+                    + ("bg-yellow-800" if post.liked else "")
+                ),
+                hx_put(f"/post/{post.id}/like"),
+                hx_target(f"#post-{post.id}"),
+                hx_swap("outerHTML"),
             )(i.attrs(_class("fa fa-arrow-up fa-lg"))),
             button.attrs(
                 _class(
-                    "mr-3 px-2 py-2 rounded-md border border-gray-600"
-                    "hover:border-gray-900"
-                )
+                    "mr-3 px-2 py-2 rounded-md border border-gray-600 "
+                    "hover:border-gray-900 "
+                    + ("bg-blue-900" if post.disliked else "")
+                ),
+                hx_put(f"/post/{post.id}/dislike"),
+                hx_target(f"#post-{post.id}"),
+                hx_swap("outerHTML"),
             )(i.attrs(_class("fa fa-arrow-down fa-lg"))),
             div.attrs(_class("flex-grow")),
             button.attrs(
@@ -114,7 +123,7 @@ def new_comment_form(post_url: str, post_id: int):
         hx_encoding("multipart/form-data"),
         hx_post(post_url),
         hx_target(f"#post-{post_id}-comments"),
-        hx_swap("replace"),
+        hx_swap("outerHTML"),
         id="comment-upload-form",
     )(
         input.attrs(
@@ -126,7 +135,7 @@ def new_comment_form(post_url: str, post_id: int):
         input.attrs(type="file", name="file"),
         button.attrs(
             _class(
-                "ml-4 px-4 py-1 rounded border-white bg-blue-500 text-sm font-semibold"
+                "ml-4 px-4 py-1 rounded border-white bg-blue-500 text-sm font-semibold "
                 "hover:border-transparent hover:bg-white hover:text-teal-500"
             ),
             type="submit",
@@ -136,7 +145,7 @@ def new_comment_form(post_url: str, post_id: int):
 
 # TODO: use comment from schema instead
 def single_comment(comment: models.Comment):
-    return li.attrs(_class("flex flex-col text-sm"))(
+    return li.attrs(_class("flex flex-col text-sm"), id=f"single-comment-{comment.id}")(
         div.attrs(_class("flex flex-row mb-4"))(
             img.attrs(
                 _class("mt-1"),
@@ -168,7 +177,12 @@ def single_comment(comment: models.Comment):
                 div.attrs(_class("flex flex-row"))(
                     button.attrs(_class("mr-2"))(i.attrs(_class("fa fa-arrow-up"))),
                     button.attrs(_class("mr-4"))(i.attrs(_class("fa fa-arrow-down"))),
-                    button.attrs(_class("text-blue-500 font-bold"))("Reply"),
+                    button.attrs(
+                        _class("text-blue-500 font-bold"),
+                        hx_get(f"comment/{comment.id}/{comment.post_id}/form"),
+                        hx_target(f"#single-comment-{comment.id}"),
+                        hx_swap("afterEnd"),
+                    )("Reply"),
                 ),
             ),
         )
@@ -193,7 +207,7 @@ def comment_tree(
     comments = build_comment_list(comments_dict, ids_tree, post_id, top=True)
     return div.attrs(
         _class(
-            "mt-4 pt-4 flex flex-col justify-start items-start"
+            "mt-4 pt-4 flex flex-col justify-start items-start "
             "border-gray-600 items-stretch"
         ),
         id=(f"post-{post_id}-comments"),
