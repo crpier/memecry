@@ -94,10 +94,13 @@ def render_comment_partial():
     pass
 
 
-def render_comment(post_id: int, session: Callable[[], Session]):
+def render_comment(post_id: int, session: Callable[[], Session], experimental=True):
     comments_dict, ids_tree = comment_service.get_comment_tree(
         post_id=post_id, session=session
     )
+    if experimental:
+        return HTMLResponse(render(post_views.comment_tree(comments_dict=comments_dict, ids_tree=ids_tree, post_id=post_id)))
+
     return templates.TemplateResponse(
         "comment_tree.html",
         {

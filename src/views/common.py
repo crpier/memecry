@@ -13,14 +13,16 @@ from simple_html.nodes import (
     a,
     span,
     i,
+    ul,
     button,
     img,
     main,
+    li,
     p,
     form,
     label,
-    script,
     FlatGroup,
+    video,
 )
 from simple_html.nodes import html as _html
 
@@ -188,14 +190,14 @@ def login_form():
             div.attrs(_class("mb-4"))(
                 label.attrs(("for", "username"))("Username"),
                 input.attrs(
-                    _class("w-full rounded border p-1"),
+                    _class("w-full rounded border p-1 text-black"),
                     name="username",
                 ),
             ),
             div.attrs(_class("mb-4"))(
                 label.attrs(("for", "password"))("Password"),
                 input.attrs(
-                    _class("w-full rounded border p-1"),
+                    _class("w-full rounded border p-1 text-black"),
                     name="password",
                     type="password",
                 ),
@@ -232,21 +234,21 @@ def signup_form():
             div.attrs(_class("mb-4"))(
                 label.attrs(("for", "username"))("Username"),
                 input.attrs(
-                    _class("w-full rounded border p-1"),
+                    _class("w-full rounded border p-1 text-black"),
                     name="username",
                 ),
             ),
             div.attrs(_class("mb-4"))(
                 label.attrs(("for", "email"))("Email"),
                 input.attrs(
-                    _class("w-full rounded border p-1"),
+                    _class("w-full rounded border p-1 text-black"),
                     name="email",
                 ),
             ),
             div.attrs(_class("mb-4"))(
                 label.attrs(("for", "password"))("Password"),
                 input.attrs(
-                    _class("w-full rounded border p-1"),
+                    _class("w-full rounded border p-1 text-black"),
                     name="password",
                     type="password",
                 ),
@@ -283,7 +285,7 @@ def post_upload_form():
             div.attrs(_class("mb-4"))(
                 label.attrs(("for", "title"))("Title"),
                 input.attrs(
-                    _class("w-full rounded border p-1"),
+                    _class("w-full rounded border p-1 text-black"),
                     name="title",
                 ),
             ),
