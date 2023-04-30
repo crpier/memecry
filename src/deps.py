@@ -38,7 +38,7 @@ def get_settings():
 
 
 @functools.lru_cache()
-def get_session():
+def get_db_session():
     # TODO: why can't I use get_settings in Depends?
     settings = get_settings()
     engine = models.get_engine(settings.DB_URL)
@@ -51,7 +51,7 @@ def get_session():
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
-    session=Depends(get_session),
+    session=Depends(get_db_session),
     settings: config.Settings = Depends(get_settings),
 ) -> schema.User:
     credentials_exception = HTTPException(
@@ -69,7 +69,7 @@ async def get_current_user(
 
 def get_current_user_optional(
     token: str = Depends(oauth2_scheme),
-    session=Depends(get_session),
+    session=Depends(get_db_session),
     settings: config.Settings = Depends(get_settings),
 ) -> schema.User | None:
     try:

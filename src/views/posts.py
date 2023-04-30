@@ -85,9 +85,12 @@ def single_post(user: schema.User | None, post: schema.Post):
 
 def post_list(posts: list[schema.Post], user: schema.User | None, partial=False):
     post_partials = [single_post_partial(post=post) for post in posts]
-    post_partials[-1] = div.attrs(
-        hx_get("/?offset=2"), hx_trigger("revealed"), hx_swap("afterend")
-    )(post_partials[-1])
+    try:
+        post_partials[-1] = div.attrs(
+            hx_get("/?offset=2"), hx_trigger("revealed"), hx_swap("afterend")
+        )(post_partials[-1])
+    except IndexError:
+        post_partials= []
     if not partial:
         return page_root(
             user=user,

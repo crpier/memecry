@@ -4,7 +4,6 @@ from simple_html.nodes import (
     Tag,
     body,
     head,
-    html,
     div,
     meta,
     title,
@@ -23,9 +22,12 @@ from simple_html.nodes import (
     script,
     FlatGroup,
 )
+from simple_html.nodes import html as _html
+
 from simple_html.render import render
 
 from src import schema
+
 
 _class = str_attr("class")
 hx_get = str_attr("hx-get")
@@ -63,7 +65,9 @@ def page_head():
 
 def page_nav(user: schema.User | None):
     nav_container = nav.attrs(
-        _class("flex flex-row items-center justify-start bg-gray-900 p-3 fixed w-full h-14")
+        _class(
+            "flex flex-row items-center justify-start bg-gray-900 p-3 fixed w-full h-14"
+        )
     )
     app_logo = a.attrs(_class("mr-6 flex flex-shrink-0 items-center"), href="/")(
         span.attrs(_class("text-xl font-semibold tracking-tight"))("Memecry")
@@ -145,7 +149,7 @@ def page_nav(user: schema.User | None):
 def page_root(user: schema.User | None, partial: Tag | None = None):
     return FlatGroup(
         DOCTYPE,
-        html.attrs(lang="en")(
+        _html.attrs(lang="en")(
             page_head(),
             body.attrs(_class("bg-black text-white h-screen"))(
                 page_nav(user),

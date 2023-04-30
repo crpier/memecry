@@ -1,11 +1,14 @@
+from functools import partial
 import logging
 
 import fastapi
 import fastapi.security
 import fastapi.staticfiles
 import fastapi.templating
-from fastapi import Body, Depends, Form, HTTPException, Request, Response
+from fastapi import Body, Depends, Form, HTTPException, Request, Response, FastAPI
 from pydantic import EmailStr
+from starlette.responses import HTMLResponse
+from lib.html import html, component, CleanHTML
 
 from src import (
     comment_service,
@@ -17,6 +20,7 @@ from src import (
     security,
     user_service,
 )
+from src.templates.root import html_root, nav
 from viewrender import (
     render_comment,
     render_comment_partial,
@@ -28,13 +32,13 @@ from viewrender import (
     render_posts,
 )
 
-app = fastapi.FastAPI()
+app = FastAPI()
 
 logger = logging.getLogger()
 
 # Initialize settings at the start,
 # so that we don't have to wait for request to see errors (if any)
-deps.get_session()
+deps.get_db_session()
 
 templates = fastapi.templating.Jinja2Templates(directory="src/templates")
 
@@ -50,6 +54,19 @@ def check_health():
     return {"message": "Everything OK"}
 
 
+@app.get("/posts/{post_id}")
+def get_post_by_id(
+    post_id: int,
+    user: schema.User = Depends(deps.get_current_user_optional),
+    db_session=Depends(deps.get_db_session),
+):
+    def a():
+        return CleanHTML("<div>lol</div>")
+
+    nav_el = partial(nav, None)
+    return HTMLResponse(html_root(nav_el))
+
+
 ### Users ###
 @app.get("/me")
 def get_me(current_user: schema.User = Depends(deps.get_current_user)):
@@ -60,7 +77,7 @@ def get_me(current_user: schema.User = Depends(deps.get_current_user)):
 def get_post(
     post_id: int,
     user: schema.User = Depends(deps.get_current_user_optional),
-    session=Depends(deps.get_session),
+    session=Depends(deps.get_db_session),
 ):
     return render_post(
         post_id=post_id,
@@ -82,7 +99,7 @@ async def create_new_user(
     username: str = Form(),
     # Maybe make email optional only for dev?
     email: EmailStr | None = Form(),
-    session=Depends(deps.get_session),
+    session=Depends(deps.get_db_session),
     settings=Depends(deps.get_settings),
 ):
     user_service.add_user(
@@ -101,7 +118,7 @@ async def create_new_user(
 @app.get("/users/{username}/posts")
 def get_users_posts(
     username: str,
-    session=Depends(deps.get_session),
+    session=Depends(deps.get_db_session),
 ):
     return posting_service.get_posts_by_user(username, session)
 
@@ -113,7 +130,7 @@ async def comment_on_post(
     attachment: fastapi.UploadFile | None = None,
     content: str = Body(),
     current_user: schema.User = Depends(deps.get_current_user),
-    session=Depends(deps.get_session),
+    session=Depends(deps.get_db_session),
     settings: config.Settings = Depends(deps.get_settings),
 ):
     comment_create = schema.CommentCreate(
@@ -134,7 +151,7 @@ async def post_comment_reply(
     attachment: fastapi.UploadFile | None = None,
     content: str = Body(),
     current_user: schema.User = Depends(deps.get_current_user),
-    session=Depends(deps.get_session),
+    session=Depends(deps.get_db_session),
     settings: config.Settings = Depends(deps.get_settings),
 ):
     comment_create = schema.CommentCreate(
@@ -152,7 +169,7 @@ async def post_comment_reply(
 @app.get("/post/{post_id}/comments")
 async def get_comments_on_post(
     post_id: int,
-    session=Depends(deps.get_session),
+    session=Depends(deps.get_db_session),
 ):
     return render_comment(post_id=post_id, session=session)
 
@@ -162,7 +179,7 @@ async def get_comments_on_post(
 async def like_post(
     id: int,
     current_user: schema.User = Depends(deps.get_current_user),
-    session=Depends(deps.get_session),
+    session=Depends(deps.get_db_session),
 ):
     posting_service.add_reaction(
         session,
@@ -177,7 +194,7 @@ async def like_post(
 async def unlike_post(
     id: int,
     current_user: schema.User = Depends(deps.get_current_user),
-    session=Depends(deps.get_session),
+    session=Depends(deps.get_db_session),
 ):
     posting_service.remove_reaction(
         session,
@@ -192,7 +209,7 @@ async def unlike_post(
 async def dislike_post(
     id: int,
     current_user: schema.User = Depends(deps.get_current_user),
-    session=Depends(deps.get_session),
+    session=Depends(deps.get_db_session),
 ):
     posting_service.add_reaction(
         session,
@@ -207,7 +224,7 @@ async def dislike_post(
 async def undislike_post(
     id: int,
     current_user: schema.User = Depends(deps.get_current_user),
-    session=Depends(deps.get_session),
+    session=Depends(deps.get_db_session),
 ):
     posting_service.remove_reaction(
         session,
@@ -253,7 +270,7 @@ async def create_auth_header(request: Request, call_next):
 async def login(
     response: Response,
     form_data: fastapi.security.OAuth2PasswordRequestForm = Depends(),
-    session=Depends(deps.get_session),
+    session=Depends(deps.get_db_session),
     settings: config.Settings = Depends(deps.get_settings),
 ):
     user = user_service.authenticate_user(
@@ -295,7 +312,7 @@ async def upload_post(
     file: fastapi.UploadFile,
     title: str = Form(),
     settings: config.Settings = Depends(deps.get_settings),
-    session=Depends(deps.get_session),
+    session=Depends(deps.get_db_session),
     current_user: schema.User = Depends(deps.get_current_user),
 ):
     new_post = schema.PostCreate(title=title, user_id=current_user.id)
@@ -318,23 +335,41 @@ def log_out(response: Response):
     return response
 
 
+@component
+def root():
+    return (
+        html
+        @ """
+          <html>
+              <body style="background-color: black">
+                  <div style="background-color: red">waaaa</div>
+              </body>
+          </html>
+        """
+    )
+
+
 @app.get("/")
 def get_index(
     limit: int = 5,
     offset: int = 0,
-    session=Depends(deps.get_session),
+    session=Depends(deps.get_db_session),
     optional_current_user: schema.User | None = Depends(deps.get_current_user_optional),
+    experimental=False,
 ):
-    return render_posts(
-        session, user=optional_current_user, top=True, limit=limit, offset=offset
-    )
+    if experimental:
+        return HTMLResponse(root())
+    else:
+        return render_posts(
+            session, user=optional_current_user, top=True, limit=limit, offset=offset
+        )
 
 
 @app.get("/new")
 def show_newest_posts(
     limit: int = 5,
     offset: int = 0,
-    session=Depends(deps.get_session),
+    session=Depends(deps.get_db_session),
     optional_current_user: schema.User | None = Depends(deps.get_current_user_optional),
 ):
     return render_posts(
