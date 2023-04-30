@@ -24,7 +24,6 @@ from simple_html.nodes import (
 )
 from simple_html.nodes import html as _html
 
-from simple_html.render import render
 
 from src import schema
 

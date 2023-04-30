@@ -1,4 +1,3 @@
-from functools import partial
 import logging
 
 import fastapi
@@ -7,8 +6,6 @@ import fastapi.staticfiles
 import fastapi.templating
 from fastapi import Body, Depends, Form, HTTPException, Request, Response, FastAPI
 from pydantic import EmailStr
-from starlette.responses import HTMLResponse
-from lib.html import html, component, CleanHTML
 
 from src import (
     comment_service,
@@ -20,7 +17,6 @@ from src import (
     security,
     user_service,
 )
-from src.templates.root import html_root, nav
 from viewrender import (
     render_comment,
     render_comment_partial,
@@ -52,19 +48,6 @@ app.mount("/media", fastapi.staticfiles.StaticFiles(directory="media"), name="st
 @app.get("/health")
 def check_health():
     return {"message": "Everything OK"}
-
-
-@app.get("/posts/{post_id}")
-def get_post_by_id(
-    post_id: int,
-    user: schema.User = Depends(deps.get_current_user_optional),
-    db_session=Depends(deps.get_db_session),
-):
-    def a():
-        return CleanHTML("<div>lol</div>")
-
-    nav_el = partial(nav, None)
-    return HTMLResponse(html_root(nav_el))
 
 
 ### Users ###
@@ -258,7 +241,8 @@ async def create_auth_header(request: Request, call_next):
         request.headers.__dict__["_list"].append(
             (
                 "authorization".encode(),
-                f"Bearer 12345".encode(),
+                # TODO: fixme
+                "Bearer 12345".encode(),
             )
         )
 
@@ -335,34 +319,16 @@ def log_out(response: Response):
     return response
 
 
-@component
-def root():
-    return (
-        html
-        @ """
-          <html>
-              <body style="background-color: black">
-                  <div style="background-color: red">waaaa</div>
-              </body>
-          </html>
-        """
-    )
-
-
 @app.get("/")
 def get_index(
     limit: int = 5,
     offset: int = 0,
     session=Depends(deps.get_db_session),
     optional_current_user: schema.User | None = Depends(deps.get_current_user_optional),
-    experimental=False,
 ):
-    if experimental:
-        return HTMLResponse(root())
-    else:
-        return render_posts(
-            session, user=optional_current_user, top=True, limit=limit, offset=offset
-        )
+    return render_posts(
+        session, user=optional_current_user, top=True, limit=limit, offset=offset
+    )
 
 
 @app.get("/new")

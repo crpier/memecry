@@ -48,7 +48,7 @@ async def post_comment(
             new_comment.attachment_source = str(dest)
             s.add(new_comment)
             s.commit()
-        return new_comment.post_id # type: ignore
+        return new_comment.post_id  # type: ignore
 
 
 def get_comments_per_post(
@@ -58,7 +58,7 @@ def get_comments_per_post(
         results = s.exec(
             select(models.Comment)
             .where(models.Comment.post_id == post_id)
-            .order_by(models.Comment.created_at.desc()) # type: ignore
+            .order_by(models.Comment.created_at.desc())  # type: ignore
         ).all()
         return [schema.Comment.from_orm(comment) for comment in results]
 
@@ -87,7 +87,7 @@ def get_comment_tree(
             select(models.Comment)
             .options(selectinload(models.Comment.user))
             .where(models.Comment.post_id == post_id)
-            .order_by(models.Comment.created_at.desc()) # type: ignore
+            .order_by(models.Comment.created_at.desc())  # type: ignore
         ).all()
         for comment in all_comments:
             comment.created_at = babel.dates.format_timedelta(  # type: ignore
@@ -99,4 +99,4 @@ def get_comment_tree(
         for comment_id in root_comments_ids:
             tree[comment_id] = get_children_comment_tree(session=session, parent_id=comment_id, all_comments=all_comments)  # type: ignore
         comments_dict = {comment.id: comment for comment in all_comments}
-        return comments_dict, tree # type: ignore
+        return comments_dict, tree  # type: ignore

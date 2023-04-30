@@ -2,21 +2,11 @@ from src import schema
 from src.views.common import page_root, _class, hx_get, hx_trigger, hx_swap
 
 from simple_html.nodes import (
-    body,
-    head,
-    html,
     div,
-    meta,
-    title,
-    link,
-    script,
-    nav,
     a,
-    span,
     i,
     button,
     img,
-    main,
     p,
     video,
 )
@@ -90,7 +80,7 @@ def post_list(posts: list[schema.Post], user: schema.User | None, partial=False)
             hx_get("/?offset=2"), hx_trigger("revealed"), hx_swap("afterend")
         )(post_partials[-1])
     except IndexError:
-        post_partials= []
+        post_partials = []
     if not partial:
         return page_root(
             user=user,

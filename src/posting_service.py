@@ -17,7 +17,7 @@ def get_top_posts(
     with session() as s:
         posts = s.exec(
             select(models.Post)
-            .where(col(models.Post.top) == True)
+            .where(col(models.Post.top) is True)
             .offset(offset)
             .limit(limit)
         ).all()
@@ -50,7 +50,8 @@ async def upload_post(
         if post_data.user_id == settings.SUPER_ADMIN_ID:
             post_data.top = True
         # TODO: some tests that guarantee compatibility between models and schemas
-        # for example, to guarantee that a valid models.Post can be created from a valid schema.PostCreate
+        # for example, to guarantee that a valid models.Post,
+        # can be created from a valid schema.PostCreate
         # also the reverse: models.Post -> schema.Post
         new_post = models.Post(**post_data.__dict__)
         s.add(new_post)

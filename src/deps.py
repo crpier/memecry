@@ -77,12 +77,12 @@ def get_current_user_optional(
             token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
         )
         if (res := payload.get("sub")) is None:
-            return
+            return None
         username: str = res
         token_data = schema.TokenData(username=username)
     except jose.JWTError:
-        return
+        return None
     user = user_service.get_user_by_username(session, username=token_data.username)
     if user is None:
-        return
+        return None
     return user
