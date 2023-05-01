@@ -60,8 +60,7 @@ def single_post_partial(post: schema.Post):
             button.attrs(
                 _class(
                     "mr-3 px-2 py-2 rounded-md border border-gray-600 "
-                    "hover:border-gray-900 "
-                    + ("bg-yellow-800" if post.liked else "")
+                    "hover:border-gray-900 " + ("bg-yellow-800" if post.liked else "")
                 ),
                 hx_put(f"/post/{post.id}/like"),
                 hx_target(f"#post-{post.id}"),
@@ -70,8 +69,7 @@ def single_post_partial(post: schema.Post):
             button.attrs(
                 _class(
                     "mr-3 px-2 py-2 rounded-md border border-gray-600 "
-                    "hover:border-gray-900 "
-                    + ("bg-blue-900" if post.disliked else "")
+                    "hover:border-gray-900 " + ("bg-blue-900" if post.disliked else "")
                 ),
                 hx_put(f"/post/{post.id}/dislike"),
                 hx_target(f"#post-{post.id}"),
@@ -83,7 +81,7 @@ def single_post_partial(post: schema.Post):
                     "flex flex-row p-2 rounded-md border border-gray-600"
                     "hover:border-gray-500"
                 ),
-                hx_get(f"post/{post.id}/comments"),
+                hx_get(f"/post/{post.id}/comments"),
                 hx_target(f"#post-comments-{post.id}"),
             )(
                 i.attrs(
@@ -175,11 +173,21 @@ def single_comment(comment: models.Comment):
                 ),
                 div.attrs(_class("text-left"))(comment.content),
                 div.attrs(_class("flex flex-row"))(
-                    button.attrs(_class("mr-2"))(i.attrs(_class("fa fa-arrow-up"))),
-                    button.attrs(_class("mr-4"))(i.attrs(_class("fa fa-arrow-down"))),
+                    button.attrs(
+                        _class("mr-2"),
+                        hx_put(f"/comment/{comment.id}/like"),
+                        hx_target(f"#post-{comment.post_id}-comments"),
+                        hx_swap("outerHTML"),
+                    )(i.attrs(_class("fa fa-arrow-up"))),
+                    button.attrs(
+                        _class("mr-4"),
+                        hx_put(f"/comment/{comment.id}/dislike"),
+                        hx_target(f"#post-{comment.post_id}-comments"),
+                        hx_swap("outerHTML"),
+                    )(i.attrs(_class("fa fa-arrow-down"))),
                     button.attrs(
                         _class("text-blue-500 font-bold"),
-                        hx_get(f"comment/{comment.id}/{comment.post_id}/form"),
+                        hx_get(f"/comment/{comment.id}/{comment.post_id}/form"),
                         hx_target(f"#single-comment-{comment.id}"),
                         hx_swap("afterEnd"),
                     )("Reply"),

@@ -54,6 +54,7 @@ class Post(SQLModel, table=True):
     user_id: int = Field(foreign_key="users.id")
     user: User = Relationship(back_populates="posts")
     comments: list["Comment"] = Relationship(back_populates="post")
+    reactions: list["Reaction"] = Relationship(back_populates="post")
 
     def add_reaction(self, reaction: "ReactionKind"):
         match reaction:
@@ -103,12 +104,17 @@ class Reaction(SQLModel, table=True):
     user: User = Relationship(back_populates="reactions")
 
     post_id: int | None = Field(foreign_key="posts.id", default=None)
-    comment_id: int | None = Field(foreign_key="posts.id", default=None)
+    post: Post = Relationship(back_populates="reactions")
+
+    comment_id: int | None = Field(foreign_key="comments.id", default=None)
+    comment: "Comment" = Relationship(back_populates="reactions")
+
     kind: ReactionKind
 
+
+
     __table_args__ = (
-        UniqueConstraint("user_id", "post_id", name="unique_post_like"),
-        UniqueConstraint("user_id", "comment_id", name="unique_comment_like"),
+        UniqueConstraint("user_id", "post_id", "comment_id", name="unique_post_like"),
     )
 
 
@@ -128,3 +134,5 @@ class Comment(SQLModel, table=True):
     post_id: int = Field(foreign_key="posts.id")
     post: Post = Relationship(back_populates="comments")
     parent_id: int | None = Field(foreign_key="comments.id", default=None)
+
+    reactions: list["Reaction"] = Relationship(back_populates="comment")

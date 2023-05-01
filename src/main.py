@@ -148,10 +148,10 @@ async def post_comment_reply(
     )
     return render_comment(post_id=post_id, session=session)
 
+
 @app.get("/comment/{comment_id}/{post_id}/form")
 def open_comment_form(comment_id: int, post_id: int):
     return render_new_comment_form(comment_id=comment_id, post_id=post_id)
-
 
 
 @app.get("/post/{post_id}/comments")
@@ -191,6 +191,36 @@ async def unlike_post(
         reaction_kind=models.ReactionKind.Like,
     )
     return render_post(post_id=id, session=session, user=current_user)
+
+
+@app.put("/comment/{id}/like")
+async def like_comment(
+    id: int,
+    current_user: schema.User = Depends(deps.get_current_user),
+    session=Depends(deps.get_db_session),
+):
+    post_id = comment_service.add_reaction(
+        session,
+        comment_id=id,
+        user_id=current_user.id,
+        reaction_kind=models.ReactionKind.Like,
+    )
+    return render_comment(post_id=post_id, session=session)
+
+
+@app.put("/comment/{id}/dislike")
+async def dislike_comment(
+    id: int,
+    current_user: schema.User = Depends(deps.get_current_user),
+    session=Depends(deps.get_db_session),
+):
+    post_id = comment_service.add_reaction(
+        session,
+        comment_id=id,
+        user_id=current_user.id,
+        reaction_kind=models.ReactionKind.Dislike,
+    )
+    return render_comment(post_id=post_id, session=session)
 
 
 @app.put("/post/{id}/dislike")

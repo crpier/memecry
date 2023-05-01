@@ -3,6 +3,7 @@ from typing import Callable
 
 import aiofiles
 import fastapi
+from sqlalchemy.sql.expression import null
 from sqlmodel import Session, col, delete, select
 
 from src import config, models, schema
@@ -78,21 +79,26 @@ def add_reaction(
     post_id: int,
     reaction_kind: models.ReactionKind,
 ) -> None:
+    # TODO: instead of re-liking/re-disliking, I should undo the reaction
     with session() as s:
-        res = s.execute(
+        res = s.exec(
             select(models.Reaction).where(
-                models.Reaction.post_id == post_id, models.Reaction.user_id == user_id
+                models.Reaction.post_id == post_id,
+                models.Reaction.user_id == user_id,
+                models.Reaction.comment_id == null(),
             )
         ).one_or_none()
 
         if res:
-            if res[0].kind == reaction_kind.value:
-                logger.debug("The same reaction was given to the same post.")
-                raise ValueError(f"Already has a {reaction_kind.name} on {post_id=}")
+            logger.debug("Old reaction will be replaced")
+            s.delete(res)
+            if res.kind == models.ReactionKind.Like.value:
+                res.post.likes -= 1
+                res.post.score -= 1
             else:
-                logger.debug("Old reaction will be replaced")
-                s.delete(res[0])
-                s.flush()
+                res.post.dislikes -= 1
+                res.post.score += 1
+            s.flush()
 
         new_reaction = models.Reaction(
             user_id=user_id, post_id=post_id, kind=reaction_kind.value
@@ -200,7 +206,9 @@ def get_user_reaction_on_post(
     with session() as s:
         res = s.exec(
             select(models.Reaction).where(
-                models.Reaction.user_id == user_id, models.Reaction.post_id == post_id
+                models.Reaction.user_id == user_id,
+                models.Reaction.post_id == post_id,
+                models.Reaction.comment_id == null(),
             )
         ).one_or_none()
         return res.kind if res else None

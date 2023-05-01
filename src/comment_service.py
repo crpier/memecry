@@ -1,4 +1,5 @@
 import logging
+from types import new_class
 from typing import Callable
 
 import aiofiles
@@ -100,3 +101,42 @@ def get_comment_tree(
             tree[comment_id] = get_children_comment_tree(session=session, parent_id=comment_id, all_comments=all_comments)  # type: ignore
         comments_dict = {comment.id: comment for comment in all_comments}
         return comments_dict, tree  # type: ignore
+
+
+def add_reaction(
+    session: Callable[[], Session],
+    reaction_kind: models.ReactionKind,
+    comment_id: int,
+    user_id: int,
+) -> int:
+    # TODO: instead of re-liking/re-disliking, I should undo the reaction
+    with session() as s:
+        res = s.exec(
+            select(models.Reaction).where(
+                models.Reaction.comment_id == comment_id,
+                models.Reaction.user_id == user_id,
+            )
+        ).one_or_none()
+        if res:
+            logger.debug("Old reaction will be replaced")
+            s.delete(res)
+            if res.kind == models.ReactionKind.Like.value:
+                res.comment.likes -= 1
+            else:
+                res.comment.dislikes -= 1
+            s.flush()
+
+        new_reaction = models.Reaction(
+            user_id=user_id, comment_id=comment_id, kind=reaction_kind
+        )
+        s.add(new_reaction)
+        s.flush()
+        new_reaction.post_id = new_reaction.comment.post_id
+        if new_reaction.kind == models.ReactionKind.Like.value:
+            new_reaction.comment.likes += 1
+        else:
+            new_reaction.comment.dislikes += 1
+        updated_post_id = new_reaction.post_id
+        assert updated_post_id
+        s.commit()
+        return updated_post_id
