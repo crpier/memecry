@@ -1,5 +1,4 @@
 import logging
-from types import new_class
 from typing import Callable
 
 import aiofiles
@@ -73,34 +72,63 @@ def get_children_comment_tree(
     ]
     for child_id in direct_children_ids:
         tree[child_id] = get_children_comment_tree(
-            session=session, parent_id=child_id, all_comments=all_comments  # type: ignore
+            session=session,
+            parent_id=child_id,
+            all_comments=all_comments,
         )
-    return tree
+    return tree  # type: ignore
 
 
 def get_comment_tree(
     session: Callable[[], Session], post_id: int
-) -> tuple[dict[int, models.Comment], dict]:
+) -> tuple[dict[int, schema.Comment], dict]:
     tree = {}
     now = datetime.utcnow()
-    with session() as s:
+    with session().no_autoflush as s:
         all_comments = s.exec(
             select(models.Comment)
             .options(selectinload(models.Comment.user))
             .where(models.Comment.post_id == post_id)
             .order_by(models.Comment.created_at.desc())  # type: ignore
         ).all()
-        for comment in all_comments:
-            comment.created_at = babel.dates.format_timedelta(  # type: ignore
-                comment.created_at - now, add_direction=True, locale="en_US"
-            )
         root_comments_ids = [
             comment.id for comment in all_comments if comment.parent_id is None
         ]
         for comment_id in root_comments_ids:
-            tree[comment_id] = get_children_comment_tree(session=session, parent_id=comment_id, all_comments=all_comments)  # type: ignore
-        comments_dict = {comment.id: comment for comment in all_comments}
+            tree[comment_id] = get_children_comment_tree(
+                session=session,
+                parent_id=comment_id,  # type: ignore
+                all_comments=all_comments,  # type: ignore
+            )
+        comments_dict = {
+            comment.id: schema.Comment.from_orm(comment) for comment in all_comments
+        }
         return comments_dict, tree  # type: ignore
+
+
+def prepare_comment_for_viewing(
+    session: Callable[[], Session], comment: schema.Comment, user: schema.User | None
+) -> schema.Comment:
+    assert type(comment.created_at) == datetime
+    comment.created_at = babel.dates.format_timedelta(  # type: ignore
+        comment.created_at - datetime.utcnow(),
+        add_direction=True,
+        locale="en_US",
+    )
+    if user:
+        with session() as s:
+            reaction = s.exec(
+                select(models.Reaction).where(
+                    models.Reaction.comment_id == comment.id,
+                    models.Reaction.user_id == user.id,
+                )
+            ).one_or_none()
+            if reaction:
+                if reaction.kind == models.ReactionKind.Like.value:
+                    comment.liked = True
+                elif reaction.kind == models.ReactionKind.Dislike.value:
+                    comment.disliked = True
+    return comment
 
 
 def add_reaction(
@@ -111,20 +139,27 @@ def add_reaction(
 ) -> int:
     # TODO: instead of re-liking/re-disliking, I should undo the reaction
     with session() as s:
-        res = s.exec(
+        old_reaction = s.exec(
             select(models.Reaction).where(
                 models.Reaction.comment_id == comment_id,
                 models.Reaction.user_id == user_id,
             )
         ).one_or_none()
-        if res:
+        if old_reaction:
             logger.debug("Old reaction will be replaced")
-            s.delete(res)
-            if res.kind == models.ReactionKind.Like.value:
-                res.comment.likes -= 1
+            s.delete(old_reaction)
+            if (
+                old_reaction_kind := old_reaction.kind
+            ) == models.ReactionKind.Like.value:
+                old_reaction.comment.likes -= 1
             else:
-                res.comment.dislikes -= 1
+                old_reaction.comment.dislikes -= 1
             s.flush()
+            if old_reaction_kind == reaction_kind:
+                logger.debug("The new reaction is the same as the old one, removing")
+                s.commit()
+                assert old_reaction.post_id
+                return old_reaction.post_id
 
         new_reaction = models.Reaction(
             user_id=user_id, comment_id=comment_id, kind=reaction_kind

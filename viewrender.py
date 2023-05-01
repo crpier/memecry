@@ -97,10 +97,16 @@ def render_new_comment_form(comment_id: int, post_id: int):
     )
 
 
-def render_comment(post_id: int, session: Callable[[], Session]):
+def render_comment(
+    post_id: int, session: Callable[[], Session], user: User | None = None
+):
     comments_dict, ids_tree = comment_service.get_comment_tree(
         post_id=post_id, session=session
     )
+    for comment in comments_dict.values():
+        comment = comment_service.prepare_comment_for_viewing(
+            session=session, comment=comment, user=user
+        )
     return HTMLResponse(
         render(
             post_views.comment_tree(
@@ -108,6 +114,7 @@ def render_comment(post_id: int, session: Callable[[], Session]):
             )
         )
     )
+
 
 def render_profile_page(user: User):
     return templates.TemplateResponse("me.html", {"request": {}, "user": user})

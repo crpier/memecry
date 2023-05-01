@@ -142,7 +142,7 @@ def new_comment_form(post_url: str, post_id: int):
 
 
 # TODO: use comment from schema instead
-def single_comment(comment: models.Comment):
+def single_comment(comment: schema.Comment):
     return li.attrs(_class("flex flex-col text-sm"), id=f"single-comment-{comment.id}")(
         div.attrs(_class("flex flex-row mb-4"))(
             img.attrs(
@@ -174,13 +174,19 @@ def single_comment(comment: models.Comment):
                 div.attrs(_class("text-left"))(comment.content),
                 div.attrs(_class("flex flex-row"))(
                     button.attrs(
-                        _class("mr-2"),
+                        _class(
+                            "rounded px-1 "
+                            + ("bg-yellow-800" if comment.liked else "")
+                        ),
                         hx_put(f"/comment/{comment.id}/like"),
                         hx_target(f"#post-{comment.post_id}-comments"),
                         hx_swap("outerHTML"),
                     )(i.attrs(_class("fa fa-arrow-up"))),
                     button.attrs(
-                        _class("mr-4"),
+                        _class(
+                            "mr-4 rounded px-1 "
+                            + ("bg-blue-900" if comment.disliked else "")
+                        ),
                         hx_put(f"/comment/{comment.id}/dislike"),
                         hx_target(f"#post-{comment.post_id}-comments"),
                         hx_swap("outerHTML"),

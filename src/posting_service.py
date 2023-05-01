@@ -81,7 +81,7 @@ def add_reaction(
 ) -> None:
     # TODO: instead of re-liking/re-disliking, I should undo the reaction
     with session() as s:
-        res = s.exec(
+        old_reaction = s.exec(
             select(models.Reaction).where(
                 models.Reaction.post_id == post_id,
                 models.Reaction.user_id == user_id,
@@ -89,16 +89,22 @@ def add_reaction(
             )
         ).one_or_none()
 
-        if res:
-            logger.debug("Old reaction will be replaced")
-            s.delete(res)
-            if res.kind == models.ReactionKind.Like.value:
-                res.post.likes -= 1
-                res.post.score -= 1
+        if old_reaction:
+            logger.debug("Old reaction will be removed")
+            s.delete(old_reaction)
+            if (
+                old_reaction_kind := old_reaction.kind
+            ) == models.ReactionKind.Like.value:
+                old_reaction.post.likes -= 1
+                old_reaction.post.score -= 1
             else:
-                res.post.dislikes -= 1
-                res.post.score += 1
+                old_reaction.post.dislikes -= 1
+                old_reaction.post.score += 1
             s.flush()
+            if old_reaction_kind == reaction_kind:
+                logger.debug("The new reaction is the same as the old one, removing")
+                s.commit()
+                return None
 
         new_reaction = models.Reaction(
             user_id=user_id, post_id=post_id, kind=reaction_kind.value
@@ -110,7 +116,7 @@ def add_reaction(
         ).one()[0]
 
         reacted_post.add_reaction(reaction_kind)
-        if res is None:
+        if old_reaction is None:
             logger.debug("No previous reaction")
         else:
             logger.debug("The new reaction is different from the old one")

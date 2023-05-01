@@ -125,7 +125,7 @@ async def comment_on_post(
         attachment=attachment,
         settings=settings,
     )
-    return render_comment(post_id=post_id, session=session)
+    return render_comment(post_id=post_id, user=current_user, session=session)
 
 
 @app.post("/comment/{comment_id}/comment")
@@ -146,7 +146,7 @@ async def post_comment_reply(
         attachment=attachment,
         settings=settings,
     )
-    return render_comment(post_id=post_id, session=session)
+    return render_comment(post_id=post_id, user=current_user, session=session)
 
 
 @app.get("/comment/{comment_id}/{post_id}/form")
@@ -157,9 +157,10 @@ def open_comment_form(comment_id: int, post_id: int):
 @app.get("/post/{post_id}/comments")
 async def get_comments_on_post(
     post_id: int,
+    user: schema.User = Depends(deps.get_current_user_optional),
     session=Depends(deps.get_db_session),
 ):
-    return render_comment(post_id=post_id, session=session)
+    return render_comment(post_id=post_id, session=session, user=user)
 
 
 #### REST endpoints for html ####
@@ -205,7 +206,7 @@ async def like_comment(
         user_id=current_user.id,
         reaction_kind=models.ReactionKind.Like,
     )
-    return render_comment(post_id=post_id, session=session)
+    return render_comment(post_id=post_id, user=current_user, session=session)
 
 
 @app.put("/comment/{id}/dislike")
@@ -220,7 +221,7 @@ async def dislike_comment(
         user_id=current_user.id,
         reaction_kind=models.ReactionKind.Dislike,
     )
-    return render_comment(post_id=post_id, session=session)
+    return render_comment(post_id=post_id, user=current_user, session=session)
 
 
 @app.put("/post/{id}/dislike")

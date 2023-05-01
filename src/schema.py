@@ -119,13 +119,13 @@ class CommentUpdate(CommentBase):
 
 
 class CommentInDBBase(CommentBase):
-    attachment_source: str
-    dislikes: int
     id: int
-    likes: int
+    attachment_source: str | None = None
     parent_id: int | None = None
     post_id: int
     user_id: int
+    dislikes: int
+    likes: int
 
     class Config:
         orm_mode = True
@@ -133,8 +133,50 @@ class CommentInDBBase(CommentBase):
 
 # Additional properites to return via API
 class Comment(CommentInDBBase):
-    pass
+    liked: bool | None = None
+    disliked: bool | None = None
+    created_at: str | datetime
+    user: User
 
 
 class CommentInDB(CommentInDBBase):
+    pass
+
+
+### Reaction
+# Shared properties
+class ReactionBase(pydantic.BaseModel):
+    user_id: int
+    post_id: int
+    comment_id: int
+    kind: str
+
+
+# Properties to receive via API on creation
+class ReactionCreate(ReactionBase):
+    pass
+
+
+# Properties to receive via API on update
+class ReactionUpdate(ReactionBase):
+    pass
+
+
+class ReactionInDBBase(ReactionBase):
+    id: int
+    created_at: str
+    user: User
+    post: Post | None
+    comment: Comment | None
+
+    class Config:
+        orm_mode = True
+
+
+# Additional properites to return via API
+class Reaction(ReactionInDBBase):
+    pass
+
+
+class ReactionInDB(ReactionInDBBase):
     pass
