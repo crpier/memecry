@@ -18,7 +18,7 @@ def get_engine(source: str):
 
 
 class User(SQLModel, table=True):
-    __tablename__: str = "users"
+    __tablename__: str = "users" # type: ignore
     id: int | None = Field(default=None, primary_key=True)
     email: EmailStr
     username: str
@@ -39,7 +39,7 @@ class User(SQLModel, table=True):
 
 
 class Post(SQLModel, table=True):
-    __tablename__: str = "posts"
+    __tablename__: str = "posts" # type: ignore
     id: int | None = Field(default=None, primary_key=True)
     title: str
     # TODO: create special type for this
@@ -95,7 +95,7 @@ class ReactionKind(str, enum.Enum):
 
 
 class Reaction(SQLModel, table=True):
-    __tablename__: str = "reactions"
+    __tablename__: str = "reactions" # type: ignore
 
     id: int | None = Field(default=None, primary_key=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -119,7 +119,7 @@ class Reaction(SQLModel, table=True):
 
 
 class Comment(SQLModel, table=True):
-    __tablename__: str = "comments"
+    __tablename__: str = "comments" # type: ignore
     id: int | None = Field(default=None, primary_key=True)
     content: str
     # TODO: create special type for this too

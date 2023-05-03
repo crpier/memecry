@@ -1,12 +1,12 @@
 import logging
+from datetime import datetime
 from typing import Callable
 
 import aiofiles
-from fastapi import UploadFile
-from sqlmodel import Session, select
 import babel.dates
-from datetime import datetime
+from fastapi import UploadFile
 from sqlalchemy.orm import selectinload
+from sqlmodel import Session, select
 
 from src import config, models, schema
 
@@ -82,7 +82,7 @@ def get_comment_tree(
     session: Callable[[], Session], post_id: int
 ) -> tuple[dict[int, schema.Comment], dict]:
     tree = {}
-    now = datetime.utcnow()
+    datetime.utcnow()
     with session().no_autoflush as s:
         all_comments = s.exec(
             select(models.Comment)

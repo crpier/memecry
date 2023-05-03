@@ -2,20 +2,16 @@ from datetime import datetime
 from typing import Callable
 
 import babel.dates
-from fastapi.templating import Jinja2Templates
 import jinja2
+from simple_html.render import render
 from sqlmodel import Session, select
 from starlette.responses import HTMLResponse
 
-from src import comment_service, posting_service
+from src import comment_service, posting_service, schema
 from src.models import Post, ReactionKind
 from src.schema import User
-from src import schema
-from src.views import common, posts as post_views
-from simple_html.render import render
-
-
-templates = Jinja2Templates(directory="src/templates")
+from src.views import common
+from src.views import posts as post_views
 
 
 def prepare_post_for_viewing(
@@ -112,11 +108,9 @@ def render_comments(
     return HTMLResponse(
         render(
             post_views.comment_tree(
-                comments_dict=comments_dict, ids_tree=ids_tree, post_id=post_id
+                comments_dict=comments_dict,  # type: ignore
+                ids_tree=ids_tree,
+                post_id=post_id,
             )
         )
     )
-
-
-def render_profile_page(user: User):
-    return templates.TemplateResponse("me.html", {"request": {}, "user": user})

@@ -1,26 +1,24 @@
-from simple_html.nodes import Tag
+from simple_html.nodes import Tag, li, ul, video
+
 from src import models, schema
 from src.views.common import (
-    page_root,
     _class,
+    a,
+    button,
+    div,
+    form,
+    hx_encoding,
     hx_get,
-    hx_trigger,
-    hx_swap,
-    hx_target,
     hx_post,
     hx_put,
-    hx_encoding,
-    input,
-    div,
-    a,
+    hx_swap,
+    hx_target,
+    hx_trigger,
     i,
-    button,
     img,
+    input,
     p,
-    video,
-    form,
-    li,
-    ul,
+    page_root,
 )
 
 
@@ -159,7 +157,7 @@ def single_comment(comment: schema.Comment):
                 style="display:block;max-width:45px;max-height:45px;width:auto;height:auto;",
                 src=comment.user.pfp_src
                 or "https://avatars.githubusercontent.com/u/31815875?v=4",
-                alt="funny meme",
+                alt="user profile picture",
             ),
             div.attrs(_class("flex flex-col ml-2"))(
                 div.attrs(_class("flex flex-row"))(
@@ -182,8 +180,11 @@ def single_comment(comment: schema.Comment):
                 img.attrs(
                     _class("mt-1 w-9/12"),
                     src=comment.attachment_source,
+                    # TODO: get the alt from the database
                     alt="funny image",
-                ) if comment.attachment_source else None,
+                )
+                if comment.attachment_source
+                else None,
                 div.attrs(_class("text-left"))(comment.content),
                 div.attrs(_class("flex flex-row"))(
                     button.attrs(
@@ -220,7 +221,7 @@ def build_comment_list(
 ) -> Tag:
     comments: list[Tag] = []
     for comment_id, children in ids_tree.items():
-        comments.append(single_comment(comments_dict[comment_id]))
+        comments.append(single_comment(comments_dict[comment_id])) # type: ignore
         if children:
             comments.append(build_comment_list(comments_dict, children, post_id))
 

@@ -1,34 +1,21 @@
 from simple_html.attributes import str_attr
-from simple_html.nodes import (
-    TagBase,
-    Tag,
-    body,
-    head,
-    div,
-    meta,
-    title,
-    link,
-    script,
-    nav,
-    a,
-    span,
-    i,
-    ul,
-    button,
-    img,
-    main,
-    li,
-    p,
-    form,
-    label,
-    FlatGroup,
-    video,
-)
+from simple_html.nodes import FlatGroup, Tag, TagBase, a, body, button, div, form, head
 from simple_html.nodes import html as _html
-
+from simple_html.nodes import (
+    i,
+    img,
+    label,
+    link,
+    main,
+    meta,
+    nav,
+    p,
+    script,
+    span,
+    title,
+)
 
 from src import schema
-
 
 _class = str_attr("class")
 hx_get = str_attr("hx-get")
@@ -153,12 +140,14 @@ def page_root(user: schema.User | None, partial: Tag | None = None):
                 page_nav(user),
                 div.attrs(
                     _class(
-                        "flex flex-grow-0 flex-row items-start justify-center justify-center"
+                        "flex flex-grow-0 flex-row items-start "
+                        "justify-center justify-center"
                     )
                 )(
                     main.attrs(
                         _class(
-                            "m-16 flex flex-col items-center justify-center justify-items-center"
+                            "m-16 flex flex-col items-center "
+                            "justify-center justify-items-center"
                         )
                     )(partial)
                 ),
@@ -175,7 +164,8 @@ def login_form():
         div.attrs(_class("mt-2 flex justify-end items-end"))(
             button.attrs(
                 _class(
-                    "w-max rounded border border bg-gray-900 px-2 text-right hover:bg-gray-700"
+                    "w-max rounded border border bg-gray-900 px-2 text-right "
+                    "hover:bg-gray-700"
                 ),
                 onclick="closeLoginModal()",
             )("X"),
@@ -202,7 +192,8 @@ def login_form():
             div.attrs(_class("m-auto flex flex-col justify-center items-center"))(
                 button.attrs(
                     _class(
-                        "m-auto rounded border border bg-gray-900 px-2 py-1 text-right hover:bg-gray-700"
+                        "m-auto rounded border border bg-gray-900 px-2 py-1 text-right "
+                        "hover:bg-gray-700"
                     ),
                     type="submit",
                 )("Sign in")
@@ -219,7 +210,8 @@ def signup_form():
         div.attrs(_class("mt-2 flex justify-end items-end"))(
             button.attrs(
                 _class(
-                    "w-max rounded border border bg-gray-900 px-2 text-right hover:bg-gray-700"
+                    "w-max rounded border border bg-gray-900 px-2 text-right "
+                    "hover:bg-gray-700"
                 ),
                 onclick="closeSignupModal()",
             )("X"),
@@ -253,7 +245,8 @@ def signup_form():
             div.attrs(_class("m-auto flex flex-col justify-center items-center"))(
                 button.attrs(
                     _class(
-                        "m-auto rounded border border bg-gray-900 px-2 py-1 text-right hover:bg-gray-700"
+                        "m-auto rounded border border bg-gray-900 px-2 py-1 text-right "
+                        "hover:bg-gray-700"
                     ),
                     type="submit",
                 )("Sign up")
@@ -270,7 +263,8 @@ def post_upload_form():
         div.attrs(_class("mt-2 flex justify-end items-end"))(
             button.attrs(
                 _class(
-                    "w-max rounded border border bg-gray-900 px-2 text-right hover:bg-gray-700"
+                    "w-max rounded border border bg-gray-900 px-2 text-right "
+                    "hover:bg-gray-700"
                 ),
                 onclick="closeUploadModal()",
             )("X"),
@@ -290,12 +284,16 @@ def post_upload_form():
             div.attrs(_class("flex flex-row justify-start"))(
                 button.attrs(
                     _class(
-                        "mt-4 rounded border border-white px-4 py-1 text-sm font-semibold hover:border-transparent hover:bg-white hover:text-teal-500"
+                        "mt-4 rounded border border-white px-4 py-1 text-sm "
+                        "font-semibold hover:border-transparent "
+                        "hover:bg-white hover:text-teal-500"
                     )
                 )("Cancel"),
                 button.attrs(
                     _class(
-                        "mt-4 ml-4 rounded border-white bg-blue-500 px-4 py-1 text-sm font-semibold hover:border-transparent hover:bg-white hover:text-teal-500"
+                        "mt-4 ml-4 rounded border-white bg-blue-500 px-4 py-1 text-sm "
+                        "font-semibold "
+                        "hover:border-transparent hover:bg-white hover:text-teal-500"
                     ),
                     type="submit",
                 )("Submit"),

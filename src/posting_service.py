@@ -4,7 +4,7 @@ from typing import Callable
 import aiofiles
 import fastapi
 from sqlalchemy.sql.expression import null
-from sqlmodel import Session, col, delete, select
+from sqlmodel import Session, col, select
 
 from src import config, models, schema
 
@@ -124,29 +124,6 @@ def add_reaction(
         s.commit()
 
 
-def remove_reaction(
-    session: Callable[[], Session],
-    user_id: int,
-    post_id: int,
-    reaction_kind: models.ReactionKind,
-) -> None:
-    with session() as s:
-        res = s.execute(
-            delete(models.Reaction).where(
-                models.Reaction.post_id == post_id, models.Reaction.user_id == user_id
-            )
-        )
-        assert res.rowcount > 0, f"Cannot unlike {post_id=}: there was no like before"  # type: ignore
-        res = s.execute(
-            select(models.Post).where(models.Post.id == post_id)
-        ).one_or_none()
-        assert res, f"{post_id=} cannot be liked: it does not exist"
-        rated_post: models.Post = res[0]
-        rated_post.remove_reaction(reaction_kind)
-        s.add(rated_post)
-        s.commit()
-
-
 def dislike_post(
     session: Callable[[], Session],
     user_id: int,
@@ -162,28 +139,6 @@ def dislike_post(
         assert res, f"{post_id=} cannot be liked: it does not exist"
         rated_post = res[0]
         rated_post.likes += 1
-        s.add(rated_post)
-        s.commit()
-
-
-def undislike_post(
-    session: Callable[[], Session],
-    user_id: int,
-    post_id: int,
-) -> None:
-    with session() as s:
-        res = s.execute(
-            delete(models.Reaction).where(
-                models.Reaction.post_id == post_id, models.Reaction.user_id == user_id
-            )
-        )
-        assert res.rowcount > 0, f"Cannot unlike {post_id=}: there was no like before"  # type: ignore
-        res = s.execute(
-            select(models.Post).where(models.Post.id == post_id)
-        ).one_or_none()
-        assert res, f"{post_id=} cannot be liked: it does not exist"
-        rated_post = res[0]
-        rated_post.likes -= 1
         s.add(rated_post)
         s.commit()
 

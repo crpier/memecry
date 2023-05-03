@@ -1,7 +1,7 @@
 import logging
 from typing import Callable
-from fastapi import HTTPException
 
+from fastapi import HTTPException
 from pydantic import EmailStr
 from sqlalchemy.orm import load_only
 from sqlmodel import Session, select

@@ -4,7 +4,7 @@ import fastapi
 import fastapi.security
 import fastapi.staticfiles
 import fastapi.templating
-from fastapi import Body, Depends, Form, HTTPException, Request, Response, FastAPI
+from fastapi import Body, Depends, FastAPI, Form, HTTPException, Request, Response
 from pydantic import EmailStr
 
 from src import (
@@ -19,13 +19,12 @@ from src import (
 )
 from viewrender import (
     render_comments,
-    render_new_comment_form,
     render_login,
-    render_profile_page,
-    render_signup,
+    render_new_comment_form,
     render_post,
     render_post_upload,
     render_posts,
+    render_signup,
 )
 
 app = FastAPI()
@@ -35,8 +34,6 @@ logger = logging.getLogger()
 # Initialize settings at the start,
 # so that we don't have to wait for request to see errors (if any)
 deps.get_db_session()
-
-templates = fastapi.templating.Jinja2Templates(directory="src/templates")
 
 #### HTML endpoints ####
 app.mount("/static", fastapi.staticfiles.StaticFiles(directory="static"), name="static")
@@ -53,7 +50,7 @@ def check_health():
 ### Users ###
 @app.get("/me")
 def get_me(current_user: schema.User = Depends(deps.get_current_user)):
-    return render_profile_page(current_user)
+    return {"status": "NOT IMPLEMENTED"}
 
 
 @app.get("/post/{post_id}")
@@ -179,21 +176,6 @@ async def like_post(
     return render_post(post_id=id, session=session, user=current_user)
 
 
-@app.put("/post/{id}/unlike")
-async def unlike_post(
-    id: int,
-    current_user: schema.User = Depends(deps.get_current_user),
-    session=Depends(deps.get_db_session),
-):
-    posting_service.remove_reaction(
-        session,
-        post_id=id,
-        user_id=current_user.id,
-        reaction_kind=models.ReactionKind.Like,
-    )
-    return render_post(post_id=id, session=session, user=current_user)
-
-
 @app.put("/comment/{id}/like")
 async def like_comment(
     id: int,
@@ -231,21 +213,6 @@ async def dislike_post(
     session=Depends(deps.get_db_session),
 ):
     posting_service.add_reaction(
-        session,
-        post_id=id,
-        user_id=current_user.id,
-        reaction_kind=models.ReactionKind.Dislike,
-    )
-    return render_post(post_id=id, session=session, user=current_user)
-
-
-@app.put("/post/{id}/undislike")
-async def undislike_post(
-    id: int,
-    current_user: schema.User = Depends(deps.get_current_user),
-    session=Depends(deps.get_db_session),
-):
-    posting_service.remove_reaction(
         session,
         post_id=id,
         user_id=current_user.id,
@@ -357,18 +324,4 @@ def get_index(
     session=Depends(deps.get_db_session),
     optional_current_user: schema.User | None = Depends(deps.get_current_user_optional),
 ):
-    return render_posts(
-        session, user=optional_current_user, limit=limit, offset=offset
-    )
-
-
-@app.get("/new")
-def show_newest_posts(
-    limit: int = 5,
-    offset: int = 0,
-    session=Depends(deps.get_db_session),
-    optional_current_user: schema.User | None = Depends(deps.get_current_user_optional),
-):
-    return render_posts(
-        session, user=optional_current_user, top=False, limit=limit, offset=offset
-    )
+    return render_posts(session, user=optional_current_user, limit=limit, offset=offset)
