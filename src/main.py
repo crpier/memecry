@@ -18,7 +18,7 @@ from src import (
     user_service,
 )
 from viewrender import (
-    render_comment,
+    render_comments,
     render_new_comment_form,
     render_login,
     render_profile_page,
@@ -110,7 +110,7 @@ def get_users_posts(
 @app.post("/post/{post_id}/comment")
 async def comment_on_post(
     post_id: int,
-    attachment: fastapi.UploadFile | None = None,
+    file: fastapi.UploadFile,
     content: str = Body(),
     current_user: schema.User = Depends(deps.get_current_user),
     session=Depends(deps.get_db_session),
@@ -122,10 +122,10 @@ async def comment_on_post(
     await comment_service.post_comment(
         session=session,
         comment_data=comment_create,
-        attachment=attachment,
+        attachment=file,
         settings=settings,
     )
-    return render_comment(post_id=post_id, user=current_user, session=session)
+    return render_comments(post_id=post_id, user=current_user, session=session)
 
 
 @app.post("/comment/{comment_id}/comment")
@@ -146,7 +146,7 @@ async def post_comment_reply(
         attachment=attachment,
         settings=settings,
     )
-    return render_comment(post_id=post_id, user=current_user, session=session)
+    return render_comments(post_id=post_id, user=current_user, session=session)
 
 
 @app.get("/comment/{comment_id}/{post_id}/form")
@@ -160,7 +160,7 @@ async def get_comments_on_post(
     user: schema.User = Depends(deps.get_current_user_optional),
     session=Depends(deps.get_db_session),
 ):
-    return render_comment(post_id=post_id, session=session, user=user)
+    return render_comments(post_id=post_id, session=session, user=user)
 
 
 #### REST endpoints for html ####
@@ -206,7 +206,7 @@ async def like_comment(
         user_id=current_user.id,
         reaction_kind=models.ReactionKind.Like,
     )
-    return render_comment(post_id=post_id, user=current_user, session=session)
+    return render_comments(post_id=post_id, user=current_user, session=session)
 
 
 @app.put("/comment/{id}/dislike")
@@ -221,7 +221,7 @@ async def dislike_comment(
         user_id=current_user.id,
         reaction_kind=models.ReactionKind.Dislike,
     )
-    return render_comment(post_id=post_id, user=current_user, session=session)
+    return render_comments(post_id=post_id, user=current_user, session=session)
 
 
 @app.put("/post/{id}/dislike")
@@ -358,7 +358,7 @@ def get_index(
     optional_current_user: schema.User | None = Depends(deps.get_current_user_optional),
 ):
     return render_posts(
-        session, user=optional_current_user, top=True, limit=limit, offset=offset
+        session, user=optional_current_user, limit=limit, offset=offset
     )
 
 

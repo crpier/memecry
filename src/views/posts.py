@@ -36,13 +36,20 @@ def single_post_partial(post: schema.Post):
         post_content = video.attrs(_class("w-full"), src=post.source, controls="true")
 
     return div.attrs(
-        _class("mb-8 border-2 border-gray-600 px-6 pb-4 text-center"),
-        style="background:#181B1D;width:640px;",
+        _class(
+            "flex flex-col items-center mb-8 px-6 pb-4 "
+            "border-2 border-gray-600 text-center"
+        ),
+        style="background:#181B1D;width:520px;",
         id=f"post-{post.id}",
     )(
         p.attrs(_class("my-4 text-xl font-bold"))(post.title),
         a.attrs(href=f"/post/{post.id}")(post_content),
-        div.attrs(_class("flex flex-grow-0 flex-row items-center justify-start mt-4"))(
+        div.attrs(
+            _class(
+                "flex flex-grow-0 flex-row items-center justify-start " "mt-4 w-full"
+            )
+        )(
             a.attrs(_class("my-2 mr-2 font-semibold w-max"), href=".")(
                 f"{post.score} good boi points"
             ),
@@ -56,7 +63,9 @@ def single_post_partial(post: schema.Post):
                 ),
             ),
         ),
-        div.attrs(_class("flex flex-grow-0 flex-row items-center justify-start mt-2"))(
+        div.attrs(
+            _class("flex flex-grow-0 flex-row items-start justify-start mt-2 w-full")
+        )(
             button.attrs(
                 _class(
                     "mr-3 px-2 py-2 rounded-md border border-gray-600 "
@@ -147,11 +156,10 @@ def single_comment(comment: schema.Comment):
         div.attrs(_class("flex flex-row mb-4"))(
             img.attrs(
                 _class("mt-1"),
+                style="display:block;max-width:45px;max-height:45px;width:auto;height:auto;",
                 src=comment.user.pfp_src
                 or "https://avatars.githubusercontent.com/u/31815875?v=4",
                 alt="funny meme",
-                width="45px",
-                height="45px",
             ),
             div.attrs(_class("flex flex-col ml-2"))(
                 div.attrs(_class("flex flex-row"))(
@@ -171,12 +179,16 @@ def single_comment(comment: schema.Comment):
                         str(comment.created_at)
                     ),
                 ),
+                img.attrs(
+                    _class("mt-1 w-9/12"),
+                    src=comment.attachment_source,
+                    alt="funny image",
+                ) if comment.attachment_source else None,
                 div.attrs(_class("text-left"))(comment.content),
                 div.attrs(_class("flex flex-row"))(
                     button.attrs(
                         _class(
-                            "rounded px-1 "
-                            + ("bg-yellow-800" if comment.liked else "")
+                            "rounded px-1 " + ("bg-yellow-800" if comment.liked else "")
                         ),
                         hx_put(f"/comment/{comment.id}/like"),
                         hx_target(f"#post-{comment.post_id}-comments"),
@@ -195,7 +207,7 @@ def single_comment(comment: schema.Comment):
                         _class("text-blue-500 font-bold"),
                         hx_get(f"/comment/{comment.id}/{comment.post_id}/form"),
                         hx_target(f"#single-comment-{comment.id}"),
-                        hx_swap("afterEnd"),
+                        hx_swap("beforeend"),
                     )("Reply"),
                 ),
             ),

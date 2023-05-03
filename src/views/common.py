@@ -73,22 +73,19 @@ def page_nav(user: schema.User | None):
     app_logo = a.attrs(_class("mr-6 flex flex-shrink-0 items-center"), href="/")(
         span.attrs(_class("text-xl font-semibold tracking-tight"))("Memecry")
     )
-    new_link = a.attrs(
-        _class("mr-4 block hover:text-gray-300 lg:mt-0 lg:inline-block"),
-        href="/new",
-    )("New")
     search_button = button(i.attrs(_class("fa fa-search fa-lg h-6 mr-4")))
     signup_button = button.attrs(
         _class(
-            "mr-4 inline-block rounded border border-white px-4 py-2 text-sm leading-none "
-            "hover:border-transparent hover:bg-white hover:text-teal-500"
+            "mr-4 inline-block rounded border border-white px-4 py-2 text-sm "
+            "leading-none hover:border-transparent hover:bg-white hover:text-teal-500"
         ),
         hx_get("/signup-form"),
         hx_target("#signup-modal"),
     )("Sign up")
     signin_button = button.attrs(
         _class(
-            "mr-4 inline-block rounded border border-white px-4 py-2 text-sm leading-none "
+            "mr-4 inline-block rounded border border-white px-4 py-2 "
+            "text-sm leading-none "
             "hover:border-transparent hover:bg-white hover:text-teal-500"
         ),
         hx_get("/login-form"),
@@ -106,7 +103,8 @@ def page_nav(user: schema.User | None):
     profile_section = (
         a.attrs(
             _class(
-                "flex flex-row items-center pr-2 hover:bg-gray-800 hover:text-white mr-2"
+                "flex flex-row items-center pr-2 mr-2 "
+                "hover:bg-gray-800 hover:text-white"
             ),
             href="#responsive-header",
         )(
@@ -132,7 +130,6 @@ def page_nav(user: schema.User | None):
     return FlatGroup(
         nav_container(
             app_logo,
-            new_link,
             div.attrs(_class("flex-grow")),
             search_button,
             signup_button if not user else None,

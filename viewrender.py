@@ -37,21 +37,23 @@ def prepare_post_for_viewing(
 
 
 def render_posts(
-    session: Callable[[], Session], top: bool, user: User | None, offset=0, limit=5
+    session: Callable[[], Session],
+    user: User | None,
+    top: bool = False,
+    offset=0,
+    limit=5,
 ):
+    posts: list[schema.Post]
     if top:
-        posts: list[schema.Post] = posting_service.get_top_posts(
-            session, offset=offset, limit=limit
-        )
+        posts = posting_service.get_top_posts(session, offset=offset, limit=limit)
     else:
-        posts: list[schema.Post] = posting_service.get_newest_posts(
-            session, offset=offset, limit=limit
-        )
+        posts = posting_service.get_newest_posts(session, offset=offset, limit=limit)
     for post in posts:
         prepare_post_for_viewing(
             post=post, session=session, user_id=user.id if user else None
         )
 
+    # TODO: the responsibility to render the root should be moved to the view
     return HTMLResponse(
         render(post_views.post_list(user=user, posts=posts, partial=offset != 0))
     )
@@ -97,7 +99,7 @@ def render_new_comment_form(comment_id: int, post_id: int):
     )
 
 
-def render_comment(
+def render_comments(
     post_id: int, session: Callable[[], Session], user: User | None = None
 ):
     comments_dict, ids_tree = comment_service.get_comment_tree(

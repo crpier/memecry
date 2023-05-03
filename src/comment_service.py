@@ -30,7 +30,6 @@ async def post_comment(
             parent_comment: models.Comment = res[0]
             comment_data.post_id = int(str(parent_comment.post_id))
 
-        logger.info(s)
         new_comment = models.Comment(**comment_data.__dict__)
         s.add(new_comment)
         s.commit()
@@ -89,7 +88,7 @@ def get_comment_tree(
             select(models.Comment)
             .options(selectinload(models.Comment.user))
             .where(models.Comment.post_id == post_id)
-            .order_by(models.Comment.created_at.desc())  # type: ignore
+            .order_by(models.Comment.created_at.asc())  # type: ignore
         ).all()
         root_comments_ids = [
             comment.id for comment in all_comments if comment.parent_id is None
