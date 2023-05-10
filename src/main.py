@@ -1,6 +1,7 @@
 import logging
 
 import fastapi
+from fastapi.responses import HTMLResponse
 import fastapi.security
 import fastapi.staticfiles
 import fastapi.templating
@@ -25,6 +26,7 @@ from viewrender import (
     render_post_upload,
     render_posts,
     render_signup,
+    render_search_results,
 )
 
 app = FastAPI()
@@ -49,7 +51,7 @@ def check_health():
 
 ### Users ###
 @app.get("/me")
-def get_me(current_user: schema.User = Depends(deps.get_current_user)):
+def get_me(_: schema.User = Depends(deps.get_current_user)):
     return {"status": "NOT IMPLEMENTED"}
 
 
@@ -298,15 +300,30 @@ async def upload_post(
     current_user: schema.User = Depends(deps.get_current_user),
 ):
     new_post = schema.PostCreate(title=title, user_id=current_user.id)
-    new_post_id = await posting_service.upload_post(
-        post_data=new_post,
-        session=session,
-        uploaded_file=file,
-        settings=settings,
-    )
-    response.status_code = 303
-    response.headers["HX-Redirect"] = f"/post/{new_post_id}"
-    return response
+    try:
+        new_post_id = await posting_service.upload_post(
+            post_data=new_post,
+            session=session,
+            uploaded_file=file,
+            settings=settings,
+        )
+        response.status_code = 303
+        response.headers["HX-Redirect"] = f"/post/{new_post_id}"
+        return response
+    except Exception:
+        # TODO: move this html to a template
+        return HTMLResponse(
+            "<div class='bg-red-800 w-max py-1 px-2 rounded'>Something went wrong</div>"
+        )
+
+
+@app.get("/search")
+def search(
+    query: str,
+    session=Depends(deps.get_db_session),
+    user: schema.User = Depends(deps.get_current_user_optional),
+):
+    return render_search_results(query=query, user=user, session=session)
 
 
 @app.post("/logout")

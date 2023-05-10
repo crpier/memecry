@@ -13,12 +13,12 @@ from sqlmodel import (
 )
 
 
-def get_engine(source: str):
+def get_engine(source: str = "sqlite+pysqlite:///lol.db"):
     return create_engine(source, echo=False)
 
 
 class User(SQLModel, table=True):
-    __tablename__: str = "users" # type: ignore
+    __tablename__: str = "users"  # type: ignore
     id: int | None = Field(default=None, primary_key=True)
     email: EmailStr
     username: str
@@ -39,7 +39,7 @@ class User(SQLModel, table=True):
 
 
 class Post(SQLModel, table=True):
-    __tablename__: str = "posts" # type: ignore
+    __tablename__: str = "posts"  # type: ignore
     id: int | None = Field(default=None, primary_key=True)
     title: str
     # TODO: create special type for this
@@ -50,6 +50,7 @@ class Post(SQLModel, table=True):
     score: int = Field(default=0)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     comment_count: int = Field(default=0)
+    content: str = Field(default="")
 
     user_id: int = Field(foreign_key="users.id")
     user: User = Relationship(back_populates="posts")
@@ -95,7 +96,7 @@ class ReactionKind(str, enum.Enum):
 
 
 class Reaction(SQLModel, table=True):
-    __tablename__: str = "reactions" # type: ignore
+    __tablename__: str = "reactions"  # type: ignore
 
     id: int | None = Field(default=None, primary_key=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
@@ -111,15 +112,13 @@ class Reaction(SQLModel, table=True):
 
     kind: ReactionKind
 
-
-
     __table_args__ = (
         UniqueConstraint("user_id", "post_id", "comment_id", name="unique_post_like"),
     )
 
 
 class Comment(SQLModel, table=True):
-    __tablename__: str = "comments" # type: ignore
+    __tablename__: str = "comments"  # type: ignore
     id: int | None = Field(default=None, primary_key=True)
     content: str
     # TODO: create special type for this too

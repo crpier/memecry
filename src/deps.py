@@ -44,6 +44,13 @@ def get_db_session():
     engine = models.get_engine(settings.DB_URL)
     logger.info("Uploading files to %s", settings.UPLOAD_STORAGE)
     SQLModel.metadata.create_all(engine)
+    # create virtual tables manually
+    conn = engine.raw_connection()
+    c = conn.cursor()
+    c.execute(
+        "CREATE VIRTUAL TABLE IF NOT EXISTS posts_data USING fts4(title, content)", ()
+    )
+
     session = functools.partial(Session, engine)
     settings.SUPER_ADMIN_ID = user_service.add_superadmin(session, settings)
     return session

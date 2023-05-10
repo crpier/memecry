@@ -1,5 +1,6 @@
 import logging
 from typing import Callable
+from pathlib import Path
 
 import aiofiles
 import fastapi
@@ -7,6 +8,7 @@ from sqlalchemy.sql.expression import null
 from sqlmodel import Session, col, select
 
 from src import config, models, schema
+from src.index_service import get_text_from_image
 
 logger = logging.getLogger()
 
@@ -57,20 +59,36 @@ async def upload_post(
         new_post = models.Post(**post_data.__dict__)
         s.add(new_post)
         s.commit()
-        # TODO Putting all files in one folder is probably a bad idea long term
+        # TODO: Putting all files in one folder is probably a bad idea long term
         dest = (settings.UPLOAD_STORAGE / uploaded_file.filename).with_stem(
             str(new_post.id)
         )
-        logger.debug("Uploading content to %s", dest)
-        async with aiofiles.open(dest, "wb") as f:
-            await f.write(await uploaded_file.read())
-        new_post.source = "/" + str(dest)
-        new_post_id = new_post.id
-        if not new_post_id:
-            raise ValueError("We created a post with no id??")
-        s.add(new_post)
-        s.commit()
-        return new_post_id
+        try:
+            logger.debug("Uploading content to %s", dest)
+            async with aiofiles.open(dest, "wb") as f:
+                await f.write(await uploaded_file.read())
+            new_post.source = "/" + str(dest)
+            new_post_id = new_post.id
+            if not new_post_id:
+                raise ValueError("We created a post with no id??")
+            s.add(new_post)
+            new_post.content = get_text_from_image(Path(dest), debug=True)
+            conn = s.connection()
+            # TODO: get table name from config
+            __import__("pdb").set_trace()
+            conn.exec_driver_sql(
+                "INSERT INTO posts_data (rowid, title, content) VALUES (?, ?, ?)",
+                (new_post_id, new_post.title, new_post.content),  # type: ignore
+            )
+            s.commit()
+            return new_post_id
+        except Exception as e:
+            logger.error("Error while uploading post: %s", e)
+            s.rollback()
+            s.delete(new_post)
+            s.commit()
+            dest.unlink()
+            raise e
 
 
 def add_reaction(
@@ -173,3 +191,20 @@ def get_user_reaction_on_post(
             )
         ).one_or_none()
         return res.kind if res else None
+
+
+def search_through_posts(
+    query: str, session: Callable[[], Session]
+) -> list[schema.Post]:
+    with session() as s:
+        conn = s.connection()
+        # TODO: get table name from config
+        res = conn.exec_driver_sql(
+            "SELECT rowid FROM posts_data " "WHERE posts_data MATCH ?",
+            (query,),  # type: ignore
+        )
+        post_ids: list[int] = [result[0] for result in res.fetchall()]
+        posts = s.exec(
+            select(models.Post).where(col(models.Post.id).in_(post_ids))
+        ).all()
+        return [schema.Post.from_orm(post) for post in posts]

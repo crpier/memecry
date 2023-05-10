@@ -52,6 +52,7 @@ def page_head():
 
 
 def page_nav(user: schema.User | None):
+    query = "heresy"
     nav_container = nav.attrs(
         _class(
             "flex flex-row items-center justify-start bg-gray-900 p-3 fixed w-full h-14"
@@ -60,7 +61,9 @@ def page_nav(user: schema.User | None):
     app_logo = a.attrs(_class("mr-6 flex flex-shrink-0 items-center"), href="/")(
         span.attrs(_class("text-xl font-semibold tracking-tight"))("Memecry")
     )
-    search_button = button(i.attrs(_class("fa fa-search fa-lg h-6 mr-4")))
+    search_button = button(
+        i.attrs(_class("fa fa-search fa-lg h-6 mr-4"), hx_get(f"/search?query={query}"))
+    )
     signup_button = button.attrs(
         _class(
             "mr-4 inline-block rounded border border-white px-4 py-2 text-sm "
@@ -271,7 +274,10 @@ def post_upload_form():
         ),
         p.attrs(_class("mb-1 text-center text-2xl"))("Upload"),
         form.attrs(
-            hx_encoding("multipart/form-data"), hx_post("/upload"), id="upload-form"
+            hx_encoding("multipart/form-data"),
+            hx_post("/upload"),
+            hx_swap("afterend"),
+            id="upload-form",
         )(
             div.attrs(_class("mb-4"))(
                 label.attrs(("for", "title"))("Title"),

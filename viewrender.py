@@ -55,6 +55,19 @@ def render_posts(
     )
 
 
+def render_search_results(
+    query: str, session: Callable[[], Session], user: User | None = None
+):
+    posts = posting_service.search_through_posts(query=query, session=session)
+    for post in posts:
+        prepare_post_for_viewing(
+            post=post, session=session, user_id=user.id if user else None
+        )
+    return HTMLResponse(
+        render(post_views.post_list(user=user, posts=posts, partial=False))
+    )
+
+
 def render_post(
     post_id: int,
     session: Callable[[], Session],
