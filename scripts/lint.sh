@@ -1,17 +1,28 @@
 #! /bin/bash
 
+status=0
+
 echo "black:"
-black src
+if ! black src --check; then
+  status=1
+fi
 echo -e "---------\n"
 
 echo "isort:"
-isort src --check-only --profile black
+if ! isort src --check-only --profile black; then
+  status=1
+fi
 echo -e "---------\n"
 
 echo "ruff:"
-ruff src
+if ! ruff src; then
+  status=1
+fi
 echo -e "---------\n"
 
 echo "mypy:"
-mypy src
-echo -e "---------\n"
+if ! mypy src; then
+  status=1
+fi
+
+exit $status
