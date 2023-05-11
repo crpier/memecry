@@ -344,6 +344,16 @@ def get_posts(
     return HTMLResponse(render(FlatGroup(*elements)))
 
 
+@app.get("/search-form")
+def redirect_to_search(
+    response: Response,
+    query: str,
+):
+    response.status_code = 303
+    response.headers["HX-Redirect"] = f"/search?query={query}"
+    return response
+
+
 @app.get("/search")
 def search(
     query: str,

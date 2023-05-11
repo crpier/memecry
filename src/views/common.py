@@ -61,8 +61,24 @@ def page_nav(user: schema.User | None):
     app_logo = a.attrs(_class("mr-6 flex flex-shrink-0 items-center"), href="/")(
         span.attrs(_class("text-xl font-semibold tracking-tight"))("Memecry")
     )
-    search_button = button(
-        i.attrs(_class("fa fa-search fa-lg h-6 mr-4"), hx_get(f"/search?query={query}"))
+    search_form = form.attrs(
+        _class("flex flex-row items-center justify-end"),
+        hx_encoding("multipart/form-data"),
+        hx_get("/search-form"),
+        id="search-form",
+    )(
+        label.attrs(("for", "query"))(),
+        input.attrs(
+            _class("w-full rounded border text-black mr-2"),
+            placeholder="search for smth pls",
+            type="search",
+            name="query",
+        ),
+        button.attrs(type="submit")(
+            i.attrs(
+                _class("fa fa-search fa-lg h-6 mr-4"),
+            )
+        ),
     )
     signup_button = button.attrs(
         _class(
@@ -121,7 +137,7 @@ def page_nav(user: schema.User | None):
         nav_container(
             app_logo,
             div.attrs(_class("flex-grow")),
-            search_button,
+            search_form,
             signup_button if not user else None,
             signin_button if not user else None,
             upload_button if user else None,
