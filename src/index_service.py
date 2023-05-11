@@ -1,15 +1,15 @@
-from collections import defaultdict
-from itertools import product
 import re
+from collections import defaultdict
+from functools import lru_cache
+from itertools import product
+from pathlib import Path
 from pprint import pprint
 
-from functools import lru_cache
-from pathlib import Path
-from PIL import Image
-import numpy as np
-import matplotlib.pyplot as plt  # type: ignore
 import cv2  # type: ignore
+import matplotlib.pyplot as plt  # type: ignore
+import numpy as np
 import pytesseract  # type: ignore
+from PIL import Image
 
 
 def _get_image_text(image_path: Path, debug=False, threshold=240, psm=11):
@@ -18,7 +18,7 @@ def _get_image_text(image_path: Path, debug=False, threshold=240, psm=11):
     im = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)  # type: ignore
     _, im = cv2.threshold(im, threshold, 255, 1)  # type: ignore
     if debug:
-        _save_intermediate_image(im)
+        _save_intermediate_image(im)  # type: ignore
     custom_config = rf"--oem 3 --psm {psm}"
     return pytesseract.image_to_string(im, config=custom_config, lang="eng")
 
@@ -74,5 +74,6 @@ def get_text_from_image(image_path: Path, debug=False) -> str:
         pprint(results)
     # I'd rather have all the options available
     return " ".join(results.values())
+
 
 # print(get_text_from_image(Path("/home/crpier/Downloads/memecry/11.mp4")))

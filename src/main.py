@@ -1,11 +1,11 @@
 import logging
 
 import fastapi
-from fastapi.responses import HTMLResponse
 import fastapi.security
 import fastapi.staticfiles
 import fastapi.templating
 from fastapi import (
+    BackgroundTasks,
     Body,
     Depends,
     FastAPI,
@@ -13,12 +13,11 @@ from fastapi import (
     HTTPException,
     Request,
     Response,
-    BackgroundTasks,
 )
+from fastapi.responses import HTMLResponse
 from pydantic import EmailStr
-from simple_html.render import render
 from simple_html.nodes import FlatGroup
-from src.views import common
+from simple_html.render import render
 
 from src import (
     comment_service,
@@ -30,16 +29,17 @@ from src import (
     security,
     user_service,
 )
-from viewrender import (
+from src.viewrender import (
+    get_posts_html,
     render_comments,
     render_login,
     render_new_comment_form,
     render_post,
     render_post_upload,
-    get_posts_html,
-    render_signup,
     render_search_results,
+    render_signup,
 )
+from src.views import common
 
 app = FastAPI()
 

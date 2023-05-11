@@ -3,17 +3,17 @@ from typing import Callable
 
 import babel.dates
 import jinja2
+from simple_html.nodes import Tag
 from simple_html.render import render
 from sqlmodel import Session, select
 from starlette.responses import HTMLResponse
-from simple_html.nodes import Tag, div
 
 from src import comment_service, posting_service, schema
 from src.models import Post, ReactionKind
 from src.schema import User
 from src.views import common
-from src.views.common import hx_get, hx_swap, hx_trigger
 from src.views import posts as post_views
+from src.views.common import hx_get, hx_swap, hx_trigger
 
 
 def prepare_post_for_viewing(
