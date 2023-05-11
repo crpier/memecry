@@ -134,7 +134,7 @@ def page_nav(user: schema.User | None):
     )
 
 
-def page_root(user: schema.User | None, partial: Tag | None = None):
+def page_root(user: schema.User | None, partial: Tag | FlatGroup | None = None):
     return FlatGroup(
         DOCTYPE,
         _html.attrs(lang="en")(

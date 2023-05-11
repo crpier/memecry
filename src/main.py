@@ -7,6 +7,9 @@ import fastapi.staticfiles
 import fastapi.templating
 from fastapi import Body, Depends, FastAPI, Form, HTTPException, Request, Response
 from pydantic import EmailStr
+from simple_html.render import render
+from simple_html.nodes import FlatGroup
+from src.views import common
 
 from src import (
     comment_service,
@@ -24,7 +27,7 @@ from viewrender import (
     render_new_comment_form,
     render_post,
     render_post_upload,
-    render_posts,
+    get_posts_html,
     render_signup,
     render_search_results,
 )
@@ -317,15 +320,6 @@ async def upload_post(
         )
 
 
-@app.get("/search")
-def search(
-    query: str,
-    session=Depends(deps.get_db_session),
-    user: schema.User = Depends(deps.get_current_user_optional),
-):
-    return render_search_results(query=query, user=user, session=session)
-
-
 @app.post("/logout")
 def log_out(response: Response):
     response.delete_cookie(key="Authorization")
@@ -334,11 +328,50 @@ def log_out(response: Response):
     return response
 
 
-@app.get("/")
-def get_index(
-    limit: int = 5,
+@app.get("/posts")
+def get_posts(
     offset: int = 0,
+    limit: int = 0,
+    settings: config.Settings = Depends(deps.get_settings),
     session=Depends(deps.get_db_session),
     optional_current_user: schema.User | None = Depends(deps.get_current_user_optional),
 ):
-    return render_posts(session, user=optional_current_user, limit=limit, offset=offset)
+    if limit == 0:
+        limit = settings.DEFAULT_POSTS_PER_PAGE
+    elements = get_posts_html(
+        session=session, user=optional_current_user, limit=limit, offset=offset
+    )
+    return HTMLResponse(render(FlatGroup(*elements)))
+
+
+@app.get("/search")
+def search(
+    query: str,
+    session=Depends(deps.get_db_session),
+    user: schema.User = Depends(deps.get_current_user_optional),
+):
+    elements = render_search_results(query=query, user=user, session=session)
+    return HTMLResponse(
+        render(common.page_root(user=user, partial=FlatGroup(*elements)))
+    )
+
+
+@app.get("/")
+def get_index(
+    offset: int = 0,
+    limit: int = 0,
+    settings: config.Settings = Depends(deps.get_settings),
+    session=Depends(deps.get_db_session),
+    optional_current_user: schema.User | None = Depends(deps.get_current_user_optional),
+):
+    if limit == 0:
+        limit = settings.DEFAULT_POSTS_PER_PAGE
+    elements = get_posts_html(
+        session=session, user=optional_current_user, limit=limit, offset=offset
+    )
+
+    return HTMLResponse(
+        render(
+            common.page_root(user=optional_current_user, partial=FlatGroup(*elements))
+        )
+    )

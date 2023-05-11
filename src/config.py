@@ -13,6 +13,7 @@ class Settings(pydantic.BaseSettings):
     SUPER_ADMIN_USERNAME: str = "cristi"
     SUPER_ADMIN_PASSWORD: str
     DB_URL: str = "sqlite+pysqlite:///lol.db"
+    DEFAULT_POSTS_PER_PAGE: int = 5
 
     class Config:
         env_file = ".env"

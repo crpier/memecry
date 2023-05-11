@@ -75,7 +75,6 @@ async def upload_post(
             new_post.content = get_text_from_image(Path(dest), debug=True)
             conn = s.connection()
             # TODO: get table name from config
-            __import__("pdb").set_trace()
             conn.exec_driver_sql(
                 "INSERT INTO posts_data (rowid, title, content) VALUES (?, ?, ?)",
                 (new_post_id, new_post.title, new_post.content),  # type: ignore

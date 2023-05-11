@@ -13,7 +13,6 @@ from src.views.common import (
     hx_put,
     hx_swap,
     hx_target,
-    hx_trigger,
     i,
     img,
     input,
@@ -103,23 +102,6 @@ def single_post_partial(post: schema.Post):
 
 def single_post(user: schema.User | None, post: schema.Post):
     return page_root(user=user, partial=single_post_partial(post))
-
-
-def post_list(posts: list[schema.Post], user: schema.User | None, partial=False):
-    post_partials = [single_post_partial(post=post) for post in posts]
-    try:
-        post_partials[-1] = div.attrs(
-            hx_get("/?offset=2"), hx_trigger("revealed"), hx_swap("afterend")
-        )(post_partials[-1])
-    except IndexError:
-        post_partials = []
-    if not partial:
-        return page_root(
-            user=user,
-            partial=div(*post_partials),
-        )
-    else:
-        return div(*post_partials)
 
 
 def new_comment_form(post_url: str, post_id: int):
@@ -221,7 +203,7 @@ def build_comment_list(
 ) -> Tag:
     comments: list[Tag] = []
     for comment_id, children in ids_tree.items():
-        comments.append(single_comment(comments_dict[comment_id])) # type: ignore
+        comments.append(single_comment(comments_dict[comment_id]))  # type: ignore
         if children:
             comments.append(build_comment_list(comments_dict, children, post_id))
 

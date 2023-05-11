@@ -6,11 +6,13 @@ import jinja2
 from simple_html.render import render
 from sqlmodel import Session, select
 from starlette.responses import HTMLResponse
+from simple_html.nodes import Tag, div
 
 from src import comment_service, posting_service, schema
 from src.models import Post, ReactionKind
 from src.schema import User
 from src.views import common
+from src.views.common import hx_get, hx_swap, hx_trigger
 from src.views import posts as post_views
 
 
@@ -32,40 +34,45 @@ def prepare_post_for_viewing(
             post.disliked = True
 
 
-def render_posts(
+def get_posts_html(
+    offset,
+    limit,
     session: Callable[[], Session],
     user: User | None,
-    top: bool = False,
-    offset=0,
-    limit=5,
 ):
-    posts: list[schema.Post]
-    if top:
-        posts = posting_service.get_top_posts(session, offset=offset, limit=limit)
-    else:
-        posts = posting_service.get_newest_posts(session, offset=offset, limit=limit)
+    elements: list[Tag] = []
+    posts = posting_service.get_newest_posts(session, offset=offset, limit=limit)
     for post in posts:
         prepare_post_for_viewing(
             post=post, session=session, user_id=user.id if user else None
         )
+        posts_html = post_views.single_post_partial(post=post)
+        elements.append(posts_html)
+    try:
+        if len(elements) == limit:
+            elements[-1].attributes += (
+                hx_get(f"/posts?offset={offset+limit}"),
+                hx_trigger("revealed"),
+                hx_swap("afterend"),
+            )
+    except IndexError:
+        pass
 
-    # TODO: the responsibility to render the root should be moved to the view
-    return HTMLResponse(
-        render(post_views.post_list(user=user, posts=posts, partial=offset != 0))
-    )
+    return elements
 
 
 def render_search_results(
     query: str, session: Callable[[], Session], user: User | None = None
-):
+) -> list[Tag]:
+    elements: list[Tag] = []
     posts = posting_service.search_through_posts(query=query, session=session)
     for post in posts:
         prepare_post_for_viewing(
             post=post, session=session, user_id=user.id if user else None
         )
-    return HTMLResponse(
-        render(post_views.post_list(user=user, posts=posts, partial=False))
-    )
+        posts_html = post_views.single_post_partial(post=post)
+        elements.append(posts_html)
+    return elements
 
 
 def render_post(
@@ -83,6 +90,7 @@ def render_post(
         prepare_post_for_viewing(
             post=post, session=session, user_id=user.id if user else None
         )
+        # TODO: logic about partials should be moved in main.py I think 🤔
         if partial:
             return HTMLResponse(render(post_views.single_post_partial(post=post)))
         else:
