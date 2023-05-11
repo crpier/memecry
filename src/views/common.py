@@ -52,7 +52,6 @@ def page_head():
 
 
 def page_nav(user: schema.User | None):
-    query = "heresy"
     nav_container = nav.attrs(
         _class(
             "flex flex-row items-center justify-start bg-gray-900 p-3 fixed w-full h-14"

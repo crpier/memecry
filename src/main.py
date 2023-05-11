@@ -5,7 +5,16 @@ from fastapi.responses import HTMLResponse
 import fastapi.security
 import fastapi.staticfiles
 import fastapi.templating
-from fastapi import Body, Depends, FastAPI, Form, HTTPException, Request, Response
+from fastapi import (
+    Body,
+    Depends,
+    FastAPI,
+    Form,
+    HTTPException,
+    Request,
+    Response,
+    BackgroundTasks,
+)
 from pydantic import EmailStr
 from simple_html.render import render
 from simple_html.nodes import FlatGroup
@@ -297,6 +306,7 @@ def open_login_form():
 async def upload_post(
     response: Response,
     file: fastapi.UploadFile,
+    background_tasks: BackgroundTasks,
     title: str = Form(),
     settings: config.Settings = Depends(deps.get_settings),
     session=Depends(deps.get_db_session),
@@ -310,6 +320,11 @@ async def upload_post(
             uploaded_file=file,
             settings=settings,
         )
+
+        background_tasks.add_task(
+            posting_service.index_post, session=session, post_id=new_post_id
+        )
+
         response.status_code = 303
         response.headers["HX-Redirect"] = f"/post/{new_post_id}"
         return response

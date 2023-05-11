@@ -74,3 +74,5 @@ def get_text_from_image(image_path: Path, debug=False) -> str:
         pprint(results)
     # I'd rather have all the options available
     return " ".join(results.values())
+
+# print(get_text_from_image(Path("/home/crpier/Downloads/memecry/11.mp4")))

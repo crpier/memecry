@@ -13,6 +13,8 @@ from src.index_service import get_text_from_image
 logger = logging.getLogger()
 
 
+INDEXABLE_SUFFIXES = [".png", ".jpg", ".jpeg"]
+
 # TODO: one function for posts, with a param
 def get_top_posts(
     session: Callable[[], Session], limit=5, offset=0
@@ -72,13 +74,6 @@ async def upload_post(
             if not new_post_id:
                 raise ValueError("We created a post with no id??")
             s.add(new_post)
-            new_post.content = get_text_from_image(Path(dest), debug=True)
-            conn = s.connection()
-            # TODO: get table name from config
-            conn.exec_driver_sql(
-                "INSERT INTO posts_data (rowid, title, content) VALUES (?, ?, ?)",
-                (new_post_id, new_post.title, new_post.content),  # type: ignore
-            )
             s.commit()
             return new_post_id
         except Exception as e:
@@ -88,6 +83,23 @@ async def upload_post(
             s.commit()
             dest.unlink()
             raise e
+
+
+def index_post(session: Callable[[], Session], post_id: int) -> None:
+    with session() as s:
+        new_post = s.exec(select(models.Post).where(models.Post.id == post_id)).one()
+        assert new_post.source
+        # we need to do this because the source path is absolute
+        dest = Path(new_post.source).relative_to("/")
+        if dest.suffix in INDEXABLE_SUFFIXES:
+            new_post.content = get_text_from_image(Path(dest), debug=True)
+        conn = s.connection()
+        # TODO: get table name from config
+        conn.exec_driver_sql(
+            "INSERT INTO posts_data (rowid, title, content) VALUES (?, ?, ?)",
+            (new_post.id, new_post.title, new_post.content),  # type: ignore
+        )
+        s.commit()
 
 
 def add_reaction(
