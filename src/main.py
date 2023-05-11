@@ -335,8 +335,6 @@ async def upload_post(
         )
 
 
-
-
 @app.post("/logout")
 def log_out(response: Response):
     response.delete_cookie(key="Authorization")
