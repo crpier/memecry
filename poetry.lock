@@ -1535,17 +1535,6 @@ files = [
 test = ["pytest"]
 
 [[package]]
-name = "sqlite-spellfix"
-version = "1.0"
-description = "Loadable spellfix1 extension for sqlite"
-category = "main"
-optional = false
-python-versions = "*"
-files = [
-    {file = "sqlite-spellfix-1.0.tar.gz", hash = "sha256:6451994aeddf871c4c2f25e0794e7d76cdee2a321c19a3dba52d89ec06f31ed9"},
-]
-
-[[package]]
 name = "sqlmodel"
 version = "0.0.8"
 description = "SQLModel, SQL databases in Python, designed for simplicity, compatibility, and robustness."
@@ -1725,4 +1714,4 @@ test = ["covdefaults (>=2.3)", "coverage (>=7.2.3)", "coverage-enable-subprocess
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "8790197bf06fd4a6529ad59be64b1122c9930d5db766e020c272788a4320a2cb"
+content-hash = "14f5998bfaccc1e48ccca6fd7039a6c5aee1502f6d8e4fb48dd8f4e40e64487b"

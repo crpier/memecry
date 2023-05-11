@@ -19,7 +19,7 @@ jobs:
       - uses: snok/install-poetry@v1
         with:
           version: 1.4.2
-          virtualens-create: true
+          virtualenvs-create: true
           virtualenvs-in-project: true
 
       - name: cache deps
