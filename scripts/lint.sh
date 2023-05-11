@@ -1,15 +1,17 @@
+#! /bin/bash
+
 echo "black:"
 black src
-echo "---------"
+echo -e "---------\n"
 
-echo "\nisort:"
+echo "isort:"
 isort src --check-only --profile black
-echo "---------"
+echo -e "---------\n"
 
-echo "\nruff:"
+echo "ruff:"
 ruff src
-echo "---------"
+echo -e "---------\n"
 
-echo "\nmypy:"
+echo "mypy:"
 mypy src
-echo "---------"
+echo -e "---------\n"
