@@ -62,12 +62,14 @@ async def upload_post(
         s.add(new_post)
         s.commit()
         # TODO: Putting all files in one folder is probably a bad idea long term
-        dest = (Path("media") / uploaded_file.filename).with_stem(str(new_post.id))
+        dest = (settings.MEDIA_UPLOAD_STORAGE / uploaded_file.filename).with_stem(
+            str(new_post.id)
+        )
         try:
             logger.debug("Uploading content to %s", dest)
             async with aiofiles.open(dest, "wb") as f:
                 await f.write(await uploaded_file.read())
-            new_post.source = "/" + str(dest)
+            new_post.source = "/media/" + str(dest.name)
             new_post_id = new_post.id
             if not new_post_id:
                 raise ValueError("We created a post with no id??")
