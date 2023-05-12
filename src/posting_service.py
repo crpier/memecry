@@ -62,7 +62,7 @@ async def upload_post(
         s.add(new_post)
         s.commit()
         # TODO: Putting all files in one folder is probably a bad idea long term
-        dest = (settings.UPLOAD_STORAGE / uploaded_file.filename).with_stem(
+        dest = (settings.MEDIA_UPLOAD_STORAGE / uploaded_file.filename).with_stem(
             str(new_post.id)
         )
         try:

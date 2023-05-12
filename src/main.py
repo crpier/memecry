@@ -328,7 +328,9 @@ async def upload_post(
             settings=settings,
         )
 
-        posting_service.index_post(session=session, post_id=new_post_id)
+        background_tasks.add_task(
+            posting_service.index_post, session=session, post_id=new_post_id
+        )
 
         response.status_code = 303
         response.headers["HX-Redirect"] = f"/post/{new_post_id}"
