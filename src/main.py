@@ -331,7 +331,10 @@ async def upload_post(
         logger.info("Finished uploading post %s", new_post_id)
 
         background_tasks.add_task(
-            posting_service.index_post, session=session, post_id=new_post_id
+            posting_service.index_post,
+            session=session,
+            post_id=new_post_id,
+            settings=settings,
         )
 
         response.status_code = 303

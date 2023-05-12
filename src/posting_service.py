@@ -87,14 +87,16 @@ async def upload_post(
             raise e
 
 
-def index_post(session: Callable[[], Session], post_id: int) -> None:
+def index_post(
+    session: Callable[[], Session], post_id: int, settings: config.Settings
+) -> None:
     logger.info("Index post %s", post_id)
     with session() as s:
         new_post = s.exec(select(models.Post).where(models.Post.id == post_id)).one()
         logger.info("Post to index source: %s", new_post.source)
         assert new_post.source
         # we need to do this because the source path is absolute
-        dest = Path(new_post.source).relative_to("/")
+        dest = settings.MEDIA_UPLOAD_STORAGE / Path(new_post.source).name
         if dest.suffix in INDEXABLE_SUFFIXES:
             new_post.content = get_text_from_image(Path(dest), debug=True)
         logger.info("Post %s indexed content: %s", new_post.id, new_post.content)
