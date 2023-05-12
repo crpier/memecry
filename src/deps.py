@@ -1,6 +1,5 @@
 import functools
 import logging
-import os
 import sys
 
 import fastapi
@@ -31,6 +30,7 @@ def get_settings():
 
     logger.info("First admin has id=%s", settings.SUPER_ADMIN_ID)
     comments_dir = settings.MEDIA_UPLOAD_STORAGE / "comments"
+    # TDOO: this validation should be done in the Settings class
     if comments_dir.exists() and comments_dir.is_dir():
         logger.info("Comments dir already exists")
     elif comments_dir.exists() and not comments_dir.is_dir():

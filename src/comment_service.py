@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 from typing import Callable
+from pathlib import Path
 
 import aiofiles
 import babel.dates
@@ -39,7 +40,7 @@ async def post_comment(
         # TODO: "comments" is a magic string
         if attachment:
             dest = (
-                settings.MEDIA_UPLOAD_STORAGE / "comments" / attachment.filename
+                Path("media") / "comments" / attachment.filename
             ).with_stem(str(new_comment.id))
             logger.debug("Uploading content to %s", dest)
             async with aiofiles.open(dest, "wb") as f:

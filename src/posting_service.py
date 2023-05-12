@@ -62,9 +62,7 @@ async def upload_post(
         s.add(new_post)
         s.commit()
         # TODO: Putting all files in one folder is probably a bad idea long term
-        dest = (settings.MEDIA_UPLOAD_STORAGE / uploaded_file.filename).with_stem(
-            str(new_post.id)
-        )
+        dest = (Path("media") / uploaded_file.filename).with_stem(str(new_post.id))
         try:
             logger.debug("Uploading content to %s", dest)
             async with aiofiles.open(dest, "wb") as f:

@@ -11,6 +11,7 @@ import numpy as np
 import pytesseract  # type: ignore
 from PIL import Image
 
+
 def _get_image_text(image_path: Path, debug=False, threshold=240, psm=11):
     im = np.array(Image.open(image_path))
     im = cv2.bilateralFilter(im, 5, 55, 60)  # type: ignore
