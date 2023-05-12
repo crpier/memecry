@@ -39,7 +39,7 @@ async def post_comment(
         # TODO: "comments" is a magic string
         if attachment:
             dest = (
-                settings.UPLOAD_STORAGE / "comments" / attachment.filename
+                settings.MEDIA_UPLOAD_STORAGE / "comments" / attachment.filename
             ).with_stem(str(new_comment.id))
             logger.debug("Uploading content to %s", dest)
             async with aiofiles.open(dest, "wb") as f:

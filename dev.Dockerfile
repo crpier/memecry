@@ -9,7 +9,8 @@ ENV POETRY_VIRTUALENVS_IN_PROJECT=true
 ENV POETRY_VERSION=1.4.2
 ENV PATH="$POETRY_HOME/bin:$PATH"
 RUN python -c 'from urllib.request import urlopen; print(urlopen("https://install.python-poetry.org").read().decode())' | python -
-COPY . ./
+COPY poetry.lock .
+COPY pyproject.toml .
 RUN poetry install --no-interaction --no-ansi -vvv --only main
 
 
@@ -18,4 +19,4 @@ FROM python as runtime
 RUN apt-get update && apt-get install -y python3-opencv libleptonica-dev tesseract-ocr libtesseract-dev python3-pil tesseract-ocr-eng tesseract-ocr-script-latn
 ENV PATH="/app/.venv/bin:$PATH"
 COPY --from=poetry /app /app
-CMD uvicorn src.main:app --host 0.0.0.0 --port $PORT
+CMD uvicorn src.main:app --host 0.0.0.0 --port $PORT --log-level debug --reload

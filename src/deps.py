@@ -30,10 +30,15 @@ def get_settings():
     logger.addHandler(handler)
 
     logger.info("First admin has id=%s", settings.SUPER_ADMIN_ID)
-    try:
-        os.mkdir(settings.UPLOAD_STORAGE / "comments")
-    except FileExistsError:
-        logger.debug("Comment folder exists")
+    comments_dir = settings.MEDIA_UPLOAD_STORAGE / "comments"
+    if comments_dir.exists() and comments_dir.is_dir():
+        logger.info("Comments dir already exists")
+    elif comments_dir.exists() and not comments_dir.is_dir():
+        logger.error("Comments dir is not a directory")
+        sys.exit(1)
+    elif not comments_dir.exists():
+        logger.info("Creating comments dir")
+        comments_dir.mkdir(parents=True)
     return settings
 
 
@@ -42,7 +47,7 @@ def get_db_session():
     # TODO: why can't I use get_settings in Depends?
     settings = get_settings()
     engine = models.get_engine(settings.DB_URL)
-    logger.info("Uploading files to %s", settings.UPLOAD_STORAGE)
+    logger.info("Uploading files to %s", settings.MEDIA_UPLOAD_STORAGE)
     SQLModel.metadata.create_all(engine)
     # create virtual tables manually
     conn = engine.raw_connection()

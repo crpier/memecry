@@ -51,7 +51,11 @@ deps.get_db_session()
 
 #### HTML endpoints ####
 app.mount("/static", fastapi.staticfiles.StaticFiles(directory="static"), name="static")
-app.mount("/media", fastapi.staticfiles.StaticFiles(directory="media"), name="static")
+app.mount(
+    "/media",
+    fastapi.staticfiles.StaticFiles(directory=deps.get_settings().MEDIA_UPLOAD_STORAGE),
+    name="media",
+)
 
 
 ### Login stuff ###
@@ -121,12 +125,15 @@ def get_users_posts(
 @app.post("/post/{post_id}/comment")
 async def comment_on_post(
     post_id: int,
-    file: fastapi.UploadFile,
+    file: fastapi.UploadFile | None = None,
+    # TODO: we should allow comments with no text, but an attachment
     content: str = Body(),
     current_user: schema.User = Depends(deps.get_current_user),
     session=Depends(deps.get_db_session),
     settings: config.Settings = Depends(deps.get_settings),
 ):
+    # TODO: the function should expect a CommentCreate object in formdata,
+    # and perform the validation logic when instantiating
     comment_create = schema.CommentCreate(
         content=content, post_id=post_id, user_id=current_user.id
     )
@@ -142,7 +149,7 @@ async def comment_on_post(
 @app.post("/comment/{comment_id}/comment")
 async def post_comment_reply(
     comment_id: int,
-    attachment: fastapi.UploadFile | None = None,
+    file: fastapi.UploadFile | None = None,
     content: str = Body(),
     current_user: schema.User = Depends(deps.get_current_user),
     session=Depends(deps.get_db_session),
@@ -154,7 +161,7 @@ async def post_comment_reply(
     post_id = await comment_service.post_comment(
         session=session,
         comment_data=comment_create,
-        attachment=attachment,
+        attachment=file,
         settings=settings,
     )
     return render_comments(post_id=post_id, user=current_user, session=session)
@@ -321,9 +328,7 @@ async def upload_post(
             settings=settings,
         )
 
-        background_tasks.add_task(
-            posting_service.index_post, session=session, post_id=new_post_id
-        )
+        posting_service.index_post(session=session, post_id=new_post_id)
 
         response.status_code = 303
         response.headers["HX-Redirect"] = f"/post/{new_post_id}"
