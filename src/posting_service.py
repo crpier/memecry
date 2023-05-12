@@ -54,6 +54,7 @@ async def upload_post(
         # all posts by super admin are top posts huehuehuehue
         if post_data.user_id == settings.SUPER_ADMIN_ID:
             post_data.top = True
+            logger.info("New post by super admin, setting top to True")
         # TODO: some tests that guarantee compatibility between models and schemas
         # for example, to guarantee that a valid models.Post,
         # can be created from a valid schema.PostCreate
@@ -61,12 +62,13 @@ async def upload_post(
         new_post = models.Post(**post_data.__dict__)
         s.add(new_post)
         s.commit()
+        logger.info("New post has ID %s", new_post.id)
         # TODO: Putting all files in one folder is probably a bad idea long term
         dest = (settings.MEDIA_UPLOAD_STORAGE / uploaded_file.filename).with_stem(
             str(new_post.id)
         )
         try:
-            logger.debug("Uploading content to %s", dest)
+            logger.debug("Uploading post content to %s", dest)
             async with aiofiles.open(dest, "wb") as f:
                 await f.write(await uploaded_file.read())
             new_post.source = "/media/" + str(dest.name)
@@ -86,13 +88,16 @@ async def upload_post(
 
 
 def index_post(session: Callable[[], Session], post_id: int) -> None:
+    logger.info("Index post %s", post_id)
     with session() as s:
         new_post = s.exec(select(models.Post).where(models.Post.id == post_id)).one()
+        logger.info("Post to index source: %s", new_post.source)
         assert new_post.source
         # we need to do this because the source path is absolute
         dest = Path(new_post.source).relative_to("/")
         if dest.suffix in INDEXABLE_SUFFIXES:
             new_post.content = get_text_from_image(Path(dest), debug=True)
+        logger.info("Post %s indexed content: %s", new_post.id, new_post.content)
         conn = s.connection()
         # TODO: get table name from config
         conn.exec_driver_sql(
@@ -100,6 +105,7 @@ def index_post(session: Callable[[], Session], post_id: int) -> None:
             (new_post.id, new_post.title, new_post.content),  # type: ignore
         )
         s.commit()
+        logger.info("Post %s indexed", new_post.id)
 
 
 def add_reaction(

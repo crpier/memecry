@@ -7,6 +7,7 @@ import fastapi.security
 import jose
 import jose.jwt
 from fastapi import Depends, HTTPException
+from sqlite_fts4 import register_functions  # type: ignore
 from sqlmodel import Session, SQLModel
 
 from src import config, models, schema, user_service
@@ -51,6 +52,7 @@ def get_db_session():
     SQLModel.metadata.create_all(engine)
     # create virtual tables manually
     conn = engine.raw_connection()
+    register_functions(conn)
     c = conn.cursor()
     c.execute(
         "CREATE VIRTUAL TABLE IF NOT EXISTS posts_data USING fts4(title, content)", ()

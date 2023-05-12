@@ -320,6 +320,7 @@ async def upload_post(
     current_user: schema.User = Depends(deps.get_current_user),
 ):
     new_post = schema.PostCreate(title=title, user_id=current_user.id)
+    logger.info("Uploading post with file %s", file.filename)
     try:
         new_post_id = await posting_service.upload_post(
             post_data=new_post,
@@ -327,6 +328,7 @@ async def upload_post(
             uploaded_file=file,
             settings=settings,
         )
+        logger.info("Finished uploading post %s", new_post_id)
 
         background_tasks.add_task(
             posting_service.index_post, session=session, post_id=new_post_id
