@@ -127,7 +127,7 @@ class Reaction(SQLModel, table=True):
 class Comment(SQLModel, table=True):
     __tablename__: str = "comments"  # type: ignore
     id: int | None = Field(default=None, primary_key=True)
-    content: str
+    content: str | None = Field(default=None)
     # TODO: create special type for this too
     attachment_source: str | None = Field(default=None)
     likes: int = Field(default=0)

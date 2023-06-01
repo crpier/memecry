@@ -1,7 +1,7 @@
 from simple_html.nodes import FlatGroup, Tag, li, ul, video
 from simple_html.render import render
 
-from src import models, schema
+from src import schema
 from src.views.common import (
     _class,
     a,
@@ -133,8 +133,7 @@ def new_comment_form_partial(post_url: str, post_id: int) -> Tag:
     )
 
 
-# TODO: use comment from schema instead
-def single_comment(comment: schema.Comment):
+def single_comment(comment: schema.Comment, child: Tag | None = None) -> Tag:
     return li.attrs(_class("flex flex-col text-sm"), id=f"single-comment-{comment.id}")(
         div.attrs(_class("flex flex-row mb-4"))(
             img.attrs(
@@ -197,30 +196,42 @@ def single_comment(comment: schema.Comment):
                     )("Reply"),
                 ),
             ),
-        )
+        ),
+        child,
     )
-
-
-def build_comment_list(
-    comments_dict: dict[int, models.Comment], ids_tree: dict, post_id: int, top=False
-) -> Tag:
-    comments: list[Tag] = []
-    for comment_id, children in ids_tree.items():
-        comments.append(single_comment(comments_dict[comment_id]))  # type: ignore
-        if children:
-            comments.append(build_comment_list(comments_dict, children, post_id))
-
-    return ul.attrs(_class("ml-16" if not top else ""))(*comments)
 
 
 def new_comment_form_view(post_url: str, post_id: int) -> str:
     return render(new_comment_form_partial(post_url=post_url, post_id=post_id))
 
 
-def comment_tree_view(
-    comments_dict: dict[int, models.Comment], ids_tree: dict, post_id: int
-) -> str:
-    comments = build_comment_list(comments_dict, ids_tree, post_id, top=True)
+def one_comment_tree(
+    root_comment: schema.Comment, comments: list[schema.Comment]
+) -> Tag:
+    comment_elements: list[Tag] = []
+    for comment in filter(lambda c: c.parent_id == root_comment.id, comments):
+        if any(c.parent_id == comment.id for c in comments):
+            # comment has children
+            new_comment = single_comment(
+                comment, child=one_comment_tree(root_comment=comment, comments=comments)
+            )
+        else:
+            new_comment = single_comment(comment)
+
+        comment_elements.append(new_comment)
+
+    return single_comment(
+        root_comment,
+        child=ul.attrs(_class("ml-16"))(*comment_elements),
+    )
+
+
+def comment_tree_view(comments: list[schema.Comment], post_id: int) -> str:
+    comment_trees: list[Tag] = []
+    for top_comment in filter(lambda c: c.parent_id is None, comments):
+        comment_trees.append(
+            one_comment_tree(root_comment=top_comment, comments=comments)
+        )
     return render(
         div.attrs(
             _class(
@@ -232,7 +243,7 @@ def comment_tree_view(
             new_comment_form_partial(
                 post_url=f"/post/{post_id}/comment", post_id=post_id
             ),
-            comments,
+            ul(*comment_trees),
         )
     )
 

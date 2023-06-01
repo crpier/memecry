@@ -82,7 +82,6 @@ def get_comment_tree(
     session: Callable[[], Session], post_id: int
 ) -> tuple[dict[int, schema.Comment], dict]:
     tree = {}
-    datetime.utcnow()
     with session().no_autoflush as s:
         all_comments = s.exec(
             select(models.Comment)
@@ -103,6 +102,49 @@ def get_comment_tree(
             comment.id: schema.Comment.from_orm(comment) for comment in all_comments
         }
         return comments_dict, tree  # type: ignore
+
+
+def get_comments(
+    session: Callable[[], Session], post_id: int, viewer: schema.User | None = None
+) -> list[schema.Comment]:
+    with session() as s:
+        res = s.exec(
+            select(models.Comment)
+            .options(selectinload(models.Comment.user))
+            .where(models.Comment.post_id == post_id)
+            .order_by(models.Comment.created_at.asc())  # type: ignore
+        ).all()
+        # TODO: this should be done in the service
+        results: list[schema.Comment] = []
+
+        for comment in res:
+            comment_id: int = comment.id  # type: ignore
+            if viewer:
+                reaction = get_user_reaction_on_comment(
+                    session=session, comment_id=comment_id, user_id=viewer.id
+                )
+            else:
+                reaction = None
+            results.append(
+                schema.Comment.from_model(
+                    comment_in_db=comment,
+                    reaction=reaction,
+                )
+            )
+        return results
+
+
+def get_user_reaction_on_comment(
+    session: Callable[[], Session], comment_id: int, user_id: int
+) -> models.ReactionKind | None:
+    with session() as s:
+        res = s.exec(
+            select(models.Reaction).where(
+                models.Reaction.comment_id == comment_id,
+                models.Reaction.user_id == user_id,
+            )
+        ).one_or_none()
+        return res.kind if res else None
 
 
 def prepare_comment_for_viewing(

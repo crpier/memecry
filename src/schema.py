@@ -125,7 +125,7 @@ class PostInDB(PostInDBBase):
 ### Comment
 # Shared properties
 class CommentBase(pydantic.BaseModel):
-    content: str
+    content: str | None
 
 
 # Properties to receive via API on creation
@@ -159,6 +159,25 @@ class Comment(CommentInDBBase):
     disliked: bool | None = None
     created_at: str | datetime
     user: User
+
+    @staticmethod
+    def from_model(
+        comment_in_db: models.Comment, reaction: models.ReactionKind | None = None
+    ) -> "Comment":
+        now = datetime.utcnow()
+
+        comment_dict = comment_in_db.__dict__
+        comment_dict["created_at"] = babel.dates.format_timedelta(
+            comment_in_db.created_at - now, add_direction=True, locale="en_US"
+        )
+        new_comment = Comment(**comment_dict)
+        if reaction:
+            if reaction == models.ReactionKind.Like:
+                new_comment.liked = True
+            elif reaction == models.ReactionKind.Dislike:
+                new_comment.disliked = True
+
+        return new_comment
 
 
 class CommentInDB(CommentInDBBase):

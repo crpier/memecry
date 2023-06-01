@@ -205,6 +205,7 @@ def get_posts_by_user(
         if res is None:
             return []
         else:
+            # TODO: use from_model
             return [schema.Post.from_orm(post[0]) for post in res]
 
 
