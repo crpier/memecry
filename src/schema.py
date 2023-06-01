@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 
 import babel.dates
 import pydantic
@@ -80,7 +81,7 @@ class PostUpdate(PostBase):
 class PostInDBBase(PostBase):
     id: int
     user_id: int
-    source: str
+    source: Path
     top: bool
     likes: int
     dislikes: int
@@ -89,6 +90,14 @@ class PostInDBBase(PostBase):
     disliked: bool | None = None
     score: int
     comment_count: int
+
+    @pydantic.validator("source")
+    def source_must_be_absolute(cls, v: Path):
+        if not v.is_absolute():
+            raise ValueError(
+                "source must be an absolute path (it is used as url to the file)"
+            )
+        return v
 
     class Config:
         orm_mode = True
@@ -142,12 +151,21 @@ class CommentUpdate(CommentBase):
 
 class CommentInDBBase(CommentBase):
     id: int
-    attachment_source: str | None = None
+    attachment_source: Path | None = None
     parent_id: int | None = None
     post_id: int
     user_id: int
     dislikes: int
     likes: int
+
+    @pydantic.validator("attachment_source")
+    def attachment_source_must_be_absolute(cls, v: Path):
+        if v is not None and not v.is_absolute():
+            raise ValueError(
+                "Attachment_source must be an absolute "
+                "path (it is used as url to the file)"
+            )
+        return v
 
     class Config:
         orm_mode = True

@@ -35,11 +35,12 @@ async def post_comment(
         s.commit()
         new_comment.post.comment_count += 1
         s.commit()
-        # TODO Putting all files in one folder is probably a bad idea long term
-        # TODO: "comments" is a magic string
+        # TODO: Putting all files in one folder is probably a bad idea long term
         if attachment:
             dest = (
-                settings.MEDIA_UPLOAD_STORAGE / "comments" / attachment.filename
+                settings.MEDIA_UPLOAD_STORAGE
+                / settings.COMMENT_SUBDIR
+                / attachment.filename
             ).with_stem(str(new_comment.id))
             logger.debug("Uploading content to %s", dest)
             async with aiofiles.open(dest, "wb") as f:
@@ -114,7 +115,6 @@ def get_comments(
             .where(models.Comment.post_id == post_id)
             .order_by(models.Comment.created_at.asc())  # type: ignore
         ).all()
-        # TODO: this should be done in the service
         results: list[schema.Comment] = []
 
         for comment in res:
@@ -178,7 +178,6 @@ def add_reaction(
     comment_id: int,
     user_id: int,
 ) -> int:
-    # TODO: instead of re-liking/re-disliking, I should undo the reaction
     with session() as s:
         old_reaction = s.exec(
             select(models.Reaction).where(

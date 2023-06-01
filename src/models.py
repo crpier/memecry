@@ -23,7 +23,6 @@ class User(SQLModel, table=True):
     email: EmailStr
     username: str
     pass_hash: str
-    # TODO: custom validator or smth
     achievements: list[str] = Field(sa_column=Column(JSON), default=[])
     verified: bool = Field(default=False)
     banned: bool = Field(default=False)
@@ -42,7 +41,6 @@ class Post(SQLModel, table=True):
     __tablename__: str = "posts"  # type: ignore
     id: int | None = Field(default=None, primary_key=True)
     title: str
-    # TODO: create special type for this
     source: str | None = Field(default=None)
     top: bool = Field(default=False)
     likes: int = Field(default=0)
@@ -128,7 +126,6 @@ class Comment(SQLModel, table=True):
     __tablename__: str = "comments"  # type: ignore
     id: int | None = Field(default=None, primary_key=True)
     content: str | None = Field(default=None)
-    # TODO: create special type for this too
     attachment_source: str | None = Field(default=None)
     likes: int = Field(default=0)
     dislikes: int = Field(default=0)

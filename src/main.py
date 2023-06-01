@@ -238,8 +238,11 @@ def get_post(
 def get_users_posts(
     username: str,
     session=Depends(deps.get_db_session),
+    optional_current_user: schema.User | None = Depends(deps.get_current_user_optional),
 ):
-    return posting_service.get_posts_by_user(username, session)
+    return posting_service.get_posts_by_user(
+        owner_id=username, session=session, viewer=optional_current_user
+    )
 
 
 @app.get("/search-form")
@@ -329,7 +332,9 @@ async def comment_on_post(
         attachment=file,
         settings=settings,
     )
-    comments = comment_service.get_comments(session=session, post_id=post_id)
+    comments = comment_service.get_comments(
+        session=session, post_id=post_id, viewer=user
+    )
     return HTMLResponse(
         posts_views.comment_tree_view(
             comments=comments,
@@ -350,7 +355,7 @@ def coment_on_comment_form(comment_id: int, post_id: int):
 async def comment_on_comment(
     comment_id: int,
     file: fastapi.UploadFile | None = None,
-    content: str = Body(),
+    content: str | None = Body(default=None),
     current_user: schema.User = Depends(deps.get_current_user),
     session=Depends(deps.get_db_session),
     settings: config.Settings = Depends(deps.get_settings),
@@ -375,7 +380,9 @@ async def get_comments_on_post(
     user: schema.User = Depends(deps.get_current_user_optional),
     session=Depends(deps.get_db_session),
 ):
-    comments = comment_service.get_comments(session=session, post_id=post_id)
+    comments = comment_service.get_comments(
+        session=session, post_id=post_id, viewer=user
+    )
     return HTMLResponse(
         posts_views.comment_tree_view(comments=comments, post_id=post_id)
     )
@@ -393,20 +400,11 @@ async def like_comment(
         user_id=current_user.id,
         reaction_kind=models.ReactionKind.Like,
     )
-    comments_dict, ids_tree = comment_service.get_comment_tree(
-        post_id=post_id, session=session
+    comments = comment_service.get_comments(
+        session=session, post_id=post_id, viewer=current_user
     )
-    # TODO: this should be done in the service
-    for comment in comments_dict.values():
-        comment = comment_service.prepare_comment_for_viewing(
-            session=session, comment=comment, user=current_user
-        )
     return HTMLResponse(
-        posts_views.comment_tree_view(
-            comments_dict=comments_dict,  # type: ignore
-            ids_tree=ids_tree,
-            post_id=post_id,
-        )
+        posts_views.comment_tree_view(comments=comments, post_id=post_id)
     )
 
 
@@ -425,15 +423,9 @@ async def dislike_comment(
     comments_dict, ids_tree = comment_service.get_comment_tree(
         post_id=post_id, session=session
     )
-    # TODO: this should be done in the service
-    for comment in comments_dict.values():
-        comment = comment_service.prepare_comment_for_viewing(
-            session=session, comment=comment, user=current_user
-        )
+    comments = comment_service.get_comments(
+        session=session, post_id=post_id, viewer=current_user
+    )
     return HTMLResponse(
-        posts_views.comment_tree_view(
-            comments_dict=comments_dict,  # type: ignore
-            ids_tree=ids_tree,
-            post_id=post_id,
-        )
+        posts_views.comment_tree_view(comments=comments, post_id=post_id)
     )

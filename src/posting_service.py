@@ -13,10 +13,6 @@ from src.index_service import get_text_from_image
 logger = logging.getLogger()
 
 
-# TODO: this const should be in the index service
-INDEXABLE_SUFFIXES = [".png", ".jpg", ".jpeg"]
-
-
 def get_posts(
     session: Callable[[], Session], limit=5, offset=0, viewer: schema.User | None = None
 ) -> list[schema.Post]:
@@ -37,6 +33,31 @@ def get_posts(
             ]
         else:
             return [schema.Post.from_model(post) for post in res]
+
+
+def get_posts_by_user(
+    owner_id: str, session: Callable[[], Session], viewer: schema.User | None = None
+) -> list[schema.Post]:
+    with session() as s:
+        res = s.exec(select(models.Post).where(models.Post.user_id == owner_id)).all()
+        if res is None:
+            return []
+        else:
+            if viewer:
+                return [
+                    schema.Post.from_model(
+                        post,
+                        # TODO: we might want to do a single query for all reactions
+                        get_user_reaction_on_post(
+                            user_id=viewer.id,
+                            post_id=post.id,  # type: ignore
+                            session=session,
+                        ),
+                    )
+                    for post in res
+                ]
+            else:
+                return [schema.Post.from_model(post) for post in res]
 
 
 def get_post_by_id(
@@ -74,6 +95,8 @@ async def upload_post(
         s.commit()
         logger.info("New post has ID %s", new_post.id)
         # TODO: Putting all files in one folder is probably a bad idea long term
+        # TODO: Maybe conversion from URI path to filesystem path
+        # should be done in the schema
         dest = (settings.MEDIA_UPLOAD_STORAGE / uploaded_file.filename).with_stem(
             str(new_post.id)
         )
@@ -107,8 +130,7 @@ def index_post(
         assert new_post.source
         # we need to do this because the source path is absolute
         dest = settings.MEDIA_UPLOAD_STORAGE / Path(new_post.source).name
-        if dest.suffix in INDEXABLE_SUFFIXES:
-            new_post.content = get_text_from_image(Path(dest), debug=True)
+        new_post.content = get_text_from_image(Path(dest), debug=True)
         logger.info("Post %s indexed content: %s", new_post.id, new_post.content)
         conn = s.connection()
         # TODO: get table name from config
@@ -126,7 +148,6 @@ def add_reaction(
     post_id: int,
     reaction_kind: models.ReactionKind,
 ) -> None:
-    # TODO: instead of re-liking/re-disliking, I should undo the reaction
     with session() as s:
         old_reaction = s.exec(
             select(models.Reaction).where(
@@ -188,25 +209,6 @@ def dislike_post(
         rated_post.likes += 1
         s.add(rated_post)
         s.commit()
-
-
-def get_posts_by_user(
-    username: str, session: Callable[[], Session]
-) -> list[schema.Post]:
-    with session() as s:
-        owner = s.exec(
-            select(models.User).where(models.User.username == username)
-        ).one_or_none()
-        if not owner or not owner.id:
-            return []
-        res = s.execute(
-            select(models.Post).where(models.Post.user_id == owner.id)
-        ).all()
-        if res is None:
-            return []
-        else:
-            # TODO: use from_model
-            return [schema.Post.from_orm(post[0]) for post in res]
 
 
 def get_user_reaction_on_post(

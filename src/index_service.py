@@ -11,6 +11,7 @@ import numpy as np
 import pytesseract  # type: ignore
 from PIL import Image
 
+INDEXABLE_SUFFIXES = [".png", ".jpg", ".jpeg"]
 
 def _get_image_text(image_path: Path, debug=False, threshold=240, psm=11):
     im = np.array(Image.open(image_path))
@@ -58,6 +59,8 @@ def _get_real_word_count(text: str):
 
 
 def get_text_from_image(image_path: Path, debug=False) -> str:
+    if image_path.suffix not in INDEXABLE_SUFFIXES:
+        return ""
     threshold_options = [240, 150]
     psm_options = [6, 11]
     results: dict[int, str] = defaultdict(str)

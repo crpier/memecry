@@ -1,3 +1,4 @@
+from pathlib import Path
 from simple_html.nodes import FlatGroup, Tag, li, ul, video
 from simple_html.render import render
 
@@ -23,16 +24,17 @@ from src.views.common import (
 )
 
 
-def content_is_image(file_name: str) -> bool:
-    name_ext = file_name.rsplit(".", 1)[1]
-    return name_ext in ["png", "jpg", "jpeg"]
+def content_is_image(file_name: Path) -> bool:
+    return file_name.suffix in [".png", ".jpg", ".jpeg"]
 
 
 def post_partial(post: schema.Post) -> Tag:
     if content_is_image(post.source):
-        post_content = img.attrs(src=post.source)
+        post_content = img.attrs(src=str(post.source))
     else:
-        post_content = video.attrs(_class("w-full"), src=post.source, controls="true")
+        post_content = video.attrs(
+            _class("w-full"), src=str(post.source), controls="true"
+        )
 
     return div.attrs(
         _class(
@@ -53,7 +55,6 @@ def post_partial(post: schema.Post) -> Tag:
                 f"{post.score} good boi points"
             ),
             div.attrs(_class("flex-grow")),
-            # TODO: actually use a differently named delta from created_at
             div.attrs(_class("font-semibold"))(
                 post.created_since,
                 " by ",
@@ -157,13 +158,12 @@ def single_comment(comment: schema.Comment, child: Tag | None = None) -> Tag:
                     ),
                     div.attrs(_class("text-sm text-gray-400 mr-1"))("-"),
                     div.attrs(_class("text-sm text-gray-400 mr-1"))(
-                        # TODO: remove this str after moving to schema
                         str(comment.created_at)
                     ),
                 ),
                 img.attrs(
                     _class("mt-1 w-9/12"),
-                    src=comment.attachment_source,
+                    src=str(comment.attachment_source),
                     # TODO: get the alt from the database
                     alt="funny image",
                 )
@@ -206,7 +206,7 @@ def new_comment_form_view(post_url: str, post_id: int) -> str:
 
 
 def one_comment_tree(
-    root_comment: schema.Comment, comments: list[schema.Comment]
+    root_comment: schema.Comment, comments: list[schema.Comment], top: bool = False
 ) -> Tag:
     comment_elements: list[Tag] = []
     for comment in filter(lambda c: c.parent_id == root_comment.id, comments):
@@ -220,17 +220,20 @@ def one_comment_tree(
 
         comment_elements.append(new_comment)
 
-    return single_comment(
-        root_comment,
-        child=ul.attrs(_class("ml-16"))(*comment_elements),
-    )
+    if top:
+        return single_comment(
+            root_comment,
+            child=ul.attrs(_class("ml-16"))(*comment_elements),
+        )
+    else:
+        return ul.attrs(_class("ml-16"))(*comment_elements)
 
 
 def comment_tree_view(comments: list[schema.Comment], post_id: int) -> str:
     comment_trees: list[Tag] = []
     for top_comment in filter(lambda c: c.parent_id is None, comments):
         comment_trees.append(
-            one_comment_tree(root_comment=top_comment, comments=comments)
+            one_comment_tree(root_comment=top_comment, comments=comments, top=True)
         )
     return render(
         div.attrs(

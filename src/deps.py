@@ -30,8 +30,8 @@ def get_settings():
     logger.addHandler(handler)
 
     logger.info("First admin has id=%s", settings.SUPER_ADMIN_ID)
-    comments_dir = settings.MEDIA_UPLOAD_STORAGE / "comments"
-    # TDOO: this validation should be done in the Settings class
+    comments_dir = settings.MEDIA_UPLOAD_STORAGE / settings.COMMENT_SUBDIR
+    # TODO: this validation should be done in the Settings class
     if comments_dir.exists() and comments_dir.is_dir():
         logger.info("Comments dir already exists")
     elif comments_dir.exists() and not comments_dir.is_dir():
@@ -45,7 +45,6 @@ def get_settings():
 
 @functools.lru_cache()
 def get_db_session():
-    # TODO: why can't I use get_settings in Depends?
     settings = get_settings()
     engine = models.get_engine(settings.DB_URL)
     logger.info("Uploading files to %s", settings.MEDIA_UPLOAD_STORAGE)
