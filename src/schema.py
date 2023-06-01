@@ -1,6 +1,9 @@
 from datetime import datetime
 
+import babel.dates
 import pydantic
+
+from src import models
 
 ### User
 
@@ -81,7 +84,6 @@ class PostInDBBase(PostBase):
     top: bool
     likes: int
     dislikes: int
-    created_at: datetime
     user: User
     liked: bool | None = None
     disliked: bool | None = None
@@ -94,11 +96,30 @@ class PostInDBBase(PostBase):
 
 # Additional properites to return via API
 class Post(PostInDBBase):
-    pass
+    created_since: str
+
+    @staticmethod
+    def from_model(
+        post_in_db: models.Post, reaction: models.ReactionKind | None = None
+    ) -> "Post":
+        now = datetime.utcnow()
+
+        post_dict = post_in_db.__dict__
+        post_dict["created_since"] = babel.dates.format_timedelta(
+            post_in_db.created_at - now, add_direction=True, locale="en_US"
+        )
+        new_post = Post(**post_dict)
+        if reaction:
+            if reaction == models.ReactionKind.Like:
+                new_post.liked = True
+            elif reaction == models.ReactionKind.Dislike:
+                new_post.disliked = True
+
+        return new_post
 
 
 class PostInDB(PostInDBBase):
-    pass
+    created_at: datetime
 
 
 ### Comment

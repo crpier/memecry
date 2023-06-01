@@ -5,7 +5,7 @@ from typing import Callable
 import aiofiles
 import fastapi
 from sqlalchemy.sql.expression import null
-from sqlmodel import Session, col, select
+from sqlmodel import Session, select
 
 from src import config, models, schema
 from src.index_service import get_text_from_image
@@ -13,35 +13,45 @@ from src.index_service import get_text_from_image
 logger = logging.getLogger()
 
 
+# TODO: this const should be in the index service
 INDEXABLE_SUFFIXES = [".png", ".jpg", ".jpeg"]
 
-# TODO: one function for posts, with a param
-def get_top_posts(
-    session: Callable[[], Session], limit=5, offset=0
+
+def get_posts(
+    session: Callable[[], Session], limit=5, offset=0, viewer: schema.User | None = None
 ) -> list[schema.Post]:
     with session() as s:
-        posts = s.exec(
-            select(models.Post)
-            .where(col(models.Post.top) is True)
-            .offset(offset)
-            .limit(limit)
-        ).all()
-        return [schema.Post.from_orm(post) for post in posts]
+        res = s.exec(select(models.Post).offset(offset).limit(limit)).all()
+        if viewer:
+            return [
+                schema.Post.from_model(
+                    post,
+                    # TODO: we might want to do a single query for all reactions
+                    get_user_reaction_on_post(
+                        user_id=viewer.id,
+                        post_id=post.id,  # type: ignore
+                        session=session,
+                    ),
+                )
+                for post in res
+            ]
+        else:
+            return [schema.Post.from_model(post) for post in res]
 
 
-def get_newest_posts(
-    session: Callable[[], Session], limit=5, offset=0
-) -> list[schema.Post]:
+def get_post_by_id(
+    session: Callable[[], Session], post_id: int, viewer: schema.User | None = None
+) -> schema.Post:
     with session() as s:
-        posts = s.exec(select(models.Post).offset(offset).limit(limit)).all()
-        return [schema.Post.from_orm(post) for post in posts]
-
-
-def get_post(post_id: int, session: Callable[[], Session]) -> schema.Post:
-    with session() as s:
-        logger.info(f"Looking for post {post_id}")
         res = s.exec(select(models.Post).where(models.Post.id == post_id)).one()
-        return schema.Post.from_orm(res)
+        assert res.id
+        if viewer:
+            reaction = get_user_reaction_on_post(
+                user_id=viewer.id, post_id=res.id, session=session
+            )
+        else:
+            reaction = None
+        return schema.Post.from_model(post_in_db=res, reaction=reaction)
 
 
 async def upload_post(
@@ -144,7 +154,7 @@ def add_reaction(
                 return None
 
         new_reaction = models.Reaction(
-            user_id=user_id, post_id=post_id, kind=reaction_kind.value
+            user_id=user_id, post_id=post_id, kind=reaction_kind
         )
         s.add(new_reaction)
 
@@ -213,7 +223,7 @@ def get_user_reaction_on_post(
 
 
 def search_through_posts(
-    query: str, session: Callable[[], Session]
+    query: str, session: Callable[[], Session], user: schema.User | None = None
 ) -> list[schema.Post]:
     with session() as s:
         conn = s.connection()
@@ -223,7 +233,7 @@ def search_through_posts(
             (query,),  # type: ignore
         )
         post_ids: list[int] = [result[0] for result in res.fetchall()]
-        posts = s.exec(
-            select(models.Post).where(col(models.Post.id).in_(post_ids))
-        ).all()
-        return [schema.Post.from_orm(post) for post in posts]
+        return [
+            get_post_by_id(session=session, post_id=post_id, viewer=user)
+            for post_id in post_ids
+        ]

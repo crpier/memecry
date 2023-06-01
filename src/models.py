@@ -1,5 +1,5 @@
+import datetime
 import enum
-from datetime import datetime
 
 from pydantic import EmailStr
 from sqlmodel import (
@@ -48,12 +48,17 @@ class Post(SQLModel, table=True):
     likes: int = Field(default=0)
     dislikes: int = Field(default=0)
     score: int = Field(default=0)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime.datetime = Field(
+        default_factory=lambda: datetime.datetime.now(tz=datetime.UTC)
+    )
     comment_count: int = Field(default=0)
     content: str = Field(default="")
 
     user_id: int = Field(foreign_key="users.id")
-    user: User = Relationship(back_populates="posts")
+    # we always want the poster's row in the schema, so eagerly load it with JOIN
+    user: User = Relationship(
+        back_populates="posts", sa_relationship_kwargs={"lazy": "joined"}
+    )
     comments: list["Comment"] = Relationship(back_populates="post")
     reactions: list["Reaction"] = Relationship(back_populates="post")
 
@@ -99,7 +104,9 @@ class Reaction(SQLModel, table=True):
     __tablename__: str = "reactions"  # type: ignore
 
     id: int | None = Field(default=None, primary_key=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime.datetime = Field(
+        default_factory=lambda: datetime.datetime.now(tz=datetime.UTC)
+    )
 
     user_id: int = Field(foreign_key="users.id")
     user: User = Relationship(back_populates="reactions")
@@ -125,7 +132,9 @@ class Comment(SQLModel, table=True):
     attachment_source: str | None = Field(default=None)
     likes: int = Field(default=0)
     dislikes: int = Field(default=0)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime.datetime = Field(
+        default_factory=lambda: datetime.datetime.now(tz=datetime.UTC)
+    )
 
     user_id: int = Field(foreign_key="users.id")
     user: User = Relationship(back_populates="comments")

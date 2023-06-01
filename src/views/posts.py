@@ -1,4 +1,5 @@
-from simple_html.nodes import Tag, li, ul, video
+from simple_html.nodes import FlatGroup, Tag, li, ul, video
+from simple_html.render import render
 
 from src import models, schema
 from src.views.common import (
@@ -13,6 +14,7 @@ from src.views.common import (
     hx_put,
     hx_swap,
     hx_target,
+    hx_trigger,
     i,
     img,
     input,
@@ -26,7 +28,7 @@ def content_is_image(file_name: str) -> bool:
     return name_ext in ["png", "jpg", "jpeg"]
 
 
-def single_post_partial(post: schema.Post):
+def post_partial(post: schema.Post) -> Tag:
     if content_is_image(post.source):
         post_content = img.attrs(src=post.source)
     else:
@@ -53,7 +55,7 @@ def single_post_partial(post: schema.Post):
             div.attrs(_class("flex-grow")),
             # TODO: actually use a differently named delta from created_at
             div.attrs(_class("font-semibold"))(
-                post.created_at,  # type: ignore
+                post.created_since,
                 " by ",
                 a.attrs(_class("font-bold text-green-300"), href=".")(
                     post.user.username
@@ -101,10 +103,10 @@ def single_post_partial(post: schema.Post):
 
 
 def single_post(user: schema.User | None, post: schema.Post):
-    return page_root(user=user, partial=single_post_partial(post))
+    return page_root(user=user, child=post_partial(post))
 
 
-def new_comment_form(post_url: str, post_id: int):
+def new_comment_form_partial(post_url: str, post_id: int) -> Tag:
     return form.attrs(
         _class("mb-2 pb-2"),
         hx_encoding("multipart/form-data"),
@@ -117,7 +119,8 @@ def new_comment_form(post_url: str, post_id: int):
             _class("w-full rounded border p-1 mb-2 text-black"),
             type="text",
             name="content",
-            placeholder="write comment pls",
+            placeholder="To be fair, you have to have a very high IQ to understand "
+            "Rick and Morty. The humour is extremely subtle",
         ),
         input.attrs(type="file", name="file"),
         button.attrs(
@@ -210,14 +213,54 @@ def build_comment_list(
     return ul.attrs(_class("ml-16" if not top else ""))(*comments)
 
 
-def comment_tree(
+def new_comment_form_view(post_url: str, post_id: int) -> str:
+    return render(new_comment_form_partial(post_url=post_url, post_id=post_id))
+
+
+def comment_tree_view(
     comments_dict: dict[int, models.Comment], ids_tree: dict, post_id: int
-):
+) -> str:
     comments = build_comment_list(comments_dict, ids_tree, post_id, top=True)
-    return div.attrs(
-        _class(
-            "mt-4 pt-4 flex flex-col justify-start items-start "
-            "border-gray-600 items-stretch"
-        ),
-        id=(f"post-{post_id}-comments"),
-    )(new_comment_form(post_url=f"/post/{post_id}/comment", post_id=post_id), comments)
+    return render(
+        div.attrs(
+            _class(
+                "mt-4 pt-4 flex flex-col justify-start items-start "
+                "border-gray-600 items-stretch"
+            ),
+            id=(f"post-{post_id}-comments"),
+        )(
+            new_comment_form_partial(
+                post_url=f"/post/{post_id}/comment", post_id=post_id
+            ),
+            comments,
+        )
+    )
+
+
+def post_view(
+    post: schema.Post, user: schema.User | None = None, partial_html: bool = False
+) -> str:
+    post_html = post_partial(post)
+    if partial_html:
+        return render(post_html)
+    else:
+        return render(page_root(child=post_html, user=user))
+
+
+def posts_view(
+    posts: list[schema.Post],
+    user: schema.User | None = None,
+    partial_html: bool = False,
+    scroll_continue_url: str | None = None,
+) -> str:
+    elements = [post_partial(post) for post in posts]
+    if scroll_continue_url:
+        elements[-1].attributes += (
+            hx_get(scroll_continue_url),
+            hx_trigger("revealed"),
+            hx_swap("afterend"),
+        )
+    if partial_html:
+        return render(FlatGroup(*elements))
+    else:
+        return render(page_root(child=FlatGroup(*elements), user=user))

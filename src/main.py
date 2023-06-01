@@ -16,9 +16,8 @@ from fastapi import (
 )
 from fastapi.responses import HTMLResponse
 from pydantic import EmailStr
-from simple_html.nodes import FlatGroup
-from simple_html.render import render
 
+import src.views.posts
 from src import (
     comment_service,
     config,
@@ -29,17 +28,8 @@ from src import (
     security,
     user_service,
 )
-from src.viewrender import (
-    get_posts_html,
-    render_comments,
-    render_login,
-    render_new_comment_form,
-    render_post,
-    render_post_upload,
-    render_search_results,
-    render_signup,
-)
-from src.views import common
+from src.views import common as common_views
+from src.views import posts as posts_views
 
 app = FastAPI()
 
@@ -77,17 +67,13 @@ def get_post(
     user: schema.User = Depends(deps.get_current_user_optional),
     session=Depends(deps.get_db_session),
 ):
-    return render_post(
-        post_id=post_id,
-        user=user,
-        session=session,
-        partial=False,
-    )
+    post = posting_service.get_post_by_id(session=session, post_id=post_id)
+    return HTMLResponse(posts_views.post_view(post=post, user=user, partial_html=False))
 
 
 @app.get("/signup-form")
 def get_signup_form():
-    return render_signup()
+    return HTMLResponse(common_views.signup_form())
 
 
 @app.post("/signup")
@@ -95,7 +81,6 @@ async def create_new_user(
     response: Response,
     password: str = Form(),
     username: str = Form(),
-    # Maybe make email optional only for dev?
     email: EmailStr | None = Form(),
     session=Depends(deps.get_db_session),
     settings=Depends(deps.get_settings),
@@ -128,14 +113,14 @@ async def comment_on_post(
     file: fastapi.UploadFile | None = None,
     # TODO: we should allow comments with no text, but an attachment
     content: str = Body(),
-    current_user: schema.User = Depends(deps.get_current_user),
+    user: schema.User = Depends(deps.get_current_user),
     session=Depends(deps.get_db_session),
     settings: config.Settings = Depends(deps.get_settings),
 ):
     # TODO: the function should expect a CommentCreate object in formdata,
     # and perform the validation logic when instantiating
     comment_create = schema.CommentCreate(
-        content=content, post_id=post_id, user_id=current_user.id
+        content=content, post_id=post_id, user_id=user.id
     )
     await comment_service.post_comment(
         session=session,
@@ -143,11 +128,24 @@ async def comment_on_post(
         attachment=file,
         settings=settings,
     )
-    return render_comments(post_id=post_id, user=current_user, session=session)
+    comments_dict, ids_tree = comment_service.get_comment_tree(
+        post_id=post_id, session=session
+    )
+    for comment in comments_dict.values():
+        comment = comment_service.prepare_comment_for_viewing(
+            session=session, comment=comment, user=user
+        )
+    return HTMLResponse(
+        posts_views.comment_tree_view(
+            comments_dict=comments_dict,  # type: ignore
+            ids_tree=ids_tree,
+            post_id=post_id,
+        )
+    )
 
 
 @app.post("/comment/{comment_id}/comment")
-async def post_comment_reply(
+async def reply_to_comment(
     comment_id: int,
     file: fastapi.UploadFile | None = None,
     content: str = Body(),
@@ -164,12 +162,18 @@ async def post_comment_reply(
         attachment=file,
         settings=settings,
     )
-    return render_comments(post_id=post_id, user=current_user, session=session)
+    # return render_comments(post_id=post_id, user=current_user, session=session)
+    return await get_comments_on_post(
+        post_id=post_id, user=current_user, session=session
+    )
 
 
 @app.get("/comment/{comment_id}/{post_id}/form")
 def open_comment_form(comment_id: int, post_id: int):
-    return render_new_comment_form(comment_id=comment_id, post_id=post_id)
+    post_url = f"/comment/{comment_id}/comment"
+    return HTMLResponse(
+        posts_views.new_comment_form_view(post_url=post_url, post_id=post_id)
+    )
 
 
 @app.get("/post/{post_id}/comments")
@@ -178,23 +182,42 @@ async def get_comments_on_post(
     user: schema.User = Depends(deps.get_current_user_optional),
     session=Depends(deps.get_db_session),
 ):
-    return render_comments(post_id=post_id, session=session, user=user)
+    comments_dict, ids_tree = comment_service.get_comment_tree(
+        post_id=post_id, session=session
+    )
+    # TODO: this should be done in the service
+    for comment in comments_dict.values():
+        comment = comment_service.prepare_comment_for_viewing(
+            session=session, comment=comment, user=user
+        )
+    return HTMLResponse(
+        posts_views.comment_tree_view(
+            comments_dict=comments_dict,  # type: ignore
+            ids_tree=ids_tree,
+            post_id=post_id,
+        )
+    )
 
 
 #### REST endpoints for html ####
-@app.put("/post/{id}/like")
+@app.put("/post/{post_id}/like")
 async def like_post(
-    id: int,
+    post_id: int,
     current_user: schema.User = Depends(deps.get_current_user),
     session=Depends(deps.get_db_session),
 ):
     posting_service.add_reaction(
         session,
-        post_id=id,
+        post_id=post_id,
         user_id=current_user.id,
         reaction_kind=models.ReactionKind.Like,
     )
-    return render_post(post_id=id, session=session, user=current_user)
+    post = posting_service.get_post_by_id(
+        session=session, post_id=post_id, viewer=current_user
+    )
+    return HTMLResponse(
+        posts_views.post_view(post=post, user=current_user, partial_html=True)
+    )
 
 
 @app.put("/comment/{id}/like")
@@ -209,7 +232,21 @@ async def like_comment(
         user_id=current_user.id,
         reaction_kind=models.ReactionKind.Like,
     )
-    return render_comments(post_id=post_id, user=current_user, session=session)
+    comments_dict, ids_tree = comment_service.get_comment_tree(
+        post_id=post_id, session=session
+    )
+    # TODO: this should be done in the service
+    for comment in comments_dict.values():
+        comment = comment_service.prepare_comment_for_viewing(
+            session=session, comment=comment, user=current_user
+        )
+    return HTMLResponse(
+        posts_views.comment_tree_view(
+            comments_dict=comments_dict,  # type: ignore
+            ids_tree=ids_tree,
+            post_id=post_id,
+        )
+    )
 
 
 @app.put("/comment/{id}/dislike")
@@ -224,22 +261,41 @@ async def dislike_comment(
         user_id=current_user.id,
         reaction_kind=models.ReactionKind.Dislike,
     )
-    return render_comments(post_id=post_id, user=current_user, session=session)
+    comments_dict, ids_tree = comment_service.get_comment_tree(
+        post_id=post_id, session=session
+    )
+    # TODO: this should be done in the service
+    for comment in comments_dict.values():
+        comment = comment_service.prepare_comment_for_viewing(
+            session=session, comment=comment, user=current_user
+        )
+    return HTMLResponse(
+        posts_views.comment_tree_view(
+            comments_dict=comments_dict,  # type: ignore
+            ids_tree=ids_tree,
+            post_id=post_id,
+        )
+    )
 
 
-@app.put("/post/{id}/dislike")
+@app.put("/post/{post_id}/dislike")
 async def dislike_post(
-    id: int,
+    post_id: int,
     current_user: schema.User = Depends(deps.get_current_user),
     session=Depends(deps.get_db_session),
 ):
     posting_service.add_reaction(
         session,
-        post_id=id,
+        post_id=post_id,
         user_id=current_user.id,
         reaction_kind=models.ReactionKind.Dislike,
     )
-    return render_post(post_id=id, session=session, user=current_user)
+    post = posting_service.get_post_by_id(
+        session=session, post_id=post_id, viewer=current_user
+    )
+    return HTMLResponse(
+        posts_views.post_view(post=post, user=current_user, partial_html=True)
+    )
 
 
 @app.middleware("http")
@@ -299,14 +355,22 @@ async def login(
     return response
 
 
+@app.post("/logout")
+def log_out(response: Response):
+    response.delete_cookie(key="Authorization")
+    response.headers["HX-Refresh"] = "true"
+    response.status_code = 303
+    return response
+
+
 @app.get("/upload-form")
 def open_upload_form():
-    return render_post_upload()
+    return HTMLResponse(common_views.post_upload_form())
 
 
 @app.get("/login-form")
 def open_login_form():
-    return render_login()
+    return HTMLResponse(common_views.login_form())
 
 
 @app.post("/upload")
@@ -347,30 +411,6 @@ async def upload_post(
         )
 
 
-@app.post("/logout")
-def log_out(response: Response):
-    response.delete_cookie(key="Authorization")
-    response.headers["HX-Refresh"] = "true"
-    response.status_code = 303
-    return response
-
-
-@app.get("/posts")
-def get_posts(
-    offset: int = 0,
-    limit: int = 0,
-    settings: config.Settings = Depends(deps.get_settings),
-    session=Depends(deps.get_db_session),
-    optional_current_user: schema.User | None = Depends(deps.get_current_user_optional),
-):
-    if limit == 0:
-        limit = settings.DEFAULT_POSTS_PER_PAGE
-    elements = get_posts_html(
-        session=session, user=optional_current_user, limit=limit, offset=offset
-    )
-    return HTMLResponse(render(FlatGroup(*elements)))
-
-
 @app.get("/search-form")
 def redirect_to_search(
     response: Response,
@@ -387,9 +427,15 @@ def search(
     session=Depends(deps.get_db_session),
     user: schema.User = Depends(deps.get_current_user_optional),
 ):
-    elements = render_search_results(query=query, user=user, session=session)
+    posts = posting_service.search_through_posts(
+        query=query, session=session, user=user
+    )
     return HTMLResponse(
-        render(common.page_root(user=user, partial=FlatGroup(*elements)))
+        src.views.posts.posts_view(
+            posts=posts,
+            user=user,
+            partial_html=False,
+        )
     )
 
 
@@ -397,18 +443,25 @@ def search(
 def get_index(
     offset: int = 0,
     limit: int = 0,
+    partial_html: bool = False,
     settings: config.Settings = Depends(deps.get_settings),
     session=Depends(deps.get_db_session),
     optional_current_user: schema.User | None = Depends(deps.get_current_user_optional),
 ):
     if limit == 0:
         limit = settings.DEFAULT_POSTS_PER_PAGE
-    elements = get_posts_html(
-        session=session, user=optional_current_user, limit=limit, offset=offset
+    posts = posting_service.get_posts(
+        session=session, limit=limit, offset=offset, viewer=optional_current_user
     )
-
+    if len(posts) == limit:
+        scroll_continue_url = f"/?offset={limit+offset}&partial_html=true"
+    else:
+        scroll_continue_url = None
     return HTMLResponse(
-        render(
-            common.page_root(user=optional_current_user, partial=FlatGroup(*elements))
+        src.views.posts.posts_view(
+            posts=posts,
+            user=optional_current_user,
+            partial_html=partial_html,
+            scroll_continue_url=scroll_continue_url,
         )
     )
