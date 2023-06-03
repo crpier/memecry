@@ -21,6 +21,7 @@ from src.views.common import (
     input,
     p,
     page_root,
+    textarea,
 )
 
 
@@ -28,13 +29,71 @@ def content_is_image(file_name: Path) -> bool:
     return file_name.suffix in [".png", ".jpg", ".jpeg"]
 
 
-def post_partial(post: schema.Post) -> Tag:
+def post_partial(post: schema.Post, editor: bool = False) -> Tag:
     if content_is_image(post.source):
         post_content = img.attrs(src=str(post.source))
     else:
         post_content = video.attrs(
             _class("w-full"), src=str(post.source), controls="true"
         )
+    if post.editable:
+        edit_button = button.attrs(
+            _class(
+                "mr-2 px-3 py-3 flex flex-row p-2 rounded-md border border-gray-600 "
+                "hover:border-gray-500"
+            ),
+            hx_get(f"/post/{post.id}/edit"),
+            hx_target(f"#post-{post.id}"),
+            hx_swap("outerHTML"),
+        )(i.attrs(_class("fa fa-bars")))
+    else:
+        edit_button = None
+    if editor:
+        title_bar = form.attrs(
+            _class("w-full"),
+            hx_encoding("application/x-www-form-urlencoded"),
+            hx_post(f"/post/{post.id}/edit"),
+            hx_target(f"#post-{post.id}"),
+            hx_swap("outerHTML"),
+            id=f"post-{post.id}-edit-form",
+        )(
+            textarea.attrs(
+                _class("mb-4 mt-2 px-2 py-1 text-xl bg-black text-center w-full"),
+                type="text",
+                name="title",
+                rows=str(len(post.title) // 40 + 1),
+            )(post.title)
+        )
+        cancel_button = button.attrs(
+            _class(
+                "px-3 ml-auto mt-2 rounded-md border border-gray-600 font-bold "
+                "hover:border-gray-700 hover:bg-gray-700"
+            ),
+            hx_get(f"/post/{post.id}?partial_html=true"),
+            hx_target(f"#post-{post.id}"),
+            hx_swap("outerHTML"),
+        )("X")
+        edit_button = button.attrs(
+            _class(
+                "font-bold mr-2 px-3 py-2 flex flex-row p-2 rounded-md border "
+                "border-gray-600 hover:border-gray-500 hover:bg-green-700"
+            ),
+            type="submit",
+            form=f"post-{post.id}-edit-form",
+        )("Save")
+        delete_button = button.attrs(
+            _class(
+                "font-bold mr-2 px-3 py-2 flex flex-row p-2 rounded-md border "
+                "bg-red-700 border-gray-600 hover:border-red-600 hover:bg-red-600"
+            ),
+            hx_get(f"/post/{post.id}/edit"),
+            hx_target(f"#post-{post.id}"),
+            hx_swap("outerHTML"),
+        )("Delete")
+    else:
+        title_bar = p.attrs(_class("my-4 text-xl font-bold" + "mt"))(post.title)
+        cancel_button = None
+        delete_button = None
 
     return div.attrs(
         _class(
@@ -44,7 +103,8 @@ def post_partial(post: schema.Post) -> Tag:
         style="background:#181B1D;width:520px;",
         id=f"post-{post.id}",
     )(
-        p.attrs(_class("my-4 text-xl font-bold"))(post.title),
+        cancel_button,
+        title_bar,
         a.attrs(href=f"/post/{post.id}")(post_content),
         div.attrs(
             _class(
@@ -69,7 +129,7 @@ def post_partial(post: schema.Post) -> Tag:
             button.attrs(
                 _class(
                     "mr-3 px-2 py-2 rounded-md border border-gray-600 "
-                    "hover:border-gray-900 " + ("bg-yellow-800" if post.liked else "")
+                    "hover:border-gray-500 " + ("bg-yellow-800" if post.liked else "")
                 ),
                 hx_put(f"/post/{post.id}/like"),
                 hx_target(f"#post-{post.id}"),
@@ -78,16 +138,18 @@ def post_partial(post: schema.Post) -> Tag:
             button.attrs(
                 _class(
                     "mr-3 px-2 py-2 rounded-md border border-gray-600 "
-                    "hover:border-gray-900 " + ("bg-blue-900" if post.disliked else "")
+                    "hover:border-gray-500 " + ("bg-blue-900" if post.disliked else "")
                 ),
                 hx_put(f"/post/{post.id}/dislike"),
                 hx_target(f"#post-{post.id}"),
                 hx_swap("outerHTML"),
             )(i.attrs(_class("fa fa-arrow-down fa-lg"))),
             div.attrs(_class("flex-grow")),
+            delete_button,
+            edit_button,
             button.attrs(
                 _class(
-                    "flex flex-row p-2 rounded-md border border-gray-600"
+                    "flex flex-row p-2 rounded-md border border-gray-600 "
                     "hover:border-gray-500"
                 ),
                 hx_get(f"/post/{post.id}/comments"),
@@ -101,10 +163,6 @@ def post_partial(post: schema.Post) -> Tag:
         ),
         div.attrs(id=f"post-comments-{post.id}"),
     )
-
-
-def single_post(user: schema.User | None, post: schema.Post):
-    return page_root(user=user, child=post_partial(post))
 
 
 def new_comment_form_partial(post_url: str, post_id: int) -> Tag:
@@ -252,9 +310,12 @@ def comment_tree_view(comments: list[schema.Comment], post_id: int) -> str:
 
 
 def post_view(
-    post: schema.Post, user: schema.User | None = None, partial_html: bool = False
+    post: schema.Post,
+    user: schema.User | None = None,
+    partial_html: bool = False,
+    editor: bool = False,
 ) -> str:
-    post_html = post_partial(post)
+    post_html = post_partial(post, editor=editor)
     if partial_html:
         return render(post_html)
     else:

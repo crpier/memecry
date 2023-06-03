@@ -227,11 +227,14 @@ async def upload_post(
 @app.get("/post/{post_id}")
 def get_post(
     post_id: int,
+    partial_html: bool = False,
     user: schema.User = Depends(deps.get_current_user_optional),
     session=Depends(deps.get_db_session),
 ):
-    post = posting_service.get_post_by_id(session=session, post_id=post_id)
-    return HTMLResponse(posts_views.post_view(post=post, user=user, partial_html=False))
+    post = posting_service.get_post_by_id(session=session, post_id=post_id, viewer=user)
+    return HTMLResponse(
+        posts_views.post_view(post=post, user=user, partial_html=partial_html)
+    )
 
 
 @app.get("/users/{username}/posts")
@@ -310,6 +313,36 @@ async def dislike_post(
     )
     return HTMLResponse(
         posts_views.post_view(post=post, user=current_user, partial_html=True)
+    )
+
+
+@app.get("/post/{post_id}/edit")
+def edit_post_form(
+    post_id: int,
+    user: schema.User = Depends(deps.get_current_user),
+    session=Depends(deps.get_db_session),
+):
+    post = posting_service.get_post_by_id(session=session, post_id=post_id, viewer=user)
+    return HTMLResponse(
+        posts_views.post_view(post=post, user=user, partial_html=True, editor=True)
+    )
+
+
+@app.post("/post/{post_id}/edit")
+def edit_post(
+    post_id: int,
+    post_data: schema.PostEdit = Depends(schema.PostEdit),
+    user: schema.User = Depends(deps.get_current_user),
+    session=Depends(deps.get_db_session),
+):
+    posting_service.edit_post(
+        post_id=post_id, post_data=post_data, session=session, editor=user
+    )
+    updated_post = posting_service.get_post_by_id(
+        post_id=post_id, session=session, viewer=user
+    )
+    return HTMLResponse(
+        posts_views.post_view(post=updated_post, user=user, partial_html=True)
     )
 
 

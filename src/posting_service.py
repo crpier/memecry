@@ -28,6 +28,7 @@ def get_posts(
                         post_id=post.id,  # type: ignore
                         session=session,
                     ),
+                    editable=viewer.id == post.user_id,
                 )
                 for post in res
             ]
@@ -53,6 +54,7 @@ def get_posts_by_user(
                             post_id=post.id,  # type: ignore
                             session=session,
                         ),
+                        editable=viewer.id == post.user_id,
                     )
                     for post in res
                 ]
@@ -70,9 +72,13 @@ def get_post_by_id(
             reaction = get_user_reaction_on_post(
                 user_id=viewer.id, post_id=res.id, session=session
             )
+            editable = viewer.id == res.user_id
         else:
             reaction = None
-        return schema.Post.from_model(post_in_db=res, reaction=reaction)
+            editable = False
+        return schema.Post.from_model(
+            post_in_db=res, reaction=reaction, editable=editable
+        )
 
 
 async def upload_post(
@@ -140,6 +146,35 @@ def index_post(
         )
         s.commit()
         logger.info("Post %s indexed", new_post.id)
+
+
+def edit_post(
+    session: Callable[[], Session],
+    post_id: int,
+    post_data: schema.PostEdit,
+    editor: schema.User,
+):
+    with session() as s:
+        post = s.exec(select(models.Post).where(models.Post.id == post_id)).one()
+        if editor.id != post.user_id:
+            raise fastapi.HTTPException(
+                status_code=403, detail="You can only edit your own posts"
+            )
+        # TODO: some tests that guarantee compatibility between models and schemas
+        for key, val in post_data.dict().items():
+            post.__setattr__(key, val)
+        print(post.title)
+        s.add(post)
+        print(post.title)
+        conn = s.connection()
+        # TODO: get table name from config
+        conn.exec_driver_sql(
+            "UPDATE posts_data set title=? where rowid=?",
+            (post_data.title, post_id),  # type: ignore
+        )
+        print(post.title)
+        s.commit()
+        print(post.title)
 
 
 def add_reaction(

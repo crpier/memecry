@@ -28,6 +28,7 @@ hx_swap = str_attr("hx-swap")
 hx_encoding = str_attr("hx-encoding")
 
 input = TagBase("input")
+textarea = TagBase("textarea")
 DOCTYPE = TagBase("!DOCTYPE html")
 
 

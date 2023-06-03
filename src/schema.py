@@ -2,9 +2,19 @@ from datetime import datetime
 from pathlib import Path
 
 import babel.dates
+from fastapi import Form
 import pydantic
 
 from src import models
+
+def form_body(cls):
+    cls.__signature__ = cls.__signature__.replace(
+        parameters=[
+            arg.replace(default=Form(...))
+            for arg in cls.__signature__.parameters.values()
+        ]
+    )
+    return cls
 
 ### User
 
@@ -67,6 +77,11 @@ class PostBase(pydantic.BaseModel):
     title: str
 
 
+@form_body
+class PostEdit(PostBase):
+    ...
+
+
 # Properties to receive via API on creation
 class PostCreate(PostBase):
     user_id: int
@@ -106,10 +121,13 @@ class PostInDBBase(PostBase):
 # Additional properites to return via API
 class Post(PostInDBBase):
     created_since: str
+    editable: bool = False
 
     @staticmethod
     def from_model(
-        post_in_db: models.Post, reaction: models.ReactionKind | None = None
+        post_in_db: models.Post,
+        reaction: models.ReactionKind | None = None,
+        editable: bool = False,
     ) -> "Post":
         now = datetime.utcnow()
 
@@ -117,6 +135,7 @@ class Post(PostInDBBase):
         post_dict["created_since"] = babel.dates.format_timedelta(
             post_in_db.created_at - now, add_direction=True, locale="en_US"
         )
+        post_dict["editable"] = editable
         new_post = Post(**post_dict)
         if reaction:
             if reaction == models.ReactionKind.Like:
