@@ -57,7 +57,9 @@ class Post(SQLModel, table=True):
     user: User = Relationship(
         back_populates="posts", sa_relationship_kwargs={"lazy": "joined"}
     )
-    comments: list["Comment"] = Relationship(back_populates="post")
+    comments: list["Comment"] = Relationship(
+        back_populates="post", sa_relationship_kwargs={"cascade": "all, delete"}
+    )
     reactions: list["Reaction"] = Relationship(back_populates="post")
 
     def add_reaction(self, reaction: "ReactionKind"):

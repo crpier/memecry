@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from simple_html.nodes import FlatGroup, Tag, li, ul, video
 from simple_html.render import render
 
@@ -9,6 +10,7 @@ from src.views.common import (
     button,
     div,
     form,
+    hx_delete,
     hx_encoding,
     hx_get,
     hx_post,
@@ -86,9 +88,7 @@ def post_partial(post: schema.Post, editor: bool = False) -> Tag:
                 "font-bold mr-2 px-3 py-2 flex flex-row p-2 rounded-md border "
                 "bg-red-700 border-gray-600 hover:border-red-600 hover:bg-red-600"
             ),
-            hx_get(f"/post/{post.id}/edit"),
-            hx_target(f"#post-{post.id}"),
-            hx_swap("outerHTML"),
+            hx_delete(f"/post/{post.id}"),
         )("Delete")
     else:
         title_bar = p.attrs(_class("my-4 text-xl font-bold" + "mt"))(post.title)

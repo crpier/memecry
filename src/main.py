@@ -346,6 +346,20 @@ def edit_post(
     )
 
 
+@app.delete("/post/{post_id}")
+def delete_post(
+    post_id: int,
+    response: Response,
+    user: schema.User = Depends(deps.get_current_user),
+    session=Depends(deps.get_db_session),
+):
+    posting_service.delete_post(post_id=post_id, session=session, deleter=user)
+    # TODO: don't redirect when coming from "/"
+    response.headers["HX-Redirect"] = "/"
+    response.status_code = 303
+    return response
+
+
 ### Comments ###
 @app.post("/post/{post_id}/comment")
 async def comment_on_post(

@@ -55,7 +55,8 @@ def get_db_session():
     c = conn.cursor()
     c.execute(
         # TODO: table name comes from config
-        "CREATE VIRTUAL TABLE IF NOT EXISTS posts_data USING fts4(title, content)", ()
+        "CREATE VIRTUAL TABLE IF NOT EXISTS posts_data USING fts4(title, content)",
+        (),
     )
 
     session = functools.partial(Session, engine)

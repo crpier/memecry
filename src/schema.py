@@ -2,10 +2,11 @@ from datetime import datetime
 from pathlib import Path
 
 import babel.dates
-from fastapi import Form
 import pydantic
+from fastapi import Form
 
 from src import models
+
 
 def form_body(cls):
     cls.__signature__ = cls.__signature__.replace(
@@ -15,6 +16,7 @@ def form_body(cls):
         ]
     )
     return cls
+
 
 ### User
 

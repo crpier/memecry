@@ -5,7 +5,7 @@ from typing import Callable
 import aiofiles
 import fastapi
 from sqlalchemy.sql.expression import null
-from sqlmodel import Session, select
+from sqlmodel import Session, col, select
 
 from src import config, models, schema
 from src.index_service import get_text_from_image
@@ -17,7 +17,12 @@ def get_posts(
     session: Callable[[], Session], limit=5, offset=0, viewer: schema.User | None = None
 ) -> list[schema.Post]:
     with session() as s:
-        res = s.exec(select(models.Post).offset(offset).limit(limit)).all()
+        res = s.exec(
+            select(models.Post)
+            .order_by(col(models.Post.created_at).desc())
+            .offset(offset)
+            .limit(limit)
+        ).all()
         if viewer:
             return [
                 schema.Post.from_model(
@@ -136,7 +141,7 @@ def index_post(
         assert new_post.source
         # we need to do this because the source path is absolute
         dest = settings.MEDIA_UPLOAD_STORAGE / Path(new_post.source).name
-        new_post.content = get_text_from_image(Path(dest), debug=True)
+        new_post.content = get_text_from_image(Path(dest), debug=False)
         logger.info("Post %s indexed content: %s", new_post.id, new_post.content)
         conn = s.connection()
         # TODO: get table name from config
@@ -163,18 +168,34 @@ def edit_post(
         # TODO: some tests that guarantee compatibility between models and schemas
         for key, val in post_data.dict().items():
             post.__setattr__(key, val)
-        print(post.title)
         s.add(post)
-        print(post.title)
         conn = s.connection()
         # TODO: get table name from config
         conn.exec_driver_sql(
             "UPDATE posts_data set title=? where rowid=?",
             (post_data.title, post_id),  # type: ignore
         )
-        print(post.title)
         s.commit()
-        print(post.title)
+
+
+def delete_post(
+    session: Callable[[], Session],
+    post_id: int,
+    deleter: schema.User,
+):
+    with session() as s:
+        post = s.exec(select(models.Post).where(models.Post.id == post_id)).one()
+        if deleter.id != post.user_id:
+            raise fastapi.HTTPException(
+                status_code=403, detail="You can only delete your own posts"
+            )
+        s.delete(post)
+        conn = s.connection()
+        conn.exec_driver_sql(
+            "DELETE FROM posts_data where rowid=?",
+            (post_id,),  # type: ignore
+        )
+        s.commit()
 
 
 def add_reaction(
