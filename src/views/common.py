@@ -174,7 +174,8 @@ def page_root(user: schema.User | None, child: Tag | FlatGroup | None = None):
                     main.attrs(
                         _class(
                             "flex flex-col items-center mt-24 "
-                            "justify-center justify-items-center"
+                            "justify-center justify-items-center w-full "
+                            "lg:w-6/12"
                         )
                     )(child)
                 ),

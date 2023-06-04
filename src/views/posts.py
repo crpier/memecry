@@ -59,7 +59,10 @@ def post_partial(post: schema.Post, editor: bool = False) -> Tag:
             id=f"post-{post.id}-edit-form",
         )(
             textarea.attrs(
-                _class("mb-4 mt-2 px-2 py-1 text-xl bg-black text-center w-full"),
+                _class(
+                    "mb-4 mt-2 px-2 py-1 bg-black text-center w-full text-5xl "
+                    "lg:text-xl"
+                ),
                 type="text",
                 name="title",
                 rows=str(len(post.title) // 40 + 1),
@@ -76,16 +79,18 @@ def post_partial(post: schema.Post, editor: bool = False) -> Tag:
         )("X")
         edit_button = button.attrs(
             _class(
-                "font-bold mr-2 px-3 py-2 flex flex-row p-2 rounded-md border "
-                "border-gray-600 hover:border-gray-500 hover:bg-green-700"
+                "font-bold mr-2 mt-4 px-3 py-2 flex flex-row p-2 rounded-md "
+                "border-gray-600 hover:border-gray-500 hover:bg-green-700 "
+                "lg:mt-2"
             ),
             type="submit",
             form=f"post-{post.id}-edit-form",
         )("Save")
         delete_button = button.attrs(
             _class(
-                "font-bold mr-2 px-3 py-2 flex flex-row p-2 rounded-md border "
-                "bg-red-700 border-gray-600 hover:border-red-600 hover:bg-red-600"
+                "font-bold mr-2 mt-4 px-3 py-2 flex flex-row p-2 rounded-md "
+                "bg-red-700 border-gray-600 hover:border-red-600 hover:bg-red-600 "
+                "lg:mt-2"
             ),
             hx_delete(f"/post/{post.id}"),
         )("Delete")
@@ -97,7 +102,7 @@ def post_partial(post: schema.Post, editor: bool = False) -> Tag:
     return div.attrs(
         _class(
             "flex flex-col items-center mb-10 pb-4 text-center w-full "
-            "lg:px-6 lg:border lg:w-9/12"
+            "lg:px-6 lg:border"
         ),
         id=f"post-{post.id}",
     )(
@@ -133,7 +138,7 @@ def post_partial(post: schema.Post, editor: bool = False) -> Tag:
         )(
             button.attrs(
                 _class(
-                    "mr-3 p-2 rounded-xl w-24 h-24 "
+                    "mr-3 p-2 rounded-xl w-20 h-20 "
                     "lg:w-12 lg:h-12 " + (" bg-yellow-800" if post.liked else "")
                 ),
                 hx_put(f"/post/{post.id}/like"),
@@ -142,7 +147,7 @@ def post_partial(post: schema.Post, editor: bool = False) -> Tag:
             )(i.attrs(_class("fa fa-arrow-up fa-lg"))),
             button.attrs(
                 _class(
-                    "mr-3 p-2 rounded-xl w-24 h-24 "
+                    "mr-3 p-2 rounded-xl w-20 h-20 "
                     "lg:w-12 lg:h-12 " + (" bg-blue-900" if post.disliked else "")
                 ),
                 hx_put(f"/post/{post.id}/dislike"),
@@ -183,7 +188,7 @@ def new_comment_form_partial(post_url: str, post_id: int) -> Tag:
         id="comment-upload-form",
     )(
         input.attrs(
-            _class("w-full rounded border p-1 mb-2 text-black"),
+            _class("w-full rounded border p-1 mb-2 text-black text-3xl lg:text-base "),
             type="text",
             name="content",
             placeholder="To be fair, you have to have a very high IQ to understand "
@@ -192,8 +197,8 @@ def new_comment_form_partial(post_url: str, post_id: int) -> Tag:
         input.attrs(type="file", name="file"),
         button.attrs(
             _class(
-                "ml-4 px-4 py-1 rounded border-white bg-blue-500 text-sm font-semibold "
-                "hover:border-transparent hover:bg-white hover:text-teal-500"
+                "ml-4 mt-4 px-4 py-2 rounded bg-blue-500 text-3xl font-semibold "
+                "hover:bg-white hover:text-teal-500 lg:mt-0 lg:text-sm "
             ),
             type="submit",
         )("Submit"),
@@ -212,50 +217,54 @@ def single_comment(comment: schema.Comment, child: Tag | None = None) -> Tag:
             ),
             div.attrs(_class("flex flex-col ml-2 max-w-full"))(
                 div.attrs(_class("flex flex-row"))(
-                    a.attrs(_class("text-blue-500 mr-2 font-bold"), href=".")(
-                        comment.user.username
-                    ),
-                    div.attrs(_class("text-sm text-gray-400 mr-1"))(
+                    a.attrs(
+                        _class("text-blue-500 mr-2 font-bold text-3xl lg:text-base"),
+                        href=".",
+                    )(comment.user.username),
+                    div.attrs(_class("text-2xl lg:text-sm text-gray-400 mr-1"))(
                         f"{comment.likes} Ws"
                     ),
-                    div.attrs(_class("text-sm text-gray-400 mr-1"))("-"),
-                    div.attrs(_class("text-sm text-gray-400 mr-1"))(
+                    div.attrs(_class("text-2xl lg:text-sm text-gray-400 mr-1"))("-"),
+                    div.attrs(_class("text-2xl lg:text-sm text-gray-400 mr-1"))(
                         f"{comment.dislikes} Ls"
                     ),
-                    div.attrs(_class("text-sm text-gray-400 mr-1"))("-"),
-                    div.attrs(_class("text-sm text-gray-400 mr-1"))(
+                    div.attrs(_class("text-2xl lg:text-sm text-gray-400 mr-1"))("-"),
+                    div.attrs(_class("text-2xl lg:text-sm text-gray-400 mr-1"))(
                         str(comment.created_at)
                     ),
                 ),
                 img.attrs(
-                    _class("mt-1 w-9/12"),
+                    _class("mt-1"),
                     src=str(comment.attachment_source),
                     # TODO: get the alt from the database
                     alt="funny image",
                 )
                 if comment.attachment_source
                 else None,
-                div.attrs(_class("text-left"))(comment.content),
-                div.attrs(_class("flex flex-row"))(
+                div.attrs(_class("text-left text-4xl lg:text-base"))(comment.content),
+                div.attrs(_class("flex flex-row mt-4"))(
                     button.attrs(
                         _class(
-                            "rounded px-1 " + ("bg-yellow-800" if comment.liked else "")
+                            "mr-3 p-2 rounded-xl w-20 h-20 "
+                            "lg:w-12 lg:h-12 "
+                            + (" bg-yellow-800" if comment.liked else "")
                         ),
                         hx_put(f"/comment/{comment.id}/like"),
                         hx_target(f"#post-{comment.post_id}-comments"),
                         hx_swap("outerHTML"),
-                    )(i.attrs(_class("fa fa-arrow-up"))),
+                    )(i.attrs(_class("fa fa-arrow-up fa-2x"))),
                     button.attrs(
                         _class(
-                            "mr-4 rounded px-1 "
-                            + ("bg-blue-900" if comment.disliked else "")
+                            "mr-3 p-2 rounded-xl w-20 h-20 "
+                            "lg:w-12 lg:h-12 "
+                            + (" bg-blue-900" if comment.disliked else "")
                         ),
                         hx_put(f"/comment/{comment.id}/dislike"),
                         hx_target(f"#post-{comment.post_id}-comments"),
                         hx_swap("outerHTML"),
-                    )(i.attrs(_class("fa fa-arrow-down"))),
+                    )(i.attrs(_class("fa fa-arrow-down fa-2x"))),
                     button.attrs(
-                        _class("text-blue-500 font-bold"),
+                        _class("text-blue-500 font-bold text-4xl lg:text-sm"),
                         hx_get(f"/comment/{comment.id}/{comment.post_id}/form"),
                         hx_target(f"#single-comment-{comment.id}"),
                         hx_swap("beforeend"),
