@@ -215,7 +215,7 @@ def single_comment(comment: schema.Comment, child: Tag | None = None) -> Tag:
                 or "https://avatars.githubusercontent.com/u/31815875?v=4",
                 alt="user profile picture",
             ),
-            div.attrs(_class("flex flex-col ml-2 max-w-full"))(
+            div.attrs(_class("flex flex-col ml-2 lg:max-w-xs"))(
                 div.attrs(_class("flex flex-row"))(
                     a.attrs(
                         _class("text-blue-500 mr-2 font-bold text-3xl lg:text-base"),

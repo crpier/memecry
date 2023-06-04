@@ -55,7 +55,7 @@ def page_nav(user: schema.User | None):
     nav_container = nav.attrs(
         _class(
             "flex flex-row items-center justify-center bg-gray-900 "
-            "p-3 fixed w-full h-content h-24 text-4xl "
+            "p-3 fixed w-screen h-content h-24 text-4xl "
             "lg:text-base lg:h-14"
         )
     )
@@ -175,7 +175,7 @@ def page_root(user: schema.User | None, child: Tag | FlatGroup | None = None):
                         _class(
                             "flex flex-col items-center mt-24 "
                             "justify-center justify-items-center w-full "
-                            "lg:w-6/12"
+                            "lg:max-w-2xl"
                         )
                     )(child)
                 ),
