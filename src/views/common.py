@@ -30,6 +30,7 @@ hx_encoding = str_attr("hx-encoding")
 
 input = TagBase("input")
 textarea = TagBase("textarea")
+style = TagBase("style")
 DOCTYPE = TagBase("!DOCTYPE html")
 
 
@@ -47,10 +48,6 @@ def page_head():
         ),
         script.attrs(src="/static/js/htmx.min.js?v=1.5.0"),
         script.attrs(src="/static/js/close_modals.js"),
-        script(
-            """
-           """
-        ),
     )
 
 
@@ -58,13 +55,17 @@ def page_nav(user: schema.User | None):
     nav_container = nav.attrs(
         _class(
             "flex flex-row items-center justify-center bg-gray-900 "
-            "p-3 fixed w-full h-content h-24 "
-            "text-4xl"
+            "p-3 fixed w-full h-content h-24 text-4xl "
+            "lg:text-base lg:h-14"
         )
     )
     app_logo = a.attrs(
         _class("mr-6 flex flex-shrink-0 items-center hidden lg:block"), href="/"
-    )(span.attrs(_class("text-4xl font-semibold tracking-tight"))("Memecry"))
+    )(
+        span.attrs(_class("text-4xl font-semibold tracking-tight " "lg:text-lg"))(
+            "Memecry"
+        )
+    )
     search_form = form.attrs(
         _class("flex flex-row items-center justify-end"),
         hx_encoding("multipart/form-data"),
@@ -87,6 +88,7 @@ def page_nav(user: schema.User | None):
     signup_button = button.attrs(
         _class(
             "mr-4 inline-block rounded px-4 py-2 text-4xl "
+            "lg:text-base "
             "leading-none hover:border-transparent hover:bg-white hover:text-teal-500"
         ),
         hx_get("/signup-form"),
@@ -94,8 +96,9 @@ def page_nav(user: schema.User | None):
     )("Sign up")
     signin_button = button.attrs(
         _class(
-            "mr-4 inline-block rounded px-4 py-2 "
-            "text-4xl leading-none "
+            "mr-4 inline-block rounded px-4 py-2 text-4xl "
+            "lg:text-base "
+            "leading-none "
             "hover:border-transparent hover:bg-white hover:text-teal-500"
         ),
         hx_get("/login-form"),
@@ -160,7 +163,7 @@ def page_root(user: schema.User | None, child: Tag | FlatGroup | None = None):
         DOCTYPE,
         _html.attrs(lang="en")(
             page_head(),
-            body.attrs(_class("bg-black text-white text-3xl h-screen"))(
+            body.attrs(_class("bg-black text-white text-3xl h-screen " "lg:text-base"))(
                 page_nav(user),
                 div.attrs(
                     _class(
@@ -184,7 +187,8 @@ def login_form() -> str:
     return render(
         div.attrs(
             _class(
-                "fixed flex flex-col rounded bg-gray-700 px-4 pb-8 text-3xl " "w-8/12"
+                "fixed flex flex-col rounded bg-gray-700 px-4 pb-8 text-3xl "
+                "w-8/12 lg:text-base "
             ),
             style="left:50%;top:50%;transform:translate(-50%,-50%);",
         )(
@@ -196,18 +200,18 @@ def login_form() -> str:
                     onclick="closeLoginModal()",
                 )("X"),
             ),
-            p.attrs(_class("mb-4 text-center text-5xl"))("Sign in"),
+            p.attrs(_class("mb-4 text-center text-5xl lg:text-lg"))("Sign in"),
             form.attrs(
                 hx_encoding("multipart/form-data"), hx_post("/token"), id="upload-form"
             )(
-                div.attrs(_class("mb-4 text-4xl"))(
+                div.attrs(_class("mb-4 text-4xl lg:text-base"))(
                     label.attrs(("for", "username"))("Username"),
                     input.attrs(
                         _class("w-full rounded p-1 text-black"),
                         name="username",
                     ),
                 ),
-                div.attrs(_class("mb-8 text-4xl"))(
+                div.attrs(_class("mb-8 text-4xl lg:text-base"))(
                     label.attrs(("for", "password"))("Password"),
                     input.attrs(
                         _class("w-full rounded p-1 text-black"),
@@ -216,7 +220,10 @@ def login_form() -> str:
                     ),
                 ),
                 div.attrs(
-                    _class("m-auto flex flex-col justify-center items-center text-5xl")
+                    _class(
+                        "m-auto flex flex-col justify-center items-center text-5xl "
+                        "lg:text-lg"
+                    )
                 )(
                     button.attrs(
                         _class(
@@ -234,7 +241,10 @@ def login_form() -> str:
 def signup_form() -> str:
     return render(
         div.attrs(
-            _class("fixed flex flex-col rounded bg-gray-700 px-4 pb-8 text-3xl w-8/12"),
+            _class(
+                "fixed flex flex-col rounded bg-gray-700 px-4 pb-8 text-3xl w-8/12 "
+                "lg:text-base "
+            ),
             style="left:50%;top:50%;transform:translate(-50%,-50%);",
         )(
             div.attrs(_class("mt-2 flex justify-end items-end"))(
@@ -245,25 +255,25 @@ def signup_form() -> str:
                     onclick="closeSignupModal()",
                 )("X"),
             ),
-            p.attrs(_class("mb-4 text-center text-5xl"))("Signup"),
+            p.attrs(_class("mb-4 text-center text-5xl " "lg:text-lg"))("Signup"),
             form.attrs(
                 hx_encoding("multipart/form-data"), hx_post("/signup"), id="upload-form"
             )(
-                div.attrs(_class("mb-4 text-4xl"))(
+                div.attrs(_class("mb-4 text-4xl " "lg:text-lg"))(
                     label.attrs(("for", "username"))("Username"),
                     input.attrs(
                         _class("w-full rounded p-1 text-black"),
                         name="username",
                     ),
                 ),
-                div.attrs(_class("mb-4 text-4xl"))(
+                div.attrs(_class("mb-4 text-4xl " "lg:text-lg"))(
                     label.attrs(("for", "email"))("Email"),
                     input.attrs(
                         _class("w-full rounded p-1 text-black"),
                         name="email",
                     ),
                 ),
-                div.attrs(_class("mb-8 text-4xl"))(
+                div.attrs(_class("mb-8 text-4xl " "lg:text-lg"))(
                     label.attrs(("for", "password"))("Password"),
                     input.attrs(
                         _class("w-full rounded p-1 text-black"),
@@ -272,7 +282,10 @@ def signup_form() -> str:
                     ),
                 ),
                 div.attrs(
-                    _class("m-auto flex flex-col justify-center items-center text-5xl")
+                    _class(
+                        "m-auto flex flex-col justify-center items-center text-5xl "
+                        "lg:text-lg"
+                    )
                 )(
                     button.attrs(
                         _class(
@@ -302,7 +315,7 @@ def post_upload_form():
                     onclick="closeUploadModal()",
                 )("X"),
             ),
-            p.attrs(_class("mb-1 text-center text-2xl"))("Upload"),
+            p.attrs(_class("mb-1 text-center text-3xl " "lg:text-md"))("Upload"),
             form.attrs(
                 hx_encoding("multipart/form-data"),
                 hx_post("/upload"),
