@@ -17,6 +17,7 @@ from simple_html.nodes import (
 from simple_html.render import render
 
 from src import schema
+from src.views import yahgl_common
 
 _class = str_attr("class")
 hx_get = str_attr("hx-get")
@@ -184,59 +185,65 @@ def page_root(user: schema.User | None, child: Tag | FlatGroup | None = None):
     )
 
 
-def login_form() -> str:
-    return render(
-        div.attrs(
-            _class(
-                "fixed flex flex-col rounded bg-gray-700 px-4 pb-8 text-3xl "
-                "w-8/12 lg:text-base "
-            ),
-            style="left:50%;top:50%;transform:translate(-50%,-50%);",
-        )(
-            div.attrs(_class("mt-2 flex justify-end items-end"))(
-                button.attrs(
-                    _class(
-                        "w-max rounded bg-gray-900 px-2 text-right " "hover:bg-gray-700"
-                    ),
-                    onclick="closeLoginModal()",
-                )("X"),
-            ),
-            p.attrs(_class("mb-4 text-center text-5xl lg:text-lg"))("Sign in"),
-            form.attrs(
-                hx_encoding("multipart/form-data"), hx_post("/token"), id="upload-form"
+def login_form(old: bool = False) -> str:
+    if old:
+        return render(
+            div.attrs(
+                _class(
+                    "fixed flex flex-col rounded bg-gray-700 px-4 pb-8 text-3xl "
+                    "w-8/12 lg:text-base "
+                ),
+                style="left:50%;top:50%;transform:translate(-50%,-50%);",
             )(
-                div.attrs(_class("mb-4 text-4xl lg:text-base"))(
-                    label.attrs(("for", "username"))("Username"),
-                    input.attrs(
-                        _class("w-full rounded p-1 text-black"),
-                        name="username",
-                    ),
-                ),
-                div.attrs(_class("mb-8 text-4xl lg:text-base"))(
-                    label.attrs(("for", "password"))("Password"),
-                    input.attrs(
-                        _class("w-full rounded p-1 text-black"),
-                        name="password",
-                        type="password",
-                    ),
-                ),
-                div.attrs(
-                    _class(
-                        "m-auto flex flex-col justify-center items-center text-5xl "
-                        "lg:text-lg"
-                    )
-                )(
+                div.attrs(_class("mt-2 flex justify-end items-end"))(
                     button.attrs(
                         _class(
-                            "m-auto rounded px-4 py-2 bg-gray-900 text-right "
+                            "w-max rounded bg-gray-900 px-2 text-right "
                             "hover:bg-gray-700"
                         ),
-                        type="submit",
-                    )("Sign in")
+                        onclick="closeLoginModal()",
+                    )("X"),
                 ),
-            ),
+                p.attrs(_class("mb-4 text-center text-5xl lg:text-lg"))("Sign in"),
+                form.attrs(
+                    hx_encoding("multipart/form-data"),
+                    hx_post("/token"),
+                    id="upload-form",
+                )(
+                    div.attrs(_class("mb-4 text-4xl lg:text-base"))(
+                        label.attrs(("for", "username"))("Username"),
+                        input.attrs(
+                            _class("w-full rounded p-1 text-black"),
+                            name="username",
+                        ),
+                    ),
+                    div.attrs(_class("mb-8 text-4xl lg:text-base"))(
+                        label.attrs(("for", "password"))("Password"),
+                        input.attrs(
+                            _class("w-full rounded p-1 text-black"),
+                            name="password",
+                            type="password",
+                        ),
+                    ),
+                    div.attrs(
+                        _class(
+                            "m-auto flex flex-col justify-center items-center text-5xl "
+                            "lg:text-lg"
+                        )
+                    )(
+                        button.attrs(
+                            _class(
+                                "m-auto rounded px-4 py-2 bg-gray-900 text-right "
+                                "hover:bg-gray-700"
+                            ),
+                            type="submit",
+                        )("Sign in")
+                    ),
+                ),
+            )
         )
-    )
+    else:
+        return yahgl_common.login_form().render()
 
 
 def signup_form() -> str:
