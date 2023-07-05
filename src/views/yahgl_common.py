@@ -14,38 +14,26 @@ from yahgl_py.main import (
     meta,
     script,
     title,
+    nav,
+    svg,
+    path,
+    p,
 )
 
 from src import schema
 
 
-def open_login_form():
-    return div(classes=["flex", "items-center", "justify-center", "h-screen"]).insert(
-        button(
-            classes=[
-                "bg-blue-500",
-                "hover:bg-blue-700",
-                "text-white",
-                "font-bold",
-                "py-2",
-                "px-4",
-                "rounded",
-                "focus:outline-none",
-                "focus:shadow-outline",
-            ],
-            attrs={"onclick": "toggleModal()"},
-        ).text("Open Login Form")
-    )
-
-
 def login_form():
     return div(
         classes=[
+            "z-10",
             "top-0",
             "left-0",
             "w-full",
             "h-full",
-            "bg-transparent",
+            "fixed",
+            "bg-black",
+            "bg-opacity-75",
         ],
     ).insert(
         div(classes=["flex", "items-center", "justify-center", "h-screen"]).insert(
@@ -66,9 +54,14 @@ def login_form():
                     button(
                         classes=["text-white", "text-2xl", "focus:outline-none"],
                         attrs={"onclick": "closeLoginModal()"},
-                    ).text("×"),
+                    ).text("X"),
                 ),
-                form().insert(
+                form(
+                    attrs={
+                        "hx-encoding": "multipart/form-data",
+                        "hx-post": "/token",
+                    }
+                ).insert(
                     div(classes=["mb-4"]).insert(
                         label(
                             _for="username",
@@ -82,7 +75,7 @@ def login_form():
                         ).text("Username"),
                         input(
                             type=InputType.text,
-                            name="TODO-name-me",
+                            name="username",
                             classes=[
                                 "shadow",
                                 "appearance-none",
@@ -115,7 +108,7 @@ def login_form():
                         ).text("Password"),
                         input(
                             type=InputType.password,
-                            name="TODO-name-me",
+                            name="password",
                             classes=[
                                 "shadow",
                                 "appearance-none",
@@ -149,7 +142,7 @@ def login_form():
                                 "focus:outline-none",
                                 "focus:shadow-outline",
                             ],
-                            attrs={"type": "button", "onclick": "toggleLoginModal()"},
+                            attrs={"type": "submit", "onclick": "toggleLoginModal()"},
                         ).text("Sign In"),
                         a(
                             href="#",
@@ -181,7 +174,16 @@ function closeLoginModal() {
 
 def signup_form():
     return div(
-        classes=["z-50", "top-0", "left-0", "w-full", "h-full"],
+        classes=[
+            "z-10",
+            "top-0",
+            "left-0",
+            "w-full",
+            "h-full",
+            "fixed",
+            "bg-black",
+            "bg-opacity-75",
+        ],
         attrs={"id": "signup-modal"},
     ).insert(
         div(classes=["flex", "items-center", "justify-center", "h-screen"]).insert(
@@ -202,9 +204,14 @@ def signup_form():
                     button(
                         classes=["text-white", "text-2xl", "focus:outline-none"],
                         attrs={"onclick": "closeSignupModal()"},
-                    ).text("×"),
+                    ).text("X"),
                 ),
-                form().insert(
+                form(
+                    attrs={
+                        "hx-encoding": "multipart/form-data",
+                        "hx-post": "/signup",
+                    }
+                ).insert(
                     div(classes=["mb-4"]).insert(
                         label(
                             _for="username",
@@ -218,7 +225,7 @@ def signup_form():
                         ).text("Username"),
                         input(
                             type=InputType.text,
-                            name="TODO-name-me",
+                            name="username",
                             classes=[
                                 "shadow",
                                 "appearance-none",
@@ -251,7 +258,7 @@ def signup_form():
                         ).text("Email"),
                         input(
                             type=InputType.email,
-                            name="TODO-name-me",
+                            name="email",
                             classes=[
                                 "shadow",
                                 "appearance-none",
@@ -284,7 +291,7 @@ def signup_form():
                         ).text("Password"),
                         input(
                             type=InputType.password,
-                            name="TODO-name-me",
+                            name="password",
                             classes=[
                                 "shadow",
                                 "appearance-none",
@@ -319,7 +326,7 @@ def signup_form():
                                 "focus:shadow-outline",
                             ],
                             attrs={
-                                "type": "button",
+                                "type": "submit",
                                 "onclick": "toggleModal('signup-modal')",
                             },
                         ).text("Sign Up"),
@@ -371,7 +378,117 @@ def page_head():
 
 
 def page_nav(user: schema.User | None) -> Tag:
-    ...
+    return nav(classes=["bg-gray-800"]).insert(
+        div(classes=["max-w-7xl", "mx-auto", "px-4", "sm:px-6", "lg:px-8"]).insert(
+            div(classes=["flex", "justify-between", "h-16"]).insert(
+                div(classes=["flex"]).insert(
+                    a(
+                        href="#",
+                        classes=[
+                            "flex-shrink-0",
+                            "flex",
+                            "items-center",
+                            "text-white",
+                            "font-bold",
+                        ],
+                    ).text("Logo"),
+                    div(
+                        classes=["hidden", "md:ml-6", "md:flex", "md:space-x-4"]
+                    ).insert(
+                        div(classes=["relative"]).insert(
+                            div(
+                                classes=[
+                                    "absolute",
+                                    "inset-y-0",
+                                    "left-0",
+                                    "pl-3",
+                                    "flex",
+                                    "items-center",
+                                    "pointer-events-none",
+                                ]
+                            ).insert(
+                                svg(
+                                    classes=["h-5", "w-5", "text-gray-400"],
+                                    attrs={
+                                        "fill": "none",
+                                        "viewbox": "0 0 24 24",
+                                        "stroke": "currentColor",
+                                    },
+                                ).insert(
+                                    path(
+                                        attrs={
+                                            "stroke-linecap": "round",
+                                            "stroke-linejoin": "round",
+                                            "stroke-width": "2",
+                                            "d": "M4 6h16M4 12h16M4 18h16",
+                                        }
+                                    ).text("")
+                                )
+                            ),
+                            input(
+                                type=InputType.text,
+                                name="TODO-name-me",
+                                classes=[
+                                    "bg-gray-700",
+                                    "text-white",
+                                    "rounded-md",
+                                    "py-2",
+                                    "pl-10",
+                                    "pr-4",
+                                    "focus:outline-none",
+                                    "focus:bg-white",
+                                    "focus:text-gray-900",
+                                    "placeholder-gray-400",
+                                ],
+                                attrs={"placeholder": "Search"},
+                            ),
+                        )
+                    ),
+                ),
+                div(classes=["flex", "items-center"]).insert(
+                    a(
+                        href="#",
+                        classes=[
+                            "text-gray-300",
+                            "hover:bg-gray-700",
+                            "hover:text-white",
+                            "px-3",
+                            "py-2",
+                            "rounded-md",
+                            "text-sm",
+                            "font-medium",
+                        ],
+                    ).text("Upload"),
+                    a(
+                        href="#",
+                        classes=[
+                            "text-gray-300",
+                            "hover:bg-gray-700",
+                            "hover:text-white",
+                            "px-3",
+                            "py-2",
+                            "rounded-md",
+                            "text-sm",
+                            "font-medium",
+                        ],
+                    ).text("Profile"),
+                    a(
+                        href="#",
+                        classes=[
+                            "text-gray-300",
+                            "hover:bg-gray-700",
+                            "hover:text-white",
+                            "px-3",
+                            "py-2",
+                            "rounded-md",
+                            "text-sm",
+                            "font-medium",
+                        ],
+                    ).text("Logout"),
+                ),
+            )
+        )
+    )
 
 
 def page_root(user: schema.User | None, child: Tag | None = None):
@@ -381,4 +498,128 @@ def page_root(user: schema.User | None, child: Tag | None = None):
             page_nav(user),
             child,
         ),
+    )
+
+
+def post_upload_form():
+    return div(
+        classes=[
+            "modal",
+            "fixed",
+            "inset-0",
+            "flex",
+            "items-center",
+            "justify-center",
+        ]
+    ).insert(
+        div(
+            classes=[
+                "modal-content",
+                "bg-gray-800",
+                "text-white",
+                "rounded-lg",
+                "px-8",
+                "py-6",
+            ]
+        ).insert(
+            button(
+                classes=[
+                    "absolute",
+                    "right-2",
+                    "top-2",
+                    "text-white",
+                    "hover:text-gray-300",
+                    "focus:outline-none",
+                ],
+                attrs={"id": "close-btn"},
+            ).insert(
+                svg(
+                    classes=["h-6", "w-6"],
+                    attrs={"fill": "currentColor", "viewbox": "0 0 20 20"},
+                ).insert(
+                    path(
+                        attrs={
+                            "d": "M6.35 6.34l1.41-1.41 3.54 3.54 3.54-3.54 1.41 1.41-3.54 3.54 3.54 3.54-1.41 1.41-3.54-3.54-3.54 3.54-1.41-1.41 3.54-3.54L6.35 6.34z"
+                        }
+                    )
+                )
+            ),
+            p(classes=["text-2xl", "font-bold", "mb-4"]).text("Upload Image"),
+            form(classes=["modal-form"]).insert(
+                div(classes=["mb-4"]).insert(
+                    label(
+                        _for="title",
+                        classes=["block", "text-gray-300", "font-bold", "mb-2"],
+                    ).text("Title"),
+                    input(
+                        type=InputType.text,
+                        name="TODO-name-me",
+                        classes=[
+                            "w-full",
+                            "rounded-md",
+                            "bg-gray-700",
+                            "text-white",
+                            "py-2",
+                            "px-3",
+                            "focus:outline-none",
+                            "focus:ring-2",
+                            "focus:ring-indigo-500",
+                            "focus:border-transparent",
+                        ],
+                        attrs={"id": "title", "placeholder": "Enter title"},
+                    ),
+                ),
+                div(classes=["mb-4"]).insert(
+                    label(
+                        _for="image",
+                        classes=["block", "text-gray-300", "font-bold", "mb-2"],
+                    ).text("Image"),
+                    input(
+                        type=InputType.file,
+                        name="TODO-name-me",
+                        classes=["w-full"],
+                        attrs={"id": "image", "accept": "image/*"},
+                    ),
+                    div(classes=["mt-2"], attrs={"id": "image-preview"}),
+                ),
+                button(
+                    classes=[
+                        "bg-indigo-500",
+                        "text-white",
+                        "font-semibold",
+                        "py-2",
+                        "px-4",
+                        "rounded-md",
+                        "focus:outline-none",
+                    ],
+                    attrs={"type": "submit"},
+                ).text("Upload"),
+            ),
+            script(
+                js="""
+    const modal = document.querySelector('.modal');
+    const modalForm = document.querySelector('.modal-form');
+    const imagePreview = document.getElementById('image-preview');
+
+    function handleImageUpload(event) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+
+      reader.onload = function (event) {
+        const imageUrl = event.target.result;
+        imagePreview.innerHTML = `<img src="${imageUrl}" alt="Preview" class="w-full h-auto">`;
+      };
+
+      reader.readAsDataURL(file);
+    }
+
+    modalForm.addEventListener('submit', function (event) {
+      event.preventDefault();
+      // Handle form submission here
+    });
+
+    document.getElementById('image').addEventListener('change', handleImageUpload);
+"""
+            ),
+        )
     )
