@@ -47,6 +47,7 @@ def page_head():
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css",
             rel="stylesheet",
         ),
+        link.attrs(href="/static/css/global.css", rel="stylesheet"),
         script.attrs(src="/static/js/htmx.min.js?v=1.5.0"),
         script.attrs(src="/static/js/close_modals.js"),
     )
@@ -159,30 +160,35 @@ def page_nav(user: schema.User | None):
     )
 
 
-def page_root(user: schema.User | None, child: Tag | FlatGroup | None = None):
-    return FlatGroup(
-        DOCTYPE,
-        _html.attrs(lang="en")(
-            page_head(),
-            body.attrs(_class("bg-black text-white text-3xl h-screen " "lg:text-base"))(
-                page_nav(user),
-                div.attrs(
-                    _class(
-                        "flex flex-grow-0 flex-row items-start "
-                        "justify-center justify-center"
-                    )
-                )(
-                    main.attrs(
+def page_root(
+    user: schema.User | None, child: Tag | FlatGroup | None = None, old: bool = True
+):
+    if old:
+        return FlatGroup(
+            DOCTYPE,
+            _html.attrs(lang="en")(
+                page_head(),
+                body.attrs(_class("bg-black text-white text-3xl h-screen " "lg:text-base"))(
+                    page_nav(user),
+                    div.attrs(
                         _class(
-                            "flex flex-col items-center mt-24 "
-                            "justify-center justify-items-center w-full "
-                            "lg:max-w-2xl"
+                            "flex flex-grow-0 flex-row items-start "
+                            "justify-center justify-center"
                         )
-                    )(child)
+                    )(
+                        main.attrs(
+                            _class(
+                                "flex flex-col items-center mt-24 "
+                                "justify-center justify-items-center w-full "
+                                "lg:max-w-2xl"
+                            )
+                        )(child)
+                    ),
                 ),
             ),
-        ),
-    )
+        )
+    else:
+        return yahgl_common.page_root(user=user, child=child)
 
 
 def login_form(old: bool = False) -> str:
@@ -246,66 +252,69 @@ def login_form(old: bool = False) -> str:
         return yahgl_common.login_form().render()
 
 
-def signup_form() -> str:
-    return render(
-        div.attrs(
-            _class(
-                "fixed flex flex-col rounded bg-gray-700 px-4 pb-8 text-3xl w-8/12 "
-                "lg:text-base "
-            ),
-            style="left:50%;top:50%;transform:translate(-50%,-50%);",
-        )(
-            div.attrs(_class("mt-2 flex justify-end items-end"))(
-                button.attrs(
-                    _class(
-                        "w-max rounded bg-gray-900 px-2 text-right " "hover:bg-gray-700"
-                    ),
-                    onclick="closeSignupModal()",
-                )("X"),
-            ),
-            p.attrs(_class("mb-4 text-center text-5xl " "lg:text-lg"))("Signup"),
-            form.attrs(
-                hx_encoding("multipart/form-data"), hx_post("/signup"), id="upload-form"
+def signup_form(old: bool = False) -> str:
+    if old:
+        return render(
+            div.attrs(
+                _class(
+                    "fixed flex flex-col rounded bg-gray-700 px-4 pb-8 text-3xl w-8/12 "
+                    "lg:text-base "
+                ),
+                style="left:50%;top:50%;transform:translate(-50%,-50%);",
             )(
-                div.attrs(_class("mb-4 text-4xl " "lg:text-lg"))(
-                    label.attrs(("for", "username"))("Username"),
-                    input.attrs(
-                        _class("w-full rounded p-1 text-black"),
-                        name="username",
-                    ),
-                ),
-                div.attrs(_class("mb-4 text-4xl " "lg:text-lg"))(
-                    label.attrs(("for", "email"))("Email"),
-                    input.attrs(
-                        _class("w-full rounded p-1 text-black"),
-                        name="email",
-                    ),
-                ),
-                div.attrs(_class("mb-8 text-4xl " "lg:text-lg"))(
-                    label.attrs(("for", "password"))("Password"),
-                    input.attrs(
-                        _class("w-full rounded p-1 text-black"),
-                        name="password",
-                        type="password",
-                    ),
-                ),
-                div.attrs(
-                    _class(
-                        "m-auto flex flex-col justify-center items-center text-5xl "
-                        "lg:text-lg"
-                    )
-                )(
+                div.attrs(_class("mt-2 flex justify-end items-end"))(
                     button.attrs(
                         _class(
-                            "m-auto rounded px-4 py-2 bg-gray-900 text-right "
-                            "hover:bg-gray-700"
+                            "w-max rounded bg-gray-900 px-2 text-right " "hover:bg-gray-700"
                         ),
-                        type="submit",
-                    )("Sign up")
+                        onclick="closeSignupModal()",
+                    )("X"),
                 ),
-            ),
+                p.attrs(_class("mb-4 text-center text-5xl " "lg:text-lg"))("Signup"),
+                form.attrs(
+                    hx_encoding("multipart/form-data"), hx_post("/signup"), id="upload-form"
+                )(
+                    div.attrs(_class("mb-4 text-4xl " "lg:text-lg"))(
+                        label.attrs(("for", "username"))("Username"),
+                        input.attrs(
+                            _class("w-full rounded p-1 text-black"),
+                            name="username",
+                        ),
+                    ),
+                    div.attrs(_class("mb-4 text-4xl " "lg:text-lg"))(
+                        label.attrs(("for", "email"))("Email"),
+                        input.attrs(
+                            _class("w-full rounded p-1 text-black"),
+                            name="email",
+                        ),
+                    ),
+                    div.attrs(_class("mb-8 text-4xl " "lg:text-lg"))(
+                        label.attrs(("for", "password"))("Password"),
+                        input.attrs(
+                            _class("w-full rounded p-1 text-black"),
+                            name="password",
+                            type="password",
+                        ),
+                    ),
+                    div.attrs(
+                        _class(
+                            "m-auto flex flex-col justify-center items-center text-5xl "
+                            "lg:text-lg"
+                        )
+                    )(
+                        button.attrs(
+                            _class(
+                                "m-auto rounded px-4 py-2 bg-gray-900 text-right "
+                                "hover:bg-gray-700"
+                            ),
+                            type="submit",
+                        )("Sign up")
+                    ),
+                ),
+            )
         )
-    )
+    else:
+        return yahgl_common.signup_form().render()
 
 
 def post_upload_form():
