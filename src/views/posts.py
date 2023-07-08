@@ -180,7 +180,7 @@ def post_partial(post: schema.Post, editor: bool = False, old: bool = False) -> 
             div.attrs(id=f"post-comments-{post.id}"),
         )
     else:
-        return posts_yahgl.post_view()
+        return posts_yahgl.posts_view()
 
 
 def new_comment_form_partial(post_url: str, post_id: int) -> Tag:

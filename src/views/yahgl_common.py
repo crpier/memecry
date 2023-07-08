@@ -39,6 +39,66 @@ def alert_button(text: str):
     ).text(text)
 
 
+def search_bar():
+    return div(classes=["hidden", "md:ml-6", "md:flex", "md:space-x-4"]).insert(
+        div(classes=["relative"]).insert(
+            div(
+                classes=[
+                    "absolute",
+                    "inset-y-0",
+                    "left-0",
+                    "pl-3",
+                    "flex",
+                    "items-center",
+                    "pointer-events-none",
+                ]
+            ).insert(i(classes=["fa", "fa-search", "text-gray-400"])),
+            input(
+                type=InputType.text,
+                name="search",
+                classes=[
+                    "bg-gray-700",
+                    "text-white",
+                    "rounded-md",
+                    "py-1",
+                    "pl-10",
+                    "pr-4",
+                    "focus:outline-none",
+                    "focus:bg-gray-600",
+                    "focus:text-white",
+                    "placeholder-gray-400",
+                ],
+                attrs={"placeholder": "Search"},
+            ),
+        )
+    )
+
+
+# TODO: should be search icon that, when clicked
+# opens an input box somewhere
+def small_screen_search():
+    return input(
+        type=InputType.text,
+        name="search",
+        placeholder="Search",
+        classes=[
+            "block",
+            "md:hidden",
+            "bg-gray-700",
+            "text-white",
+            "rounded-md",
+            "py-1",
+            "px-2",
+            "mx-2",
+            "focus:outline-none",
+            "focus:bg-gray-600",
+            "focus:text-white",
+            "placeholder-gray-400",
+            "w-6/12",
+        ],
+    )
+
+
 def login_form():
     return div(
         classes=[
@@ -403,47 +463,20 @@ def page_nav(user: schema.User | None) -> Tag:
             "flex",
             "justify-between",
             "items-center",
+            "w-full",
+            "fixed",
         ]
     ).insert(
         div(classes=["flex", "items-center"]).insert(
             a(
-                href="#",
+                # TODO: change to / I guess
+                href="/posts",
                 classes=["flex-shrink-0", "text-white", "font-bold", "text-lg"],
             ).text("Memecry"),
-            div(classes=["hidden", "md:ml-6", "md:flex", "md:space-x-4"]).insert(
-                div(classes=["relative"]).insert(
-                    div(
-                        classes=[
-                            "absolute",
-                            "inset-y-0",
-                            "left-0",
-                            "pl-3",
-                            "flex",
-                            "items-center",
-                            "pointer-events-none",
-                        ]
-                    ).insert(i(classes=["fa", "fa-search", "text-gray-400"])),
-                    input(
-                        type=InputType.text,
-                        name="TODO-name-me",
-                        classes=[
-                            "bg-gray-700",
-                            "text-white",
-                            "rounded-md",
-                            "py-1",
-                            "pl-10",
-                            "pr-4",
-                            "focus:outline-none",
-                            "focus:bg-gray-600",
-                            "focus:text-white",
-                            "placeholder-gray-400",
-                        ],
-                        attrs={"placeholder": "Search"},
-                    ),
-                )
-            ),
+            search_bar(),
         ),
         div(classes=["flex", "items-center"]).insert(
+            small_screen_search(),
             alert_button("Upload"),
             div(classes=["mx-3"]).insert(
                 button(
@@ -486,12 +519,12 @@ def page_nav(user: schema.User | None) -> Tag:
     )
 
 
-def page_root(user: schema.User | None, child: Tag | None = None):
+def page_root(user: schema.User | None, child: Tag):
     return html(lang="en").insert(
         page_head(),
-        body().insert(
+        body(classes=["bg-black", "text-white"]).insert(
             page_nav(user),
-            child,
+            child.classes(["pt-16"]),
         ),
     )
 

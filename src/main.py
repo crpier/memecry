@@ -171,12 +171,13 @@ def view_posts(
 ):
     if limit == 0:
         limit = settings.DEFAULT_POSTS_PER_PAGE
-    posting_service.get_posts(
+    posts = posting_service.get_posts(
         session=session, limit=limit, offset=offset, viewer=optional_current_user
     )
     return HTMLResponse(
         yahgl_common.page_root(
-            user=optional_current_user, child=src.views.posts_yahgl.post_view()
+            user=optional_current_user,
+            child=src.views.posts_yahgl.posts_view(posts=posts),
         ).render()
     )
 
@@ -184,7 +185,7 @@ def view_posts(
 @app.get("/")
 def view_all_posts(
     offset: int = 0,
-    limit: int = 0,
+    limit: int = 1000,
     partial_html: bool = False,
     settings: config.Settings = Depends(deps.get_settings),
     session=Depends(deps.get_db_session),
