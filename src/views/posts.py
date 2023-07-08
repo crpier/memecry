@@ -1,8 +1,10 @@
 from pathlib import Path
+from typing import Any
 
 from simple_html.nodes import FlatGroup, Tag, li, ul, video
 from simple_html.render import render
 
+from src.views import posts_yahgl
 from src import schema
 from src.views.common import (
     _class,
@@ -31,151 +33,154 @@ def content_is_image(file_name: Path) -> bool:
     return file_name.suffix in [".png", ".jpg", ".jpeg"]
 
 
-def post_partial(post: schema.Post, editor: bool = False) -> Tag:
-    if content_is_image(post.source):
-        post_content = img.attrs(_class("w-full"), src=str(post.source))
-    else:
-        post_content = video.attrs(
-            _class("w-full"), src=str(post.source), controls="true"
-        )
-    if post.editable:
-        edit_button = button.attrs(
-            _class(
-                "mr-8 mt-4 px-3 py-3 flex flex-row p-2 rounded-md " "lg:mt-2 lg:mr-2"
-            ),
-            hx_get(f"/post/{post.id}/edit"),
-            hx_target(f"#post-{post.id}"),
-            hx_swap("outerHTML"),
-        )(i.attrs(_class("fa fa-bars fa-lg")))
-    else:
-        edit_button = None
-    if editor:
-        title_bar = form.attrs(
-            _class("w-full text-4xl lg:text-lg"),
-            hx_encoding("application/x-www-form-urlencoded"),
-            hx_post(f"/post/{post.id}/edit"),
-            hx_target(f"#post-{post.id}"),
-            hx_swap("outerHTML"),
-            id=f"post-{post.id}-edit-form",
-        )(
-            textarea.attrs(
-                _class(
-                    "mb-4 mt-2 px-2 py-1 bg-black text-center w-full text-5xl "
-                    "lg:text-xl"
-                ),
-                type="text",
-                name="title",
-                rows=str(len(post.title) // 40 + 1),
-            )(post.title)
-        )
-        cancel_button = button.attrs(
-            _class(
-                "px-3 ml-auto mt-2 rounded-md border border-gray-600 font-bold "
-                "hover:border-gray-700 hover:bg-gray-700"
-            ),
-            hx_get(f"/post/{post.id}?partial_html=true"),
-            hx_target(f"#post-{post.id}"),
-            hx_swap("outerHTML"),
-        )("X")
-        edit_button = button.attrs(
-            _class(
-                "font-bold mr-2 mt-4 px-3 py-2 flex flex-row p-2 rounded-md "
-                "border-gray-600 hover:border-gray-500 hover:bg-green-700 "
-                "lg:mt-2"
-            ),
-            type="submit",
-            form=f"post-{post.id}-edit-form",
-        )("Save")
-        delete_button = button.attrs(
-            _class(
-                "font-bold mr-2 mt-4 px-3 py-2 flex flex-row p-2 rounded-md "
-                "bg-red-700 border-gray-600 hover:border-red-600 hover:bg-red-600 "
-                "lg:mt-2"
-            ),
-            hx_delete(f"/post/{post.id}"),
-        )("Delete")
-    else:
-        title_bar = p.attrs(_class("my-4 text-5xl font-bold " "lg:text-xl"))(post.title)
-        cancel_button = None
-        delete_button = None
-
-    return div.attrs(
-        _class(
-            "flex flex-col items-center mb-10 pb-4 text-center w-full "
-            "lg:px-6 lg:border"
-        ),
-        id=f"post-{post.id}",
-    )(
-        cancel_button,
-        title_bar,
-        a.attrs(_class("w-full"), href=f"/post/{post.id}")(post_content),
-        div.attrs(
-            _class(
-                "flex flex-grow-0 flex-row items-center justify-start ml-8 "
-                "mt-4 w-full lg:ml-0 lg:mt-0"
+def post_partial(post: schema.Post, editor: bool = False, old: bool = False) -> Tag:
+    if old:
+        if content_is_image(post.source):
+            post_content = img.attrs(_class("w-full"), src=str(post.source))
+        else:
+            post_content = video.attrs(
+                _class("w-full"), src=str(post.source), controls="true"
             )
-        )(
-            a.attrs(
+        if post.editable:
+            edit_button = button.attrs(
                 _class(
-                    "my-2 mr-2 font-semibold w-max text-3xl " "lg:text-base lg:mr-0"
+                    "mr-8 mt-4 px-3 py-3 flex flex-row p-2 rounded-md " "lg:mt-2 lg:mr-2"
                 ),
-                href=".",
-            )(f"{post.score} good boi points"),
-            div.attrs(_class("flex-grow")),
-            div.attrs(_class("font-semibold mr-8 " "lg:mr-0 lg:text-base"))(
-                post.created_since,
-                " by ",
-                a.attrs(_class("font-bold text-green-300"), href=".")(
-                    post.user.username
-                ),
-            ),
-        ),
-        div.attrs(
-            _class(
-                "flex flex-grow-0 flex-row items-start justify-start mt-2 ml-8 w-full "
-                "lg:ml-0"
-            )
-        )(
-            button.attrs(
-                _class(
-                    "mr-3 p-2 rounded-xl w-20 h-20 "
-                    "lg:w-12 lg:h-12 " + (" bg-yellow-800" if post.liked else "")
-                ),
-                hx_put(f"/post/{post.id}/like"),
+                hx_get(f"/post/{post.id}/edit"),
                 hx_target(f"#post-{post.id}"),
                 hx_swap("outerHTML"),
-            )(i.attrs(_class("fa fa-arrow-up fa-lg"))),
-            button.attrs(
-                _class(
-                    "mr-3 p-2 rounded-xl w-20 h-20 "
-                    "lg:w-12 lg:h-12 " + (" bg-blue-900" if post.disliked else "")
-                ),
-                hx_put(f"/post/{post.id}/dislike"),
+            )(i.attrs(_class("fa fa-bars fa-lg")))
+        else:
+            edit_button = None
+        if editor:
+            title_bar = form.attrs(
+                _class("w-full text-4xl lg:text-lg"),
+                hx_encoding("application/x-www-form-urlencoded"),
+                hx_post(f"/post/{post.id}/edit"),
                 hx_target(f"#post-{post.id}"),
                 hx_swap("outerHTML"),
-            )(i.attrs(_class("fa fa-arrow-down fa-lg"))),
-            div.attrs(_class("flex-grow")),
-            delete_button,
-            edit_button,
-            button.attrs(
-                _class(
-                    "flex flex-row p-2 mr-8 rounded-md items-center justify-center "
-                    "mt-4 lg:mt-2 lg:mr-0 "
-                    "hover:border-gray-500"
-                ),
-                hx_get(f"/post/{post.id}/comments"),
-                hx_target(f"#post-comments-{post.id}"),
+                id=f"post-{post.id}-edit-form",
             )(
-                i.attrs(
-                    _class("fa fa-comment mr-4"),
+                textarea.attrs(
+                    _class(
+                        "mb-4 mt-2 px-2 py-1 bg-black text-center w-full text-5xl "
+                        "lg:text-xl"
+                    ),
+                    type="text",
+                    name="title",
+                    rows=str(len(post.title) // 40 + 1),
+                )(post.title)
+            )
+            cancel_button = button.attrs(
+                _class(
+                    "px-3 ml-auto mt-2 rounded-md border border-gray-600 font-bold "
+                    "hover:border-gray-700 hover:bg-gray-700"
                 ),
-                p.attrs(
-                    _class("text-4xl " "lg:text-base"),
-                )(f"{post.comment_count} comments"),
+                hx_get(f"/post/{post.id}?partial_html=true"),
+                hx_target(f"#post-{post.id}"),
+                hx_swap("outerHTML"),
+            )("X")
+            edit_button = button.attrs(
+                _class(
+                    "font-bold mr-2 mt-4 px-3 py-2 flex flex-row p-2 rounded-md "
+                    "border-gray-600 hover:border-gray-500 hover:bg-green-700 "
+                    "lg:mt-2"
+                ),
+                type="submit",
+                form=f"post-{post.id}-edit-form",
+            )("Save")
+            delete_button = button.attrs(
+                _class(
+                    "font-bold mr-2 mt-4 px-3 py-2 flex flex-row p-2 rounded-md "
+                    "bg-red-700 border-gray-600 hover:border-red-600 hover:bg-red-600 "
+                    "lg:mt-2"
+                ),
+                hx_delete(f"/post/{post.id}"),
+            )("Delete")
+        else:
+            title_bar = p.attrs(_class("my-4 text-5xl font-bold " "lg:text-xl"))(post.title)
+            cancel_button = None
+            delete_button = None
+
+        return div.attrs(
+            _class(
+                "flex flex-col items-center mb-10 pb-4 text-center w-full "
+                "lg:px-6 lg:border"
             ),
-        ),
-        div.attrs(id=f"post-comments-{post.id}"),
-    )
+            id=f"post-{post.id}",
+        )(
+            cancel_button,
+            title_bar,
+            a.attrs(_class("w-full"), href=f"/post/{post.id}")(post_content),
+            div.attrs(
+                _class(
+                    "flex flex-grow-0 flex-row items-center justify-start ml-8 "
+                    "mt-4 w-full lg:ml-0 lg:mt-0"
+                )
+            )(
+                a.attrs(
+                    _class(
+                        "my-2 mr-2 font-semibold w-max text-3xl " "lg:text-base lg:mr-0"
+                    ),
+                    href=".",
+                )(f"{post.score} good boi points"),
+                div.attrs(_class("flex-grow")),
+                div.attrs(_class("font-semibold mr-8 " "lg:mr-0 lg:text-base"))(
+                    post.created_since,
+                    " by ",
+                    a.attrs(_class("font-bold text-green-300"), href=".")(
+                        post.user.username
+                    ),
+                ),
+            ),
+            div.attrs(
+                _class(
+                    "flex flex-grow-0 flex-row items-start justify-start mt-2 ml-8 w-full "
+                    "lg:ml-0"
+                )
+            )(
+                button.attrs(
+                    _class(
+                        "mr-3 p-2 rounded-xl w-20 h-20 "
+                        "lg:w-12 lg:h-12 " + (" bg-yellow-800" if post.liked else "")
+                    ),
+                    hx_put(f"/post/{post.id}/like"),
+                    hx_target(f"#post-{post.id}"),
+                    hx_swap("outerHTML"),
+                )(i.attrs(_class("fa fa-arrow-up fa-lg"))),
+                button.attrs(
+                    _class(
+                        "mr-3 p-2 rounded-xl w-20 h-20 "
+                        "lg:w-12 lg:h-12 " + (" bg-blue-900" if post.disliked else "")
+                    ),
+                    hx_put(f"/post/{post.id}/dislike"),
+                    hx_target(f"#post-{post.id}"),
+                    hx_swap("outerHTML"),
+                )(i.attrs(_class("fa fa-arrow-down fa-lg"))),
+                div.attrs(_class("flex-grow")),
+                delete_button,
+                edit_button,
+                button.attrs(
+                    _class(
+                        "flex flex-row p-2 mr-8 rounded-md items-center justify-center "
+                        "mt-4 lg:mt-2 lg:mr-0 "
+                        "hover:border-gray-500"
+                    ),
+                    hx_get(f"/post/{post.id}/comments"),
+                    hx_target(f"#post-comments-{post.id}"),
+                )(
+                    i.attrs(
+                        _class("fa fa-comment mr-4"),
+                    ),
+                    p.attrs(
+                        _class("text-4xl " "lg:text-base"),
+                    )(f"{post.comment_count} comments"),
+                ),
+            ),
+            div.attrs(id=f"post-comments-{post.id}"),
+        )
+    else:
+        return posts_yahgl.post_view()
 
 
 def new_comment_form_partial(post_url: str, post_id: int) -> Tag:
@@ -325,6 +330,8 @@ def comment_tree_view(comments: list[schema.Comment], post_id: int) -> str:
         )
     )
 
+def transition_render(elem: Any):
+    return elem.render()
 
 def post_view(
     post: schema.Post,

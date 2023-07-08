@@ -18,6 +18,7 @@ from fastapi.responses import HTMLResponse
 from pydantic import EmailStr
 
 import src.views.posts
+import src.views.posts_yahgl
 from src import (
     comment_service,
     config,
@@ -29,6 +30,7 @@ from src import (
     user_service,
 )
 from src.views import common as common_views
+from src.views import yahgl_common
 from src.views import posts as posts_views
 
 app = FastAPI()
@@ -156,6 +158,27 @@ def log_out(response: Response):
     response.headers["HX-Refresh"] = "true"
     response.status_code = 303
     return response
+
+
+@app.get("/posts")
+def view_posts(
+    offset: int = 0,
+    limit: int = 0,
+    partial_html: bool = False,
+    settings: config.Settings = Depends(deps.get_settings),
+    session=Depends(deps.get_db_session),
+    optional_current_user: schema.User | None = Depends(deps.get_current_user_optional),
+):
+    if limit == 0:
+        limit = settings.DEFAULT_POSTS_PER_PAGE
+    posting_service.get_posts(
+        session=session, limit=limit, offset=offset, viewer=optional_current_user
+    )
+    return HTMLResponse(
+        yahgl_common.page_root(
+            user=optional_current_user, child=src.views.posts_yahgl.post_view()
+        ).render()
+    )
 
 
 @app.get("/")

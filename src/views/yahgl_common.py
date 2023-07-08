@@ -1,26 +1,42 @@
 from yahgl_py.main import (
     InputType,
     Tag,
-    body,
-    div,
     a,
+    body,
+    button,
+    div,
+    form,
     head,
     html,
+    i,
+    img,
     input,
-    button,
-    form,
     label,
     link,
     meta,
-    script,
-    title,
     nav,
-    svg,
-    path,
     p,
+    path,
+    script,
+    svg,
+    title,
 )
 
 from src import schema
+
+
+def alert_button(text: str):
+    return button(
+        classes=[
+            "px-3",
+            "py-1",
+            "rounded-md",
+            "text-sm",
+            "text-white",
+            "bg-blue-500",
+            "hover:bg-blue-700",
+        ],
+    ).text(text)
 
 
 def login_form():
@@ -362,11 +378,9 @@ def page_head():
     return head().insert(
         title("Memecry"),
         meta(charset="UTF-8"),
-        meta(name="viewport", content="width=device-width, initial-scale=1.0"),
-        link(
-            href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css",
-            rel="stylesheet",
-        ),
+        meta(name="viewport", content="width=device-width, initial-scale=1"),
+        # TODO: use pytailwindcss instead?
+        script(src="https://cdn.tailwindcss.com"),
         link(
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css",
             rel="stylesheet",
@@ -378,116 +392,97 @@ def page_head():
 
 
 def page_nav(user: schema.User | None) -> Tag:
-    return nav(classes=["bg-gray-800"]).insert(
-        div(classes=["max-w-7xl", "mx-auto", "px-4", "sm:px-6", "lg:px-8"]).insert(
-            div(classes=["flex", "justify-between", "h-16"]).insert(
-                div(classes=["flex"]).insert(
-                    a(
-                        href="#",
+    return nav(
+        classes=[
+            "bg-gray-800",
+            "mx-auto",
+            "px-4",
+            "py-1",
+            "sm:px-6",
+            "lg:px-8",
+            "flex",
+            "justify-between",
+            "items-center",
+        ]
+    ).insert(
+        div(classes=["flex", "items-center"]).insert(
+            a(
+                href="#",
+                classes=["flex-shrink-0", "text-white", "font-bold", "text-lg"],
+            ).text("Memecry"),
+            div(classes=["hidden", "md:ml-6", "md:flex", "md:space-x-4"]).insert(
+                div(classes=["relative"]).insert(
+                    div(
                         classes=[
-                            "flex-shrink-0",
+                            "absolute",
+                            "inset-y-0",
+                            "left-0",
+                            "pl-3",
                             "flex",
                             "items-center",
+                            "pointer-events-none",
+                        ]
+                    ).insert(i(classes=["fa", "fa-search", "text-gray-400"])),
+                    input(
+                        type=InputType.text,
+                        name="TODO-name-me",
+                        classes=[
+                            "bg-gray-700",
                             "text-white",
-                            "font-bold",
+                            "rounded-md",
+                            "py-1",
+                            "pl-10",
+                            "pr-4",
+                            "focus:outline-none",
+                            "focus:bg-gray-600",
+                            "focus:text-white",
+                            "placeholder-gray-400",
                         ],
-                    ).text("Logo"),
-                    div(
-                        classes=["hidden", "md:ml-6", "md:flex", "md:space-x-4"]
-                    ).insert(
-                        div(classes=["relative"]).insert(
-                            div(
-                                classes=[
-                                    "absolute",
-                                    "inset-y-0",
-                                    "left-0",
-                                    "pl-3",
-                                    "flex",
-                                    "items-center",
-                                    "pointer-events-none",
-                                ]
-                            ).insert(
-                                svg(
-                                    classes=["h-5", "w-5", "text-gray-400"],
-                                    attrs={
-                                        "fill": "none",
-                                        "viewbox": "0 0 24 24",
-                                        "stroke": "currentColor",
-                                    },
-                                ).insert(
-                                    path(
-                                        attrs={
-                                            "stroke-linecap": "round",
-                                            "stroke-linejoin": "round",
-                                            "stroke-width": "2",
-                                            "d": "M4 6h16M4 12h16M4 18h16",
-                                        }
-                                    ).text("")
-                                )
-                            ),
-                            input(
-                                type=InputType.text,
-                                name="TODO-name-me",
-                                classes=[
-                                    "bg-gray-700",
-                                    "text-white",
-                                    "rounded-md",
-                                    "py-2",
-                                    "pl-10",
-                                    "pr-4",
-                                    "focus:outline-none",
-                                    "focus:bg-white",
-                                    "focus:text-gray-900",
-                                    "placeholder-gray-400",
-                                ],
-                                attrs={"placeholder": "Search"},
-                            ),
-                        )
+                        attrs={"placeholder": "Search"},
                     ),
-                ),
-                div(classes=["flex", "items-center"]).insert(
-                    a(
-                        href="#",
-                        classes=[
-                            "text-gray-300",
-                            "hover:bg-gray-700",
-                            "hover:text-white",
-                            "px-3",
-                            "py-2",
-                            "rounded-md",
-                            "text-sm",
-                            "font-medium",
-                        ],
-                    ).text("Upload"),
-                    a(
-                        href="#",
-                        classes=[
-                            "text-gray-300",
-                            "hover:bg-gray-700",
-                            "hover:text-white",
-                            "px-3",
-                            "py-2",
-                            "rounded-md",
-                            "text-sm",
-                            "font-medium",
-                        ],
-                    ).text("Profile"),
-                    a(
-                        href="#",
-                        classes=[
-                            "text-gray-300",
-                            "hover:bg-gray-700",
-                            "hover:text-white",
-                            "px-3",
-                            "py-2",
-                            "rounded-md",
-                            "text-sm",
-                            "font-medium",
-                        ],
-                    ).text("Logout"),
-                ),
-            )
-        )
+                )
+            ),
+        ),
+        div(classes=["flex", "items-center"]).insert(
+            alert_button("Upload"),
+            div(classes=["mx-3"]).insert(
+                button(
+                    classes=[
+                        "flex",
+                        "text-sm",
+                        "rounded-full",
+                        "focus:outline-none",
+                        "focus:ring-2",
+                        "focus:ring-offset-2",
+                        "focus:ring-offset-gray-800",
+                        "focus:ring-gray",
+                        "hover:ring-2",
+                        "hover:ring-offset-2",
+                        "hover:ring-offset-gray-800",
+                        "hover:ring-gray",
+                    ]
+                ).insert(
+                    img(
+                        alt="profile pciture",
+                        src="https://avatars.githubusercontent.com/u/31815875?v=4",
+                        classes=["h-8", "w-8", "rounded-full"],
+                    )
+                )
+            ),
+            a(
+                href="#",
+                classes=[
+                    "text-gray-300",
+                    "hover:bg-gray-700",
+                    "hover:text-white",
+                    "px-3",
+                    "py-2",
+                    "rounded-md",
+                    "text-sm",
+                    "font-medium",
+                ],
+            ).text("Logout"),
+        ),
     )
 
 
