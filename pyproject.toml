@@ -7,7 +7,6 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-fastapi = "^0.89.1"
 uvicorn = "^0.20.0"
 python-multipart = "^0.0.5"
 aiofiles = "^22.1.0"
@@ -29,6 +28,8 @@ types-pillow = "^9.5.0.4"
 types-aiofiles = "^23.1.0.2"
 types-python-jose = "^3.3.4.7"
 types-passlib = "^1.7.7.12"
+starlette = "^0.31.0"
+hypercorn = "^0.14.4"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -36,7 +37,6 @@ isort = "^5.11.4"
 black = "^22.12.0"
 mypy = "^1.2.0"
 ruff = "^0.0.265"
-tox = "^4.5.1"
 pydeps = "^1.12.8"
 
 [build-system]
