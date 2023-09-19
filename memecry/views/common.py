@@ -1,7 +1,10 @@
 from typing import Protocol
 
-from yahgl_py.main import (
+from yahgl_py.html import (
+    InputType,
     div,
+    input,
+    form,
     img,
     button,
     nav,
@@ -16,18 +19,18 @@ from yahgl_py.main import (
     p,
 )
 
+
 def page_head():
     return head().insert(
         title("Memecry"),
         meta(charset="UTF-8"),
         meta(name="viewport", content="width=device-width, initial-scale=1"),
-        # TODO: use pytailwindcss instead?
+        # TODO: use pytailwindcss instead
         script(src="https://cdn.tailwindcss.com"),
         link(
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css",
             rel="stylesheet",
         ),
-        script(src="/static/js/htmx.min.js?v=1.5.0"),
         script(
             src="https://unpkg.com/htmx.org@1.9.5",
             attrs=dict(
@@ -62,6 +65,7 @@ def post_view(post_id: int):
         ),
     )
 
+
 class PostUrlCallable(Protocol):
     def __call__(self, *, post_id: int) -> str:
         ...
@@ -80,3 +84,39 @@ def home_view(get_post_url: PostUrlCallable) -> Tag:
         ).text("view post"),
     )
 
+
+def signup_form():
+    return form(
+        attrs={
+            "hx-post": "/signup",
+            "hx-encoding": "multipart/form-data",
+        },
+    ).insert(
+        div(
+            classes=[
+                "flex",
+                "flex-col",
+                "items-center",
+                "justify-between",
+                "h-screen",
+                "max-h-24",
+                "p-2",
+            ],
+        ).insert(
+            input(
+                type=InputType.text,
+                name="username",
+                placeholder="username",
+                classes=["p-1"],
+            ),
+            input(
+                type=InputType.password,
+                name="password",
+                placeholder="password",
+                classes=["p-1"],
+            ),
+        ),
+        button(
+            type="submit",
+            ).text("Sign up"),
+    )
