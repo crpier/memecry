@@ -1,12 +1,13 @@
 from typing import cast
 import contextlib
+from jose import ExpiredSignatureError
 import jose.jwt
 
 from starlette.authentication import AuthCredentials, AuthenticationBackend
 from starlette.middleware import Middleware
 from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.requests import HTTPConnection
-from starlette.responses import HTMLResponse
+from starlette.responses import HTMLResponse, Response
 from starlette.exceptions import HTTPException
 from memecry.schema import UserCreate
 
@@ -31,7 +32,10 @@ class BasicAuthBackend(AuthenticationBackend):
         if "authorization" not in conn.cookies:
             return
         token = conn.cookies["authorization"]
-        payload = jose.jwt.decode(token, "abcd", algorithms=["HS256"])
+        try:
+            payload = jose.jwt.decode(token, "abcd", algorithms=["HS256"])
+        except ExpiredSignatureError:
+            return None
         if payload.get("sub") is None:
             return None
         username: str = cast(str, payload.get("sub"))
@@ -64,7 +68,7 @@ async def get_post(request: Request, *, post_id: PathInt):
     )
 
 
-@app.get("/", auth_scopes=[AuthScope.Authenticated])
+@app.get("/")
 async def get_homepage(
     request: Request,
 ):
@@ -72,7 +76,6 @@ async def get_homepage(
         username = request.user.display_name
     else:
         username = "anon"
-    print(request.cookies)
     post_url_func = app.url_wrapper(get_post)
     resp = HTMLResponse(
         common_views.page_root(
@@ -87,7 +90,13 @@ async def get_homepage(
 
 @app.get("/signup-form")
 async def signup_form(request: Request):
-    return HTMLResponse(common_views.page_root([common_views.signup_form()]).render())
+    if request.scope["from_htmx"]:
+        return HTMLResponse(common_views.signup_form(app.url_wrapper(signup)).render())
+    return HTMLResponse(
+        common_views.page_root(
+            [common_views.signup_form(app.url_wrapper(signup))]
+        ).render()
+    )
 
 
 @app.post("/signup")
@@ -118,9 +127,18 @@ async def signin(request: Request):
             raise HTTPException(
                 401, "Invalid username or password", {"WWW-Authenticate": "Bearer"}
             )
-        resp = HTMLResponse()
+        resp = Response()
         access_token = security.create_access_token(data={"sub": username})
         resp.set_cookie(key="authorization", value=access_token, httponly=True)
         resp.headers["HX-Refresh"] = "true"
         resp.status_code = 303
         return resp
+
+
+@app.get("/signout")
+async def signout(request: Request):
+    response = Response()
+    response.delete_cookie(key="authorization")
+    response.headers["HX-Refresh"] = "true"
+    response.status_code = 303
+    return response

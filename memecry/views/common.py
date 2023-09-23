@@ -1,4 +1,4 @@
-from typing import Protocol
+from typing import Callable, Protocol
 
 from yahgl_py.html import (
     InputType,
@@ -38,6 +38,7 @@ def page_head():
                 crossorigin="anonymous",
             ),
         ),
+        script(src="https://unpkg.com/hyperscript.org@0.9.11"),
     )
 
 
@@ -53,6 +54,14 @@ def page_root(child: Tag | list[Tag]):
 def page_nav(username: str | None = None):
     return nav().insert(
         p().text(f"Hello, {username}!"),
+        button(
+            id="signup",
+            attrs={
+                "hx-get": "/signup-form",
+                "hx-target": "body",
+                "hx-swap": "beforeend",
+            },
+        ).text("Sign up"),
     )
 
 
@@ -85,38 +94,75 @@ def home_view(get_post_url: PostUrlCallable) -> Tag:
     )
 
 
-def signup_form():
-    return form(
-        attrs={
-            "hx-post": "/signup",
-            "hx-encoding": "multipart/form-data",
-        },
+def signup_form(get_signup_url: Callable[[], str]):
+    return div(
+        classes=[
+            "fixed",
+            "inset-0",
+            "bg-black",
+            "bg-opacity-50",
+            "z-40",
+            "flex",
+            "flex-col",
+            "items-center",
+        ],
+        hyperscript="on closeModal remove me",
     ).insert(
         div(
+            id="underlay",
+            classes=["absolute", "inset-0", "-z-10"],
+            hyperscript="on click trigger closeModal",
+        ),
+        form(
             classes=[
+                "z-50",
+                "max-w-max",
+                "bg-gray-800",
+                "p-2",
+                "rounded-sm",
                 "flex",
                 "flex-col",
                 "items-center",
-                "justify-between",
-                "h-screen",
-                "max-h-24",
-                "p-2",
             ],
+            attrs={
+                # TODO: use function lol
+                "hx-post": get_signup_url(),
+                "hx-encoding": "multipart/form-data",
+            },
         ).insert(
-            input(
-                type=InputType.text,
-                name="username",
-                placeholder="username",
-                classes=["p-1"],
+            button(
+                classes=["px-2", "bg-red-800", "ml-auto", "mr-2", "rounded-sm"],
+                hyperscript="on click trigger closeModal",
+                type="button",
+            ).text("X"),
+            div(
+                classes=[
+                    "flex",
+                    "flex-col",
+                    "items-center",
+                    "justify-between",
+                    "h-screen",
+                    "max-h-24",
+                    "p-2",
+                ],
+            ).insert(
+                input(
+                    type=InputType.text,
+                    name="username",
+                    placeholder="username",
+                    classes=["p-1", "rounded-sm", "text-black"],
+                ),
+                input(
+                    type=InputType.password,
+                    name="password",
+                    placeholder="password",
+                    classes=["p-1", "rounded-sm", "text-black"],
+                ),
             ),
-            input(
-                type=InputType.password,
-                name="password",
-                placeholder="password",
-                classes=["p-1"],
-            ),
-        ),
-        button(
-            type="submit",
+            # TODO: enum for button types
+            button(
+                classes=["p-2", "bg-blue-800", "rounded-sm"],
+                type="submit",
             ).text("Sign up"),
+        ),
     )
