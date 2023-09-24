@@ -44,7 +44,7 @@ class BasicAuthBackend(AuthenticationBackend):
 
 
 @contextlib.asynccontextmanager
-async def lifespan(app: App):
+async def lifespan(_: App):
     await bootstrap()
     yield
 
@@ -63,7 +63,10 @@ async def get_post(request: Request, *, post_id: PathInt):
         return HTMLResponse(common_views.post_view(post_id).render())
     return HTMLResponse(
         common_views.page_root(
-            [common_views.page_nav(username), common_views.post_view(post_id)]
+            [
+                common_views.page_nav(app.url_wrapper(signup_form), username),
+                common_views.post_view(post_id),
+            ]
         ).render()
     )
 
@@ -80,7 +83,7 @@ async def get_homepage(
     resp = HTMLResponse(
         common_views.page_root(
             [
-                common_views.page_nav(username),
+                common_views.page_nav(app.url_wrapper(signup_form), username),
                 common_views.home_view(get_post_url=post_url_func),
             ]
         ).render()

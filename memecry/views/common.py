@@ -1,7 +1,6 @@
 from typing import Callable, Protocol
 
 from yahgl_py.html import (
-    InputType,
     div,
     input,
     form,
@@ -51,17 +50,15 @@ def page_root(child: Tag | list[Tag]):
     )
 
 
-def page_nav(username: str | None = None):
+def page_nav(signup_url: Callable[[], str], username: str | None = None):
     return nav().insert(
         p().text(f"Hello, {username}!"),
         button(
             id="signup",
-            attrs={
-                "hx-get": "/signup-form",
-                "hx-target": "body",
-                "hx-swap": "beforeend",
-            },
-        ).text("Sign up"),
+            type="button",
+        )
+        .hx_get(signup_url(), hx_target="body", hx_swap="beforeend")
+        .text("Sign up"),
     )
 
 
@@ -88,9 +85,11 @@ def home_view(get_post_url: PostUrlCallable) -> Tag:
     post_id = 1
     return div().insert(
         button(
+            type="button",
             classes=["text-center"],
-            attrs={"hx-get": get_post_url(post_id=post_id), "hx-swap": "outerHTML"},
-        ).text("view post"),
+        )
+        .hx_get(get_post_url(post_id=post_id), hx_swap="outerHTML")
+        .text("view post"),
     )
 
 
@@ -124,12 +123,9 @@ def signup_form(get_signup_url: Callable[[], str]):
                 "flex-col",
                 "items-center",
             ],
-            attrs={
-                # TODO: use function lol
-                "hx-post": get_signup_url(),
-                "hx-encoding": "multipart/form-data",
-            },
-        ).insert(
+        )
+        .hx_post(get_signup_url(), hx_encoding="multipart/form-data")
+        .insert(
             button(
                 classes=["px-2", "bg-red-800", "ml-auto", "mr-2", "rounded-sm"],
                 hyperscript="on click trigger closeModal",
@@ -147,13 +143,13 @@ def signup_form(get_signup_url: Callable[[], str]):
                 ],
             ).insert(
                 input(
-                    type=InputType.text,
+                    type="text",
                     name="username",
                     placeholder="username",
                     classes=["p-1", "rounded-sm", "text-black"],
                 ),
                 input(
-                    type=InputType.password,
+                    type="password",
                     name="password",
                     placeholder="password",
                     classes=["p-1", "rounded-sm", "text-black"],
