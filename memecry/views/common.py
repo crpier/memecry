@@ -4,9 +4,15 @@ from yahgl_py.html import (
     div,
     input,
     form,
+    path,
+    ul,
     img,
     button,
+    li,
     nav,
+    svg,
+    span,
+    a,
     title,
     meta,
     script,
@@ -17,6 +23,21 @@ from yahgl_py.html import (
     Tag,
     p,
 )
+
+
+def hamburger_svg():
+    return svg(
+        classes=["h-6", "w-6", "text-gray-500"],
+        attrs={
+            "x-show": "!showMenu",
+            "fill": "none",
+            "stroke-linecap": "round",
+            "stroke-linejoin": "round",
+            "stroke-width": "2",
+            "viewBox": "0 0 24 24",
+            "stroke": "currentColor",
+        },
+    ).insert(path(attrs={"d": "M4 6h16M4 12h16M4 18h16"}))
 
 
 def page_head():
@@ -51,15 +72,174 @@ def page_root(child: Tag | list[Tag]):
 
 
 def page_nav(signup_url: Callable[[], str], username: str | None = None):
-    return nav().insert(
-        p().text(f"Hello, {username}!"),
-        button(
-            id="signup",
-            type="button",
-        )
-        .hx_get(signup_url(), hx_target="body", hx_swap="beforeend")
-        .text("Sign up"),
+    return nav(classes=["bg-white", "shadow-lg",]).insert(
+        div(classes=["max-w-6xl", "mx-auto", "px-4"]).insert(
+            div(classes=["flex", "justify-between"]).insert(
+                # TODO: checkout space-x-7 in more detail
+                div(classes=["flex", "space-x-7"]).insert(
+                    # Logo
+                    div().insert(
+                        a(
+                            href="#", classes=["flex", "items-center", "py-4", "px-2"]
+                        ).insert(
+                            img(
+                                src="https://memecry.ceoofmemes.expert/media/123.jpg",
+                                alt="Memecry logo",
+                                classes=["h-8", "w-8", "mr-2"],
+                            ),
+                            span(
+                                classes=["font-semibold", "text-gray-500", "text-lg"]
+                            ).text("Memecry"),
+                        )
+                    ),
+                    # Primary Navbar items
+                    div(
+                        classes=["hidden", "md:flex", "items-center", "space-x-1"]
+                    ).insert(
+                        a(
+                            href="#",
+                            classes=[
+                                "py-4",
+                                "px-2",
+                                "text-green-500",
+                                "border-b-4",
+                                "border-green-500",
+                                "font-semibold",
+                            ],
+                        ).text("Memes"),
+                        a(
+                            href="#",
+                            classes=[
+                                "py-4",
+                                "px-2",
+                                "text-gray-500",
+                                "font-semibold",
+                                "hover:text-green-500",
+                                "transition",
+                                "duration-300",
+                            ],
+                        ).text("Account"),
+                        a(
+                            href="#",
+                            classes=[
+                                "py-4",
+                                "px-2",
+                                "text-gray-500",
+                                "font-semibold",
+                                "hover:text-green-500",
+                                "transition",
+                                "duration-300",
+                            ],
+                        ).text("Library"),
+                    ),
+                    # Secondary Navbar items
+                    div(
+                        classes=["hidden", "md:flex", "items-center", "space-x-3"]
+                    ).insert(
+                        a(
+                            href="#",
+                            classes=[
+                                "py-2",
+                                "px-2",
+                                "font-medium",
+                                "text-gray-500",
+                                "rounded",
+                                "hover:bg-green-500",
+                                "hover:text-white",
+                                "transition",
+                                "duration-300",
+                            ],
+                        ).text("Login"),
+                        a(
+                            href="#",
+                            classes=[
+                                "py-2",
+                                "px-2",
+                                "font-medium",
+                                "text-white",
+                                "bg-green-500",
+                                "rounded",
+                                "hover:bg-green-400",
+                                "transition",
+                                "duration-300",
+                            ],
+                        ).text("Sign up"),
+                    ),
+                    div(classes=["md:hidden", "flex", "items-center"]).insert(
+                        button(
+                            type="button",
+                            classes=["mobile-menu-button", "outline-none"],
+                        ).insert(
+                            hamburger_svg(),
+                        )
+                    ),
+                )
+            )
+        ),
+        # Mobile menu
+        div(classes=["hidden", "mobile-menu"]).insert(
+            ul().insert(
+                li(classes=["active"]).insert(
+                    a(
+                        href="#",
+                        classes=[
+                            "block",
+                            "text-sm",
+                            "px-2",
+                            "py-4",
+                            "text-white",
+                            "bg-green-500",
+                            "font-semibold",
+                        ],
+                    ).text("Memes")
+                ),
+                li(classes=[""]).insert(
+                    a(
+                        href="#",
+                        classes=[
+                            "block",
+                            "text-sm",
+                            "px-2",
+                            "py-4",
+                            "text-white",
+                            "bg-green-500",
+                            "font-semibold",
+                        ],
+                    ).text("Account")
+                ),
+                li(classes=[""]).insert(
+                    a(
+                        href="#",
+                        classes=[
+                            "block",
+                            "text-sm",
+                            "px-2",
+                            "py-4",
+                            "text-white",
+                            "bg-green-500",
+                            "font-semibold",
+                        ],
+                    ).text("Library")
+                ),
+            )
+        ),
+        script(js="""
+               const btn = document.querySelector("button.mobile-menu-button");
+               const menu = document.querySelector(".mobile-menu");
+
+               // Add Event Listeners
+               btn.addEventListener("click", () => {
+                   menu.classList.toggle("hidden");
+               });
+               """)
     )
+
+
+# 		<li><a href="#services" class="block text-sm px-2 py-4 hover:bg-green-500 transition duration-300">Services</a></li>
+# 		<li><a href="#about" class="block text-sm px-2 py-4 hover:bg-green-500 transition duration-300">About</a></li>
+# 		<li><a href="#contact" class="block text-sm px-2 py-4 hover:bg-green-500 transition duration-300">Contact Us</a></li>
+# 	</ul>
+# </div>
 
 
 def post_view(post_id: int):
