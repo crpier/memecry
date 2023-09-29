@@ -65,30 +65,33 @@ def page_head():
 def page_root(child: Tag | list[Tag]):
     return html(lang="en").insert(
         page_head(),
-        body(classes=["bg-black", "text-white"]).insert(
+        body(classes=["bg-black", "text-white", "pt-20"]).insert(
             child,
         ),
     )
 
 
 def page_nav(signup_url: Callable[[], str], username: str | None = None):
-    return nav(classes=["bg-white", "shadow-lg",]).insert(
+    return nav(
+        classes=["bg-gray-900", "shadow-lg", "fixed", "top-0", "left-0", "w-full"]
+    ).insert(
         div(classes=["max-w-6xl", "mx-auto", "px-4"]).insert(
             div(classes=["flex", "justify-between"]).insert(
                 # TODO: checkout space-x-7 in more detail
-                div(classes=["flex", "space-x-7"]).insert(
+                div(classes=["flex", "space-x-7", "w-full", "justify-between"]).insert(
                     # Logo
                     div().insert(
                         a(
                             href="#", classes=["flex", "items-center", "py-4", "px-2"]
                         ).insert(
-                            img(
-                                src="https://memecry.ceoofmemes.expert/media/123.jpg",
-                                alt="Memecry logo",
-                                classes=["h-8", "w-8", "mr-2"],
-                            ),
                             span(
-                                classes=["font-semibold", "text-gray-500", "text-lg"]
+                                classes=[
+                                    "font-semibold",
+                                    "text-xl",
+                                    "hover:text-green-500",
+                                    "transition",
+                                    "duration-300",
+                                ]
                             ).text("Memecry"),
                         )
                     ),
@@ -101,9 +104,9 @@ def page_nav(signup_url: Callable[[], str], username: str | None = None):
                             classes=[
                                 "py-4",
                                 "px-2",
-                                "text-green-500",
-                                "border-b-4",
-                                "border-green-500",
+                                "hover:text-green-500",
+                                "transition",
+                                "duration-300",
                                 "font-semibold",
                             ],
                         ).text("Memes"),
@@ -112,7 +115,6 @@ def page_nav(signup_url: Callable[[], str], username: str | None = None):
                             classes=[
                                 "py-4",
                                 "px-2",
-                                "text-gray-500",
                                 "font-semibold",
                                 "hover:text-green-500",
                                 "transition",
@@ -124,7 +126,6 @@ def page_nav(signup_url: Callable[[], str], username: str | None = None):
                             classes=[
                                 "py-4",
                                 "px-2",
-                                "text-gray-500",
                                 "font-semibold",
                                 "hover:text-green-500",
                                 "transition",
@@ -142,7 +143,6 @@ def page_nav(signup_url: Callable[[], str], username: str | None = None):
                                 "py-2",
                                 "px-2",
                                 "font-medium",
-                                "text-gray-500",
                                 "rounded",
                                 "hover:bg-green-500",
                                 "hover:text-white",
@@ -168,7 +168,8 @@ def page_nav(signup_url: Callable[[], str], username: str | None = None):
                     div(classes=["md:hidden", "flex", "items-center"]).insert(
                         button(
                             type="button",
-                            classes=["mobile-menu-button", "outline-none"],
+                            classes=["outline-none"],
+                            hyperscript="on click toggle .hidden on #sm-nav",
                         ).insert(
                             hamburger_svg(),
                         )
@@ -177,9 +178,9 @@ def page_nav(signup_url: Callable[[], str], username: str | None = None):
             )
         ),
         # Mobile menu
-        div(classes=["hidden", "mobile-menu"]).insert(
+        div(id="sm-nav", classes=["hidden"]).insert(
             ul().insert(
-                li(classes=["active"]).insert(
+                li(classes=["text-right"]).insert(
                     a(
                         href="#",
                         classes=[
@@ -187,13 +188,11 @@ def page_nav(signup_url: Callable[[], str], username: str | None = None):
                             "text-sm",
                             "px-2",
                             "py-4",
-                            "text-white",
-                            "bg-green-500",
                             "font-semibold",
                         ],
                     ).text("Memes")
                 ),
-                li(classes=[""]).insert(
+                li(classes=["text-right"]).insert(
                     a(
                         href="#",
                         classes=[
@@ -201,13 +200,11 @@ def page_nav(signup_url: Callable[[], str], username: str | None = None):
                             "text-sm",
                             "px-2",
                             "py-4",
-                            "text-white",
-                            "bg-green-500",
                             "font-semibold",
                         ],
                     ).text("Account")
                 ),
-                li(classes=[""]).insert(
+                li(classes=["text-right"]).insert(
                     a(
                         href="#",
                         classes=[
@@ -215,23 +212,12 @@ def page_nav(signup_url: Callable[[], str], username: str | None = None):
                             "text-sm",
                             "px-2",
                             "py-4",
-                            "text-white",
-                            "bg-green-500",
                             "font-semibold",
                         ],
                     ).text("Library")
                 ),
             )
         ),
-        script(js="""
-               const btn = document.querySelector("button.mobile-menu-button");
-               const menu = document.querySelector(".mobile-menu");
-
-               // Add Event Listeners
-               btn.addEventListener("click", () => {
-                   menu.classList.toggle("hidden");
-               });
-               """)
     )
 
 
@@ -248,6 +234,37 @@ def post_view(post_id: int):
         img(
             alt="funny meme",
             src="https://memecry.ceoofmemes.expert/media/123.jpg",
+            classes=["h-96"],
+        ),
+        img(
+            alt="funny meme",
+            src="https://memecry.ceoofmemes.expert/media/123.jpg",
+            classes=["h-96"],
+        ),
+        img(
+            alt="funny meme",
+            src="https://memecry.ceoofmemes.expert/media/123.jpg",
+            classes=["h-96"],
+        ),
+        img(
+            alt="funny meme",
+            src="https://memecry.ceoofmemes.expert/media/123.jpg",
+            classes=["h-96"],
+        ),
+        img(
+            alt="funny meme",
+            src="https://memecry.ceoofmemes.expert/media/123.jpg",
+            classes=["h-96"],
+        ),
+        img(
+            alt="funny meme",
+            src="https://memecry.ceoofmemes.expert/media/123.jpg",
+            classes=["h-96"],
+        ),
+        img(
+            alt="funny meme",
+            src="https://memecry.ceoofmemes.expert/media/123.jpg",
+            classes=["h-96"],
         ),
     )
 
@@ -263,7 +280,7 @@ def home_view(get_post_url: PostUrlCallable) -> Tag:
     Requires a function that takes a post id and returns a url to the post
     """
     post_id = 1
-    return div().insert(
+    return div(classes=[]).insert(
         button(
             type="button",
             classes=["text-center"],
