@@ -2,10 +2,12 @@ from typing import Callable, Protocol
 
 from yahgl_py.html import (
     div,
+    main,
     input,
     form,
     path,
     ul,
+    i,
     img,
     button,
     li,
@@ -71,7 +73,11 @@ def page_root(child: Tag | list[Tag]):
     )
 
 
-def page_nav(signup_url: Callable[[], str], username: str | None = None):
+def page_nav(
+    signup_url: Callable[[], str],
+    login_url: Callable[[], str],
+    username: str | None = None,
+):
     return nav(
         classes=["bg-gray-900", "shadow-lg", "fixed", "top-0", "left-0", "w-full"]
     ).insert(
@@ -137,8 +143,7 @@ def page_nav(signup_url: Callable[[], str], username: str | None = None):
                     div(
                         classes=["hidden", "md:flex", "items-center", "space-x-3"]
                     ).insert(
-                        a(
-                            href="#",
+                        button(
                             classes=[
                                 "py-2",
                                 "px-2",
@@ -149,9 +154,12 @@ def page_nav(signup_url: Callable[[], str], username: str | None = None):
                                 "transition",
                                 "duration-300",
                             ],
-                        ).text("Login"),
-                        a(
-                            href="#",
+                        )
+                        .hx_get(
+                            target=login_url(), hx_target="body", hx_swap="beforeend"
+                        )
+                        .text("Login"),
+                        button(
                             classes=[
                                 "py-2",
                                 "px-2",
@@ -163,13 +171,17 @@ def page_nav(signup_url: Callable[[], str], username: str | None = None):
                                 "transition",
                                 "duration-300",
                             ],
-                        ).text("Sign up"),
+                        )
+                        .hx_get(
+                            target=signup_url(), hx_target="body", hx_swap="beforeend"
+                        )
+                        .text("Sign up"),
                     ),
                     div(classes=["md:hidden", "flex", "items-center"]).insert(
                         button(
                             type="button",
                             classes=["outline-none"],
-                            hyperscript="on click toggle .hidden on #sm-nav",
+                            hyperscript="on click toggle .hidden on #menu",
                         ).insert(
                             hamburger_svg(),
                         )
@@ -178,7 +190,7 @@ def page_nav(signup_url: Callable[[], str], username: str | None = None):
             )
         ),
         # Mobile menu
-        div(id="sm-nav", classes=["hidden"]).insert(
+        div(id="menu", classes=["hidden"]).insert(
             ul().insert(
                 li(classes=["text-right"]).insert(
                     a(
@@ -228,45 +240,82 @@ def page_nav(signup_url: Callable[[], str], username: str | None = None):
 # </div>
 
 
-def post_view(post_id: int):
-    return div(classes=["p-4", "max-w-3xl"]).insert(
-        p(classes=["text-center"]).text("Cool title"),
-        img(
-            alt="funny meme",
-            src="https://memecry.ceoofmemes.expert/media/123.jpg",
-            classes=["h-96"],
+def home_view(post_id: int) -> Tag:
+    return posts_wrapper(post_partial_view(post_id))
+
+
+def post_partial_view(post_id: int):
+    search_content_id = f"search-content-{post_id}"
+    return div(
+        classes=["rounded-lg", "shadow-xl", "w-full", "border-2", "md:p-4"]
+    ).insert(
+        p(classes=["text-2xl", "font-extrabold", "pb-4", "text-center"]).text(
+            "Some funny title"
         ),
         img(
-            alt="funny meme",
-            src="https://memecry.ceoofmemes.expert/media/123.jpg",
-            classes=["h-96"],
+            src="https://avatars.githubusercontent.com/u/31815875?v=4",
+            alt="some funny picture",
+            classes=["w-full"],
         ),
-        img(
-            alt="funny meme",
-            src="https://memecry.ceoofmemes.expert/media/123.jpg",
-            classes=["h-96"],
+        div(
+            classes=[
+                "flex",
+                "flex-row",
+                "justify-between",
+                "items-center",
+                "pt-4",
+                "px-4",
+                "md:px-0",
+            ]
+        ).insert(
+            p(classes=["border", "rounded-md", "px-4", "py-1"]).text("Shitpost, Meme"),
+            div(classes=["space-x-2", "text-right", "py-3", "text-gray-500"]).insert(
+                button(
+                    type="button",
+                    classes=[
+                        "py-2",
+                        "px-4",
+                        "bg-green-500",
+                        "rounded-lg",
+                        "text-white",
+                        "font-semibold",
+                        "hover:bg-green-600",
+                    ],
+                    hyperscript=f"on click toggle .hidden on #{search_content_id}",
+                ).insert(i(classes=["fa", "fa-info", "fa-lg"])),
+                button(
+                    type="button",
+                    classes=[
+                        "py-2",
+                        "px-4",
+                        "bg-green-500",
+                        "rounded-lg",
+                        "text-white",
+                        "font-semibold",
+                        "hover:bg-green-600",
+                    ],
+                ).text("Edit"),
+            ),
         ),
-        img(
-            alt="funny meme",
-            src="https://memecry.ceoofmemes.expert/media/123.jpg",
-            classes=["h-96"],
-        ),
-        img(
-            alt="funny meme",
-            src="https://memecry.ceoofmemes.expert/media/123.jpg",
-            classes=["h-96"],
-        ),
-        img(
-            alt="funny meme",
-            src="https://memecry.ceoofmemes.expert/media/123.jpg",
-            classes=["h-96"],
-        ),
-        img(
-            alt="funny meme",
-            src="https://memecry.ceoofmemes.expert/media/123.jpg",
-            classes=["h-96"],
+        div(classes=["border-t", "pt-2", "hidden"], id=search_content_id).text(
+            "One morning, when Gregor Samsa woke from troubled dreams, he found himself transformed in his bed into a horrible vermin. He lay on his armour-like back, and if he lifted his head a little he could see his brown belly, slightly domed and divided by arches into stiff sections."
         ),
     )
+
+
+def posts_wrapper(posts: Tag | list[Tag]):
+    return main(
+        classes=[
+            "flex",
+            "flex-col",
+            "items-center",
+            "justify-center",
+            "justify-items-center",
+            "w-full",
+            "lg: max-w-2xl",
+            "mx-auto",
+        ]
+    ).insert(posts)
 
 
 class PostUrlCallable(Protocol):
@@ -274,29 +323,11 @@ class PostUrlCallable(Protocol):
         ...
 
 
-def home_view(get_post_url: PostUrlCallable) -> Tag:
-    """
-    Shows posts in a list
-    Requires a function that takes a post id and returns a url to the post
-    """
-    post_id = 1
-    return div(classes=[]).insert(
-        button(
-            type="button",
-            classes=["text-center"],
-        )
-        .hx_get(get_post_url(post_id=post_id), hx_swap="outerHTML")
-        .text("view post"),
-    )
-
-
 def signup_form(get_signup_url: Callable[[], str]):
     return div(
         classes=[
             "fixed",
-            "inset-0",
-            "bg-black",
-            "bg-opacity-50",
+            "inset-48",
             "z-40",
             "flex",
             "flex-col",
@@ -306,19 +337,27 @@ def signup_form(get_signup_url: Callable[[], str]):
     ).insert(
         div(
             id="underlay",
-            classes=["absolute", "inset-0", "-z-10"],
+            classes=[
+                "fixed",
+                "inset-0",
+                "w-screen",
+                "-z-10",
+                "bg-black",
+                "bg-opacity-50",
+            ],
             hyperscript="on click trigger closeModal",
         ),
         form(
             classes=[
                 "z-50",
-                "max-w-max",
                 "bg-gray-800",
                 "p-2",
                 "rounded-sm",
                 "flex",
                 "flex-col",
+                "space-y-2",
                 "items-center",
+                "w-96",
             ],
         )
         .hx_post(get_signup_url(), hx_encoding="multipart/form-data")
@@ -328,6 +367,7 @@ def signup_form(get_signup_url: Callable[[], str]):
                 hyperscript="on click trigger closeModal",
                 type="button",
             ).text("X"),
+            p(classes=["text-2xl"]).text("Sign up"),
             div(
                 classes=[
                     "flex",
@@ -337,19 +377,20 @@ def signup_form(get_signup_url: Callable[[], str]):
                     "h-screen",
                     "max-h-24",
                     "p-2",
+                    "w-full",
                 ],
             ).insert(
                 input(
                     type="text",
                     name="username",
                     placeholder="username",
-                    classes=["p-1", "rounded-sm", "text-black"],
+                    classes=["p-1", "rounded-sm", "text-black", "w-full"],
                 ),
                 input(
                     type="password",
                     name="password",
                     placeholder="password",
-                    classes=["p-1", "rounded-sm", "text-black"],
+                    classes=["p-1", "rounded-sm", "text-black", "w-full"],
                 ),
             ),
             # TODO: enum for button types

@@ -60,12 +60,16 @@ Request = Request[SimpleUser]
 async def get_post(request: Request, *, post_id: PathInt):
     username = "anon"
     if request.scope["from_htmx"]:
-        return HTMLResponse(common_views.post_view(post_id).render())
+        return HTMLResponse(
+            common_views.posts_wrapper(common_views.post_partial_view(post_id)).render()
+        )
     return HTMLResponse(
         common_views.page_root(
             [
-                common_views.page_nav(app.url_wrapper(signup_form), username),
-                common_views.post_view(post_id),
+                common_views.page_nav(
+                    app.url_wrapper(signup_form), app.url_wrapper(signup_form), username
+                ),
+                common_views.posts_wrapper(common_views.post_partial_view(post_id)),
             ]
         ).render()
     )
@@ -79,12 +83,13 @@ async def get_homepage(
         username = request.user.display_name
     else:
         username = "anon"
-    post_url_func = app.url_wrapper(get_post)
     resp = HTMLResponse(
         common_views.page_root(
             [
-                common_views.page_nav(app.url_wrapper(signup_form), username),
-                common_views.home_view(get_post_url=post_url_func),
+                common_views.page_nav(
+                    app.url_wrapper(signup_form), app.url_wrapper(signup_form), username
+                ),
+                common_views.home_view(1),
             ]
         ).render()
     )
