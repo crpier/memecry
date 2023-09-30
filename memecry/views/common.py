@@ -2,6 +2,9 @@ from typing import Callable, Protocol
 
 from yahgl_py.html import (
     div,
+    select,
+    option,
+    label,
     main,
     input,
     form,
@@ -46,9 +49,10 @@ def page_head():
     return head().insert(
         title("Memecry"),
         meta(charset="UTF-8"),
-        meta(name="viewport", content="width=device-width, initial-scale=1"),
+        meta(name="viewport", content="width=device-width, initial-scale=1.0"),
         # TODO: use pytailwindcss instead
         script(src="https://cdn.tailwindcss.com"),
+        script(src="https://unpkg.com/tailwindcss-jit-cdn"),
         link(
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css",
             rel="stylesheet",
@@ -78,40 +82,51 @@ def page_nav(
     login_url: Callable[[], str],
     username: str | None = None,
 ):
+    search_form = form(
+        classes=["flex", "flex-row", "items-center", "justify-end"]
+    ).insert(
+        input(
+            id="search",
+            name="search",
+            type="text",
+            classes=["rounded", "mr-4", "text-black", "hidden"],
+        ),
+        button(classes=[], hyperscript="on click toggle .hidden on #search").insert(
+            i(classes=["fa", "fa-search", "fa-lg"])
+        ),
+    )
     return nav(
         classes=["bg-gray-900", "shadow-lg", "fixed", "top-0", "left-0", "w-full"]
     ).insert(
-        div(classes=["max-w-6xl", "mx-auto", "px-4"]).insert(
-            div(classes=["flex", "justify-between"]).insert(
-                # TODO: checkout space-x-7 in more detail
-                div(classes=["flex", "space-x-7", "w-full", "justify-between"]).insert(
+        div(classes=["px-4"]).insert(
+            div(classes=["flex", "justify-evenly"]).insert(
+                div(classes=["flex", "w-full", "justify-between"]).insert(
                     # Logo
-                    div().insert(
-                        a(
-                            href="#", classes=["flex", "items-center", "py-4", "px-2"]
-                        ).insert(
-                            span(
-                                classes=[
-                                    "font-semibold",
-                                    "text-xl",
-                                    "hover:text-green-500",
-                                    "transition",
-                                    "duration-300",
-                                ]
-                            ).text("Memecry"),
-                        )
-                    ),
                     # Primary Navbar items
                     div(
                         classes=["hidden", "md:flex", "items-center", "space-x-1"]
                     ).insert(
+                        div().insert(
+                            a(
+                                href="#",
+                                classes=["flex", "items-center", "py-4", "px-2"],
+                            ).insert(
+                                span(
+                                    classes=[
+                                        "font-semibold",
+                                        "text-xl",
+                                        "md:hover:text-green-500",
+                                        "duration-300",
+                                    ]
+                                ).text("Memecry"),
+                            )
+                        ),
                         a(
                             href="#",
                             classes=[
                                 "py-4",
                                 "px-2",
                                 "hover:text-green-500",
-                                "transition",
                                 "duration-300",
                                 "font-semibold",
                             ],
@@ -123,7 +138,6 @@ def page_nav(
                                 "px-2",
                                 "font-semibold",
                                 "hover:text-green-500",
-                                "transition",
                                 "duration-300",
                             ],
                         ).text("Account"),
@@ -134,7 +148,6 @@ def page_nav(
                                 "px-2",
                                 "font-semibold",
                                 "hover:text-green-500",
-                                "transition",
                                 "duration-300",
                             ],
                         ).text("Library"),
@@ -143,6 +156,7 @@ def page_nav(
                     div(
                         classes=["hidden", "md:flex", "items-center", "space-x-3"]
                     ).insert(
+                        search_form,
                         button(
                             classes=[
                                 "py-2",
@@ -151,7 +165,6 @@ def page_nav(
                                 "rounded",
                                 "hover:bg-green-500",
                                 "hover:text-white",
-                                "transition",
                                 "duration-300",
                             ],
                         )
@@ -168,7 +181,6 @@ def page_nav(
                                 "bg-green-500",
                                 "rounded",
                                 "hover:bg-green-400",
-                                "transition",
                                 "duration-300",
                             ],
                         )
@@ -233,15 +245,74 @@ def page_nav(
     )
 
 
-# 		<li><a href="#services" class="block text-sm px-2 py-4 hover:bg-green-500 transition duration-300">Services</a></li>
-# 		<li><a href="#about" class="block text-sm px-2 py-4 hover:bg-green-500 transition duration-300">About</a></li>
-# 		<li><a href="#contact" class="block text-sm px-2 py-4 hover:bg-green-500 transition duration-300">Contact Us</a></li>
-# 	</ul>
-# </div>
-
-
 def home_view(post_id: int) -> Tag:
     return posts_wrapper(post_partial_view(post_id))
+
+
+def tags_component(post_id: int):
+    tags_selector_id = f"tags-selector-{post_id}"
+    return div(classes=["relative"]).insert(
+        div(classes=["h-10", "flex", "rounded", "items-center", "w-full",]).insert(
+            button(
+                id="select",
+                classes=["border", "rounded-md", "px-2", "py-1"],
+                hyperscript=f"on click toggle .hidden on #{tags_selector_id}",
+            ).text("shitpost, animals"),
+        ),
+        div(
+            id=tags_selector_id,
+            classes=[
+                "absolute",
+                "rounded",
+                "shadow",
+                "overflow-hidden",
+                "hidden",
+                "flex-col",
+                "w-full",
+                "mt-1",
+                "border",
+                "border-gray-200",
+                "bg-black",
+            ],
+        ).insert(
+            ul().insert(
+                li(
+                    classes=[
+                        "px-2",
+                        "py-1",
+                        "bg-gray-800",
+                        "hover:bg-gray-900",
+                        "cursor-pointer",
+                    ]
+                ).text("shitpost"),
+                li(
+                    classes=[
+                        "px-2",
+                        "py-1",
+                        "hover:bg-gray-900",
+                        "cursor-pointer",
+                    ]
+                ).text("meirl"),
+                li(
+                    classes=[
+                        "px-2",
+                        "py-1",
+                        "bg-gray-800",
+                        "hover:bg-gray-900",
+                        "cursor-pointer",
+                    ]
+                ).text("animals"),
+                li(
+                    classes=[
+                        "px-2",
+                        "py-1",
+                        "hover:bg-gray-900",
+                        "cursor-pointer",
+                    ]
+                ).text("reaction"),
+            ),
+        ),
+    )
 
 
 def post_partial_view(post_id: int):
@@ -268,7 +339,7 @@ def post_partial_view(post_id: int):
                 "md:px-0",
             ]
         ).insert(
-            p(classes=["border", "rounded-md", "px-4", "py-1"]).text("Shitpost, Meme"),
+            tags_component(post_id),
             div(classes=["space-x-2", "text-right", "py-3", "text-gray-500"]).insert(
                 button(
                     type="button",
@@ -280,24 +351,17 @@ def post_partial_view(post_id: int):
                         "text-white",
                         "font-semibold",
                         "hover:bg-green-600",
+                        "duration-300",
                     ],
                     hyperscript=f"on click toggle .hidden on #{search_content_id}",
                 ).insert(i(classes=["fa", "fa-info", "fa-lg"])),
-                button(
-                    type="button",
-                    classes=[
-                        "py-2",
-                        "px-4",
-                        "bg-green-500",
-                        "rounded-lg",
-                        "text-white",
-                        "font-semibold",
-                        "hover:bg-green-600",
-                    ],
-                ).text("Edit"),
             ),
         ),
-        div(classes=["border-t", "pt-2", "hidden"], id=search_content_id).text(
+        div(
+            classes=["border-t", "pt-2", "px-2", "mt-4", "hidden"],
+            attrs={"contenteditable": "true"},
+            id=search_content_id,
+        ).text(
             "One morning, when Gregor Samsa woke from troubled dreams, he found himself transformed in his bed into a horrible vermin. He lay on his armour-like back, and if he lifted his head a little he could see his brown belly, slightly domed and divided by arches into stiff sections."
         ),
     )
