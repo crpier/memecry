@@ -1,92 +1,60 @@
-import asyncio
+from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import selectinload
+from starlette.datastructures import UploadFile
+from yahgl_py.injection import Injected, injectable
+import aiofiles
 
-from memecry.model import Base, User, Post
+from memecry.model import User, Post
+from memecry.schema import PostCreate, PostRead, UserRead
 
-async def insert_objects(async_session: async_sessionmaker[AsyncSession]) -> None:
-    async with async_session() as session:
-        async with session.begin():
-            session.add_all(
-                [
-                    User(
-                        posts=[
-                            Post(title="b1", source="aaa"),
-                            Post(title="post2", source="aaa"),
-                        ],
-                        email="a1",
-                        username="cris",
-                        pass_hash="123456",
-                    ),
-                    User(posts=[], email="a2", username="cris", pass_hash="123456"),
-                    User(
-                        posts=[
-                            Post(title="Post3", source="aaa"),
-                            Post(title="post4", source="aaa"),
-                        ],
-                        email="a3",
-                        username="cris",
-                        pass_hash="123456",
-                    ),
-                ]
-            )
+MEDIA_UPLOAD_STORAGE = Path("./testdata/media")
 
 
-async def select_and_update_objects(
-    async_session: async_sessionmaker[AsyncSession],
-) -> None:
-    async with async_session() as session:
-        stmt = select(User).options(selectinload(User.posts))
-
-        result = await session.execute(stmt)
-
-        for a1 in result.scalars():
-            print(a1)
-            print(f"created at: {a1.created_at}")
-            for b1 in a1.posts:
-                print(b1)
-
-        result = await session.execute(select(User).order_by(User.id).limit(1))
-
-        a1 = result.scalars().one()
-
-        a1.email = "a1newemail"
-
+@injectable
+async def upload_post(
+    post_data: PostCreate,
+    uploaded_file: UploadFile,
+    *,
+    asession: async_sessionmaker[AsyncSession] = Injected,
+) -> int:
+    async with asession() as session:
+        new_post = Post(**post_data.__dict__)
+        # TODO: surely there's a smarter way to do this
+        new_post.source = "sentinel"
+        session.add(new_post)
         await session.commit()
+        print(f"New post has id: {new_post.id}")
+        assert uploaded_file.filename
+        dest = (MEDIA_UPLOAD_STORAGE / uploaded_file.filename).with_stem(
+            str(new_post.id)
+        )
+        async with aiofiles.open(dest, "wb") as f:
+            await f.write(await uploaded_file.read())
 
-        # access attribute subsequent to commit; this is what
-        # expire_on_commit=False allows
-        print(a1.email)
-
-        # alternatively, AsyncAttrs may be used to access any attribute
-        # as an awaitable (new in 2.0.13)
-        for b1 in await a1.awaitable_attrs.posts:
-            print(b1)
-
-
-async def async_main() -> None:
-    engine = create_async_engine(
-        "sqlite+aiosqlite:///dev.db",
-        echo=True,
-    )
-
-    # async_sessionmaker: a factory for new AsyncSession objects.
-    # expire_on_commit - don't expire objects after transaction commit
-    async_session = async_sessionmaker(engine, expire_on_commit=False)
-
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    await insert_objects(async_session)
-    await select_and_update_objects(async_session)
-
-    # for AsyncEngine created in function scope, close and
-    # clean-up pooled connections
-    await engine.dispose()
+        new_post.source = str(Path("/media") / str(dest.name))
+        session.add(new_post)
+        await session.commit()
+    return new_post.id
 
 
-asyncio.run(async_main())
+@injectable
+async def get_posts(
+    limit=5,
+    offset=0,
+    viewer: UserRead | None = None,
+    *,
+    asession: async_sessionmaker[AsyncSession] = Injected,
+):
+    async with asession() as session:
+        query = (
+            select(Post)
+            .order_by(Post.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        posts = await session.execute(query)
+        return [PostRead.model_validate(post) for post in posts.scalars().all()]

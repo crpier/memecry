@@ -42,7 +42,7 @@ async def create_user(
                 return None
             new_user = User(
                 username=user.username,
-                pass_hash=user.password,
+                pass_hash=security.get_password_hash(user.password),
             )
             session.add(new_user)
             await session.commit()

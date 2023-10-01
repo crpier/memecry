@@ -1,10 +1,11 @@
-from typing import Callable, Protocol
+from typing import Callable
 
 from yahgl_py.html import (
     div,
     select,
     option,
     label,
+    progress,
     main,
     input,
     form,
@@ -28,6 +29,10 @@ from yahgl_py.html import (
     Tag,
     p,
 )
+
+from memecry.schema import PostRead, UserRead
+
+DEFAULT_TAGS = ["reaction", "animal", "post-ironic", "ro"]
 
 
 def hamburger_svg():
@@ -79,8 +84,10 @@ def page_root(child: Tag | list[Tag]):
 
 def page_nav(
     signup_url: Callable[[], str],
-    login_url: Callable[[], str],
-    username: str | None = None,
+    signin_url: Callable[[], str],
+    signout_url: Callable[[], str],
+    upload_form_url: Callable[[], str],
+    user: UserRead | None = None,
 ):
     search_form = form(
         classes=["flex", "flex-row", "items-center", "justify-end"]
@@ -95,6 +102,93 @@ def page_nav(
             i(classes=["fa", "fa-search", "fa-lg"])
         ),
     )
+
+    signup_button = (
+        button(
+            classes=[
+                "py-2",
+                "px-2",
+                "font-medium",
+                "text-white",
+                "bg-green-500",
+                "rounded",
+                "hover:bg-green-400",
+                "duration-300",
+            ],
+        )
+        .hx_get(target=signup_url(), hx_target="body", hx_swap="beforeend")
+        .text("Sign up")
+    )
+
+    signin_button = (
+        button(
+            classes=[
+                "py-2",
+                "px-2",
+                "font-medium",
+                "rounded",
+                "hover:bg-gray-700",
+                "duration-300",
+            ],
+        )
+        .hx_get(target=signin_url(), hx_target="body", hx_swap="beforeend")
+        .text("Sign in")
+    )
+
+    upload_button = (
+        button(
+            classes=[
+                "py-2",
+                "px-2",
+                "font-medium",
+                "text-white",
+                "bg-green-500",
+                "rounded",
+                "hover:bg-green-400",
+                "duration-300",
+            ],
+        )
+        .hx_get(target=upload_form_url(), hx_target="body", hx_swap="beforeend")
+        .text("Upload")
+    )
+
+    signout_button = (
+        button(
+            classes=[
+                "py-2",
+                "px-2",
+                "font-medium",
+                "rounded",
+                "hover:bg-gray-700",
+                "duration-300",
+            ],
+        )
+        .hx_get(target=signout_url(), hx_target="body", hx_swap="beforeend")
+        .text("Sign out")
+    )
+
+    nav_links = [
+        a(
+            href="#",
+            classes=[
+                "py-4",
+                "px-2",
+                "font-semibold",
+                "hover:text-green-500",
+                "duration-300",
+            ],
+        ).text("Account"),
+        a(
+            href="#",
+            classes=[
+                "py-4",
+                "px-2",
+                "font-semibold",
+                "hover:text-green-500",
+                "duration-300",
+            ],
+        ).text("Library"),
+    ]
     return nav(
         classes=["bg-gray-900", "shadow-lg", "fixed", "top-0", "left-0", "w-full"]
     ).insert(
@@ -121,73 +215,17 @@ def page_nav(
                                 ).text("Memecry"),
                             )
                         ),
-                        a(
-                            href="#",
-                            classes=[
-                                "py-4",
-                                "px-2",
-                                "hover:text-green-500",
-                                "duration-300",
-                                "font-semibold",
-                            ],
-                        ).text("Memes"),
-                        a(
-                            href="#",
-                            classes=[
-                                "py-4",
-                                "px-2",
-                                "font-semibold",
-                                "hover:text-green-500",
-                                "duration-300",
-                            ],
-                        ).text("Account"),
-                        a(
-                            href="#",
-                            classes=[
-                                "py-4",
-                                "px-2",
-                                "font-semibold",
-                                "hover:text-green-500",
-                                "duration-300",
-                            ],
-                        ).text("Library"),
+                        nav_links if user else [],  # type: ignore
                     ),
                     # Secondary Navbar items
                     div(
                         classes=["hidden", "md:flex", "items-center", "space-x-3"]
                     ).insert(
                         search_form,
-                        button(
-                            classes=[
-                                "py-2",
-                                "px-2",
-                                "font-medium",
-                                "rounded",
-                                "hover:bg-green-500",
-                                "hover:text-white",
-                                "duration-300",
-                            ],
-                        )
-                        .hx_get(
-                            target=login_url(), hx_target="body", hx_swap="beforeend"
-                        )
-                        .text("Login"),
-                        button(
-                            classes=[
-                                "py-2",
-                                "px-2",
-                                "font-medium",
-                                "text-white",
-                                "bg-green-500",
-                                "rounded",
-                                "hover:bg-green-400",
-                                "duration-300",
-                            ],
-                        )
-                        .hx_get(
-                            target=signup_url(), hx_target="body", hx_swap="beforeend"
-                        )
-                        .text("Sign up"),
+                        signin_button if not user else None,
+                        signup_button if not user else None,
+                        signout_button if user else None,
+                        upload_button if user else None,
                     ),
                     div(classes=["md:hidden", "flex", "items-center"]).insert(
                         button(
@@ -245,19 +283,25 @@ def page_nav(
     )
 
 
-def home_view(post_id: int) -> Tag:
-    return posts_wrapper(post_partial_view(post_id))
+def home_view(posts: PostRead) -> Tag:
+    return posts_wrapper([post_component(post) for post in posts])
 
 
-def tags_component(post_id: int):
-    tags_selector_id = f"tags-selector-{post_id}"
+def tags_component(post: PostRead | None = None):
+    tags_selector_id = f"tags-selector-{post.id if post else 'sentinel'}"
     return div(classes=["relative"]).insert(
         div(classes=["h-10", "flex", "rounded", "items-center", "w-full",]).insert(
             button(
                 id="select",
-                classes=["border", "rounded-md", "px-2", "py-1"],
+                classes=["border", "border-gray-400", "rounded-md", "px-2", "py-1"],
                 hyperscript=f"on click toggle .hidden on #{tags_selector_id}",
-            ).text("shitpost, animals"),
+            ).text(post.tags if post else "no tags"),
+            input(
+                type="text",
+                value=post.tags if post else "no tags",
+                name=f"tags",
+                classes=["hidden"],
+            ),
         ),
         div(
             id=tags_selector_id,
@@ -271,7 +315,7 @@ def tags_component(post_id: int):
                 "w-full",
                 "mt-1",
                 "border",
-                "border-gray-200",
+                "border-gray-400",
                 "bg-black",
             ],
         ).insert(
@@ -315,17 +359,24 @@ def tags_component(post_id: int):
     )
 
 
-def post_partial_view(post_id: int):
-    search_content_id = f"search-content-{post_id}"
+def post_component(post: PostRead):
+    search_content_id = f"search-content-{post.id}"
     return div(
-        classes=["rounded-lg", "shadow-xl", "w-full", "border-2", "md:p-4"]
+        classes=[
+            "rounded-lg",
+            "shadow-xl",
+            "w-full",
+            "border-2",
+            "border-gray-500",
+            "md:p-4",
+        ]
     ).insert(
         p(classes=["text-2xl", "font-extrabold", "pb-4", "text-center"]).text(
-            "Some funny title"
+            post.title
         ),
         img(
-            src="https://avatars.githubusercontent.com/u/31815875?v=4",
-            alt="some funny picture",
+            src=post.source,
+            alt=post.title,
             classes=["w-full"],
         ),
         div(
@@ -339,7 +390,7 @@ def post_partial_view(post_id: int):
                 "md:px-0",
             ]
         ).insert(
-            tags_component(post_id),
+            tags_component(post),
             div(classes=["space-x-2", "text-right", "py-3", "text-gray-500"]).insert(
                 button(
                     type="button",
@@ -358,7 +409,7 @@ def post_partial_view(post_id: int):
             ),
         ),
         div(
-            classes=["border-t", "pt-2", "px-2", "mt-4", "hidden"],
+            classes=["border-t", "border-gray-500", "pt-2", "px-2", "mt-4", "hidden"],
             attrs={"contenteditable": "true"},
             id=search_content_id,
         ).text(
@@ -378,13 +429,158 @@ def posts_wrapper(posts: Tag | list[Tag]):
             "w-full",
             "lg: max-w-2xl",
             "mx-auto",
+            "space-y-8",
         ]
     ).insert(posts)
 
 
-class PostUrlCallable(Protocol):
-    def __call__(self, *, post_id: int) -> str:
-        ...
+def upload_form(upload_url: Callable[[], str]):
+    return div(
+        id="upload-form",
+        classes=[
+            "fixed",
+            "inset-48",
+            "z-40",
+            "flex",
+            "flex-col",
+            "items-center",
+        ],
+    ).insert(
+        div(
+            id="underlay",
+            classes=[
+                "fixed",
+                "inset-0",
+                "w-screen",
+                "-z-10",
+                "bg-black",
+                "bg-opacity-50",
+            ],
+            hyperscript="on click remove #upload-form",
+        ),
+        form(
+            classes=[
+                "z-50",
+                "bg-gray-800",
+                "border",
+                "border-gray-500",
+                "rounded-md",
+                "flex",
+                "flex-col",
+                "space-y-4",
+                "items-center",
+                "w-max",
+                "p-4",
+            ]
+        )
+        .hx_post(upload_url(), hx_swap="afterend", hx_encoding="multipart/form-data")
+        .insert(
+            input(
+                type="text",
+                name="title",
+                placeholder="Title",
+                classes=["w-96", "text-black"],
+            ),
+            input(
+                classes=["p-2"],
+                type="file",
+                name="file",
+            ),
+            tags_component(),
+            button(
+                type="submit",
+                classes=[
+                    "py-2",
+                    "px-2",
+                    "font-medium",
+                    "text-white",
+                    "bg-green-600",
+                    "rounded",
+                    "hover:bg-green-400",
+                    "duration-300",
+                ],
+            ).text("Upload"),
+        ),
+    )
+
+
+def signin_form(get_signing_url: Callable[[], str]):
+    return div(
+        classes=[
+            "fixed",
+            "inset-48",
+            "z-40",
+            "flex",
+            "flex-col",
+            "items-center",
+        ],
+        hyperscript="on closeModal remove me",
+    ).insert(
+        div(
+            id="underlay",
+            classes=[
+                "fixed",
+                "inset-0",
+                "w-screen",
+                "-z-10",
+                "bg-black",
+                "bg-opacity-50",
+            ],
+            hyperscript="on click trigger closeModal",
+        ),
+        form(
+            classes=[
+                "z-50",
+                "bg-gray-800",
+                "p-2",
+                "rounded-sm",
+                "flex",
+                "flex-col",
+                "space-y-2",
+                "items-center",
+                "w-96",
+            ],
+        )
+        .hx_post(get_signing_url(), hx_encoding="multipart/form-data")
+        .insert(
+            button(
+                classes=["px-2", "bg-red-800", "ml-auto", "mr-2", "rounded-sm"],
+                hyperscript="on click trigger closeModal",
+                type="button",
+            ).text("X"),
+            p(classes=["text-2xl"]).text("Sign in"),
+            div(
+                classes=[
+                    "flex",
+                    "flex-col",
+                    "items-center",
+                    "justify-between",
+                    "h-screen",
+                    "max-h-24",
+                    "p-2",
+                    "w-full",
+                ],
+            ).insert(
+                input(
+                    type="text",
+                    name="username",
+                    placeholder="username",
+                    classes=["p-1", "rounded-sm", "text-black", "w-full"],
+                ),
+                input(
+                    type="password",
+                    name="password",
+                    placeholder="password",
+                    classes=["p-1", "rounded-sm", "text-black", "w-full"],
+                ),
+            ),
+            # TODO: enum for button types
+            button(
+                classes=["p-2", "bg-blue-800", "rounded-sm"],
+                type="submit",
+            ).text("Sign in"),
+        ),
+    )
 
 
 def signup_form(get_signup_url: Callable[[], str]):

@@ -1,4 +1,5 @@
 __pycache__/
 /media
+/testdata
 /.env
-/lol.db
+/*.db
