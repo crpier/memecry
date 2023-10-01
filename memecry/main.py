@@ -12,7 +12,12 @@ from starlette.requests import HTTPConnection
 from starlette.responses import HTMLResponse, Response
 from starlette.exceptions import HTTPException
 from starlette.staticfiles import StaticFiles
-from memecry.posts_service import upload_post, get_posts
+from memecry.posts_service import (
+    get_post_by_id,
+    toggle_post_tag,
+    upload_post,
+    get_posts,
+)
 from memecry.schema import PostCreate, UserCreate, UserRead
 
 from memecry.views import common as common_views
@@ -60,13 +65,21 @@ app = App(
 )
 Request = Request[UserRead]
 
-app.routes.append(Mount("/media", app=StaticFiles(directory="testdata/media"), name="media"))
+app.routes.append(
+    Mount("/media", app=StaticFiles(directory="testdata/media"), name="media")
+)
+
 
 @app.get("/posts/{post_id}")
 async def get_post(request: Request, *, post_id: PathInt):
+    post = await get_post_by_id(post_id)
+    if not post:
+        return HTMLResponse(common_views.response_404().render())
     if request.scope["from_htmx"]:
         return HTMLResponse(
-            common_views.posts_wrapper(common_views.post_component(post_id)).render()
+            common_views.posts_wrapper(
+                common_views.post_component(app.url_wrapper(update_tags), post)
+            ).render()
         )
     return HTMLResponse(
         common_views.page_root(
@@ -78,8 +91,23 @@ async def get_post(request: Request, *, post_id: PathInt):
                     upload_form_url=app.url_wrapper(upload_form),
                     user=request.user if request.user.is_authenticated else None,
                 ),
-                common_views.posts_wrapper(common_views.post_component(post_id)),
+                common_views.posts_wrapper(
+                    common_views.post_component(app.url_wrapper(update_tags), post)
+                ),
             ]
+        ).render()
+    )
+
+
+@app.put("/posts/{post_id}/tags")
+async def update_tags(request: Request, *, post_id: PathInt):
+    body = await request.body()
+    new_tag = body.decode().split("=", 1)[1]
+    print(new_tag)
+    updated_tags = await toggle_post_tag(post_id, new_tag)
+    return HTMLResponse(
+        common_views.tags_component(
+            app.url_wrapper(update_tags), post_id, updated_tags, hidden_dropdown=False
         ).render()
     )
 
@@ -99,7 +127,7 @@ async def get_homepage(
                     upload_form_url=app.url_wrapper(upload_form),
                     user=request.user if request.user.is_authenticated else None,
                 ),
-                common_views.home_view(posts),
+                common_views.home_view(app.url_wrapper(update_tags), posts),
             ]
         ).render()
     )
@@ -109,10 +137,18 @@ async def get_homepage(
 @app.get("/upload-form")
 async def upload_form(request: Request):
     if request.scope["from_htmx"]:
-        return HTMLResponse(common_views.upload_form(app.url_wrapper(upload)).render())
+        return HTMLResponse(
+            common_views.upload_form(
+                app.url_wrapper(upload), app.url_wrapper(update_tags)
+            ).render()
+        )
     return HTMLResponse(
         common_views.page_root(
-            [common_views.upload_form(app.url_wrapper(upload))]
+            [
+                common_views.upload_form(
+                    app.url_wrapper(upload), app.url_wrapper(update_tags)
+                )
+            ]
         ).render()
     )
 

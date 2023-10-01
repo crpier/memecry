@@ -1,11 +1,7 @@
-from typing import Callable
+from typing import Callable, Protocol
 
 from yahgl_py.html import (
     div,
-    select,
-    option,
-    label,
-    progress,
     main,
     input,
     form,
@@ -32,7 +28,12 @@ from yahgl_py.html import (
 
 from memecry.schema import PostRead, UserRead
 
-DEFAULT_TAGS = ["reaction", "animal", "post-ironic", "ro"]
+DEFAULT_TAGS = ["reaction", "animals", "postironic", "romemes", "meirl"]
+
+
+class PostUpdateTagsUrl(Protocol):
+    def __call__(self, *, post_id: int) -> str:
+        ...
 
 
 def hamburger_svg():
@@ -202,7 +203,7 @@ def page_nav(
                     ).insert(
                         div().insert(
                             a(
-                                href="#",
+                                href="/",
                                 classes=["flex", "items-center", "py-4", "px-2"],
                             ).insert(
                                 span(
@@ -283,25 +284,47 @@ def page_nav(
     )
 
 
-def home_view(posts: PostRead) -> Tag:
-    return posts_wrapper([post_component(post) for post in posts])
+def home_view(post_update_tags_url: PostUpdateTagsUrl, posts: list[PostRead]) -> Tag:
+    return posts_wrapper([post_component(post_update_tags_url, post) for post in posts])
 
 
-def tags_component(post: PostRead | None = None):
-    tags_selector_id = f"tags-selector-{post.id if post else 'sentinel'}"
-    return div(classes=["relative"]).insert(
+def tags_component(
+    post_update_tags_url: PostUpdateTagsUrl,
+    post_id: int = 0,
+    post_tags: str = "no tags",
+    hidden_dropdown: bool = True,
+):
+    element_id = f"tags-{post_id}"
+    active_tags = post_tags
+    tags_selector_id = f"tags-selector-{post_id}"
+
+    def li_tag(tag: str):
+        return li().insert(
+            button(
+                attrs={"name": "tag", "value": tag},
+                classes=[
+                    "px-2",
+                    "py-1",
+                    "hover:bg-gray-900",
+                    "w-full",
+                    "cursor-pointer",
+                    "bg-gray-800" if tag in active_tags else "",
+                ],
+            )
+            .text(tag)
+            .hx_put(
+                post_update_tags_url(post_id=post_id),
+                hx_target=f"#{element_id}",
+                hx_swap="outerHTML",
+            )
+        )
+
+    return div(id=element_id, classes=["relative"]).insert(
         div(classes=["h-10", "flex", "rounded", "items-center", "w-full",]).insert(
             button(
-                id="select",
                 classes=["border", "border-gray-400", "rounded-md", "px-2", "py-1"],
                 hyperscript=f"on click toggle .hidden on #{tags_selector_id}",
-            ).text(post.tags if post else "no tags"),
-            input(
-                type="text",
-                value=post.tags if post else "no tags",
-                name=f"tags",
-                classes=["hidden"],
-            ),
+            ).text(active_tags),
         ),
         div(
             id=tags_selector_id,
@@ -310,9 +333,9 @@ def tags_component(post: PostRead | None = None):
                 "rounded",
                 "shadow",
                 "overflow-hidden",
-                "hidden",
+                "hidden" if hidden_dropdown else "",
                 "flex-col",
-                "w-full",
+                "w-max",
                 "mt-1",
                 "border",
                 "border-gray-400",
@@ -320,46 +343,13 @@ def tags_component(post: PostRead | None = None):
             ],
         ).insert(
             ul().insert(
-                li(
-                    classes=[
-                        "px-2",
-                        "py-1",
-                        "bg-gray-800",
-                        "hover:bg-gray-900",
-                        "cursor-pointer",
-                    ]
-                ).text("shitpost"),
-                li(
-                    classes=[
-                        "px-2",
-                        "py-1",
-                        "hover:bg-gray-900",
-                        "cursor-pointer",
-                    ]
-                ).text("meirl"),
-                li(
-                    classes=[
-                        "px-2",
-                        "py-1",
-                        "bg-gray-800",
-                        "hover:bg-gray-900",
-                        "cursor-pointer",
-                    ]
-                ).text("animals"),
-                li(
-                    classes=[
-                        "px-2",
-                        "py-1",
-                        "hover:bg-gray-900",
-                        "cursor-pointer",
-                    ]
-                ).text("reaction"),
+                [li_tag(tag) for tag in DEFAULT_TAGS],
             ),
         ),
     )
 
 
-def post_component(post: PostRead):
+def post_component(post_update_tags_url: PostUpdateTagsUrl, post: PostRead):
     search_content_id = f"search-content-{post.id}"
     return div(
         classes=[
@@ -390,7 +380,7 @@ def post_component(post: PostRead):
                 "md:px-0",
             ]
         ).insert(
-            tags_component(post),
+            tags_component(post_update_tags_url, post.id, post.tags),
             div(classes=["space-x-2", "text-right", "py-3", "text-gray-500"]).insert(
                 button(
                     type="button",
@@ -434,7 +424,7 @@ def posts_wrapper(posts: Tag | list[Tag]):
     ).insert(posts)
 
 
-def upload_form(upload_url: Callable[[], str]):
+def upload_form(upload_url: Callable[[], str], post_update_tags_url: PostUpdateTagsUrl):
     return div(
         id="upload-form",
         classes=[
@@ -486,7 +476,7 @@ def upload_form(upload_url: Callable[[], str]):
                 type="file",
                 name="file",
             ),
-            tags_component(),
+            tags_component(post_update_tags_url),
             button(
                 type="submit",
                 classes=[
@@ -660,3 +650,7 @@ def signup_form(get_signup_url: Callable[[], str]):
             ).text("Sign up"),
         ),
     )
+
+
+def response_404():
+    return div().text("404 resource not found")
