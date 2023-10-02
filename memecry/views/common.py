@@ -5,6 +5,7 @@ from yahgl_py.html import (
     main,
     input,
     form,
+    textarea,
     path,
     ul,
     i,
@@ -376,9 +377,9 @@ def post_component(
         ]
     ).insert(
         a(href=post_url(post_id=post.id),).insert(
-            p(
-                classes=["text-2xl", "font-bold", "pb-4", "text-center", "w-full"]
-            ).text(post.title)
+            p(classes=["text-2xl", "font-bold", "pb-4", "text-center", "w-full"]).text(
+                post.title
+            )
         ),
         img(
             src=post.source,
@@ -415,11 +416,76 @@ def post_component(
             ),
         ),
         div(
-            classes=["border-t", "border-gray-500", "pt-2", "px-2", "mt-4", "hidden"],
-            attrs={"contenteditable": "true"},
+            classes=[
+                "border-t",
+                "border-gray-500",
+                "flex",
+                "flex-col",
+                "space-y-4",
+            ],
             id=search_content_id,
-        ).text(
-            "One morning, when Gregor Samsa woke from troubled dreams, he found himself transformed in his bed into a horrible vermin. He lay on his armour-like back, and if he lifted his head a little he could see his brown belly, slightly domed and divided by arches into stiff sections."
+        ).insert(
+            textarea(
+                id="textarea",
+                classes=[
+                    "autoExpand",
+                    "block",
+                    "overflow-hidden",
+                    "p-2",
+                    "w-full",
+                    "mx-auto",
+                    "my-4",
+                    "bg-black"
+                ],
+                attrs={"name": f"content-{post.id}", "data-min-rows": 4},
+            )
+            .hx_put(
+                f"/posts/{post.id}/searchable-content",
+                hx_trigger="keyup changed delay:1s",
+                hx_swap="none",
+            )
+            .text(post.searchable_content),
+            script(
+                js="""
+                function getScrollHeight(elm){
+                    var savedValue = elm.value
+                    elm.value = ''
+                    elm._baseScrollHeight = elm.scrollHeight
+                    elm.value = savedValue
+                    }
+
+                document.getElementsByClassName("autoExpand").forEach((elem) => {onExpandableTextareaInput({target: elem})})
+                function onExpandableTextareaInput({ target:elm }){
+                    // make sure the input event originated from a textarea and it's desired to be auto-expandable
+                    if( !elm.classList.contains('autoExpand') || !elm.nodeName == 'TEXTAREA' ) return
+
+                    var minRows = elm.getAttribute('data-min-rows')|0, rows;
+                    !elm._baseScrollHeight && getScrollHeight(elm)
+
+                    elm.rows = minRows
+                    rows = Math.ceil((elm.scrollHeight - elm._baseScrollHeight) / 16)
+                    elm.rows = Math.max(minRows, rows)
+                }
+
+
+                // global delegated event listener
+                document.addEventListener('input', onExpandableTextareaInput)
+                   """
+            ),
+            button(
+                type="button",
+                classes=[
+                    "py-2",
+                    "px-4",
+                    "bg-red-600",
+                    "rounded-lg",
+                    "text-white",
+                    "font-semibold",
+                    "hover:bg-red-700",
+                    "duration-300",
+                    "ml-auto",
+                ],
+            ).text("Delete post"),
         ),
     )
 

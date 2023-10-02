@@ -17,6 +17,7 @@ from memecry.posts_service import (
     toggle_post_tag,
     upload_post,
     get_posts,
+    update_post_searchable_content
 )
 from memecry.schema import PostCreate, UserCreate, UserRead
 
@@ -137,6 +138,13 @@ async def update_tags(request: Request, *, post_id: PathInt):
             ).render()
         )
 
+
+@app.put("/posts/{post_id}/searchable-content")
+async def update_searchable_content(request: Request, *, post_id: PathInt):
+    async with request.form() as form:
+        new_content = cast(str, form[f"content-{post_id}"])
+        await update_post_searchable_content(post_id, new_content)
+    return Response("success")
 
 @app.get("/")
 async def get_homepage(

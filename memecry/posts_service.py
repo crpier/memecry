@@ -82,8 +82,8 @@ async def toggle_post_tag(
     asession: async_sessionmaker[AsyncSession] = Injected,
 ):
     async with asession() as session:
-        get_old_tags_query = select(Post).where(Post.id == post_id).options(
-            load_only(Post.tags)
+        get_old_tags_query = (
+            select(Post).where(Post.id == post_id).options(load_only(Post.tags))
         )
         result = await session.execute(get_old_tags_query)
         old_tags = result.scalars().one()
@@ -104,3 +104,21 @@ async def toggle_post_tag(
         await session.execute(query)
         await session.commit()
         return new_tags
+
+
+@injectable
+async def update_post_searchable_content(
+    post_id: int,
+    new_content: str,
+    *,
+    asession: async_sessionmaker[AsyncSession] = Injected,
+):
+    async with asession() as session:
+        query = (
+            update(Post)
+            .where(Post.id == post_id)
+            .values(searchable_content=new_content)
+        )
+        await session.execute(query)
+        await session.commit()
+        return new_content
