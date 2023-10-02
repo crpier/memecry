@@ -1,3 +1,4 @@
+import textwrap
 from typing import Callable, Protocol
 
 from yahgl_py.html import (
@@ -5,7 +6,6 @@ from yahgl_py.html import (
     main,
     input,
     form,
-    textarea,
     path,
     ul,
     i,
@@ -364,9 +364,11 @@ def tags_component(
 def post_component(
     post_update_tags_url: PostUpdateTagsUrl, post_url: PostUrlCallable, post: PostRead
 ):
-    search_content_id = f"search-content-{post.id}"
+    search_content_id = f"search-{post.id}"
     tags = tags_component(post_update_tags_url, post.id, post.tags)
+    post_id = f"post-{post.id}"
     return div(
+        id=post_id,
         classes=[
             "rounded-lg",
             "shadow-xl",
@@ -374,7 +376,7 @@ def post_component(
             "border-2",
             "border-gray-500",
             "md:p-4",
-        ]
+        ],
     ).insert(
         a(href=post_url(post_id=post.id),).insert(
             p(classes=["text-2xl", "font-bold", "pb-4", "text-center", "w-full"]).text(
@@ -422,70 +424,83 @@ def post_component(
                 "flex",
                 "flex-col",
                 "space-y-4",
+                "hidden",
             ],
             id=search_content_id,
         ).insert(
-            textarea(
-                id="textarea",
+            input(name=f"content-input-{post.id}", type="text", classes=["hidden"]),
+            script(
+                js=textwrap.dedent(
+                    f"""
+                    setTimeout(() => {{
+                        let editableElement = document.getElementsByName("content-{post.id}")[0]
+                        editableElement.addEventListener("input", function(event) {{
+                            let targetInput = document.getElementsByName("content-input-{post.id}")[0]
+                            targetInput.value = event.target.innerText
+                        }})
+                    }})
+                """
+                ),
+            ),
+            div(
                 classes=[
-                    "autoExpand",
                     "block",
-                    "overflow-hidden",
                     "p-2",
                     "w-full",
-                    "mx-auto",
                     "my-4",
-                    "bg-black"
+                    "bg-black",
+                    "outline-none",
                 ],
-                attrs={"name": f"content-{post.id}", "data-min-rows": 4},
-            )
-            .hx_put(
-                f"/posts/{post.id}/searchable-content",
-                hx_trigger="keyup changed delay:1s",
-                hx_swap="none",
-            )
-            .text(post.searchable_content),
-            script(
-                js="""
-                function getScrollHeight(elm){
-                    var savedValue = elm.value
-                    elm.value = ''
-                    elm._baseScrollHeight = elm.scrollHeight
-                    elm.value = savedValue
-                    }
-
-                document.getElementsByClassName("autoExpand").forEach((elem) => {onExpandableTextareaInput({target: elem})})
-                function onExpandableTextareaInput({ target:elm }){
-                    // make sure the input event originated from a textarea and it's desired to be auto-expandable
-                    if( !elm.classList.contains('autoExpand') || !elm.nodeName == 'TEXTAREA' ) return
-
-                    var minRows = elm.getAttribute('data-min-rows')|0, rows;
-                    !elm._baseScrollHeight && getScrollHeight(elm)
-
-                    elm.rows = minRows
-                    rows = Math.ceil((elm.scrollHeight - elm._baseScrollHeight) / 16)
-                    elm.rows = Math.max(minRows, rows)
-                }
-
-
-                // global delegated event listener
-                document.addEventListener('input', onExpandableTextareaInput)
-                   """
+                attrs={
+                    "contenteditable": "true",
+                    "name": f"content-{post.id}",
+                },
+            ).text(post.searchable_content),
+            div(classes=["flex", "flex-row", "justify-end", "space-x-4"]).insert(
+                button(
+                    type="button",
+                    classes=[
+                        "py-2",
+                        "px-4",
+                        "rounded-lg",
+                        "text-white",
+                        "font-semibold",
+                        "bg-green-600",
+                        "hover:bg-green-700",
+                        "duration-300",
+                    ],
+                )
+                .text("Save")
+                .hx_put(
+                    # TODO: use url callable
+                    f"/posts/{post.id}/searchable-content",
+                    hx_trigger="click",
+                    hx_swap="none",
+                    hx_include=f"[name='content-input-{post.id}']",
+                    hx_encoding="multipart/form-data",
+                ),
+                button(
+                    type="button",
+                    classes=[
+                        "py-2",
+                        "px-4",
+                        "bg-red-600",
+                        "rounded-lg",
+                        "text-white",
+                        "font-semibold",
+                        "hover:bg-red-700",
+                        "duration-300",
+                    ],
+                )
+                .hx_delete(
+                    # TODO: use url callable
+                    f"/posts/{post.id}",
+                    hx_trigger="click",
+                    hx_swap="delete",
+                    hx_target=f"#{post_id}",
+                )
+                .text("Delete post"),
             ),
-            button(
-                type="button",
-                classes=[
-                    "py-2",
-                    "px-4",
-                    "bg-red-600",
-                    "rounded-lg",
-                    "text-white",
-                    "font-semibold",
-                    "hover:bg-red-700",
-                    "duration-300",
-                    "ml-auto",
-                ],
-            ).text("Delete post"),
         ),
     )
 

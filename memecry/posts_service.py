@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from sqlalchemy import select, update
+from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, load_only
@@ -122,3 +122,17 @@ async def update_post_searchable_content(
         await session.execute(query)
         await session.commit()
         return new_content
+
+@injectable
+async def delete_post(
+    post_id: int,
+    *,
+    asession: async_sessionmaker[AsyncSession] = Injected,
+):
+    async with asession() as session:
+        query = (
+            delete(Post)
+            .where(Post.id == post_id)
+        )
+        await session.execute(query)
+        await session.commit()
