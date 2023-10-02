@@ -78,7 +78,11 @@ async def get_post(request: Request, *, post_id: PathInt):
     if request.scope["from_htmx"]:
         return HTMLResponse(
             common_views.posts_wrapper(
-                common_views.post_component(app.url_wrapper(update_tags), post)
+                common_views.post_component(
+                    post_update_tags_url=app.url_wrapper(update_tags),
+                    post_url=app.url_wrapper(get_post),
+                    post=post,
+                )
             ).render()
         )
     return HTMLResponse(
@@ -92,7 +96,11 @@ async def get_post(request: Request, *, post_id: PathInt):
                     user=request.user if request.user.is_authenticated else None,
                 ),
                 common_views.posts_wrapper(
-                    common_views.post_component(app.url_wrapper(update_tags), post)
+                    common_views.post_component(
+                        post_update_tags_url=app.url_wrapper(update_tags),
+                        post_url=app.url_wrapper(get_post),
+                        post=post,
+                    )
                 ),
             ]
         ).render()
@@ -100,16 +108,34 @@ async def get_post(request: Request, *, post_id: PathInt):
 
 
 @app.put("/posts/{post_id}/tags")
+# TODO: PathInt should actually be an int
 async def update_tags(request: Request, *, post_id: PathInt):
-    body = await request.body()
-    new_tag = body.decode().split("=", 1)[1]
-    print(new_tag)
-    updated_tags = await toggle_post_tag(post_id, new_tag)
-    return HTMLResponse(
-        common_views.tags_component(
-            app.url_wrapper(update_tags), post_id, updated_tags, hidden_dropdown=False
-        ).render()
-    )
+    async with request.form() as form:
+        new_tag = cast(str, form["tag"])
+        old_tags = cast(str, form.get("tags", "no tags"))
+        if int(post_id) != 0:
+            updated_tags = await toggle_post_tag(post_id, new_tag)
+        else:
+            old_tags = old_tags.split(", ")
+
+            if new_tag in old_tags:
+                old_tags.remove(new_tag)
+                if old_tags == []:
+                    old_tags = ["no tags"]
+            else:
+                if old_tags == ["no tags"]:
+                    old_tags = []
+                old_tags.append(new_tag)
+
+            updated_tags = ", ".join(old_tags)
+        return HTMLResponse(
+            common_views.tags_component(
+                app.url_wrapper(update_tags),
+                post_id,
+                updated_tags,
+                hidden_dropdown=False,
+            ).render()
+        )
 
 
 @app.get("/")
@@ -127,7 +153,9 @@ async def get_homepage(
                     upload_form_url=app.url_wrapper(upload_form),
                     user=request.user if request.user.is_authenticated else None,
                 ),
-                common_views.home_view(app.url_wrapper(update_tags), posts),
+                common_views.home_view(
+                    app.url_wrapper(update_tags), app.url_wrapper(get_post), posts
+                ),
             ]
         ).render()
     )
@@ -166,9 +194,10 @@ async def upload(request: Request):
             tags=tags,
         )
         new_post_id = await upload_post(post_data=post_data, uploaded_file=file)
-        print(new_post_id)
-    # TODO: redirect to new post
-    return Response(f"new post has id = {new_post_id=}")
+    resp = Response()
+    resp.headers["HX-Redirect"] = f"/posts/{new_post_id}"
+    resp.status_code = 201
+    return resp
 
 
 @app.get("/signup-form")

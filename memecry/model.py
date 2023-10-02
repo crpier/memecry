@@ -42,6 +42,7 @@ class Post(Base):
     title: Mapped[str]
     source: Mapped[str]
     tags: Mapped[str]
+    searchable_content: Mapped[str] = mapped_column(nullable=True)
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     user: Mapped[User] = relationship("User", back_populates="posts", lazy="joined")

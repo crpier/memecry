@@ -36,6 +36,11 @@ class PostUpdateTagsUrl(Protocol):
         ...
 
 
+class PostUrlCallable(Protocol):
+    def __call__(self, *, post_id: int) -> str:
+        ...
+
+
 def hamburger_svg():
     return svg(
         classes=["h-6", "w-6", "text-gray-500"],
@@ -225,8 +230,8 @@ def page_nav(
                         search_form,
                         signin_button if not user else None,
                         signup_button if not user else None,
-                        signout_button if user else None,
                         upload_button if user else None,
+                        signout_button if user else None,
                     ),
                     div(classes=["md:hidden", "flex", "items-center"]).insert(
                         button(
@@ -284,8 +289,14 @@ def page_nav(
     )
 
 
-def home_view(post_update_tags_url: PostUpdateTagsUrl, posts: list[PostRead]) -> Tag:
-    return posts_wrapper([post_component(post_update_tags_url, post) for post in posts])
+def home_view(
+    post_update_tags_url: PostUpdateTagsUrl,
+    post_url: PostUrlCallable,
+    posts: list[PostRead],
+) -> Tag:
+    return posts_wrapper(
+        [post_component(post_update_tags_url, post_url, post) for post in posts]
+    )
 
 
 def tags_component(
@@ -295,7 +306,6 @@ def tags_component(
     hidden_dropdown: bool = True,
 ):
     element_id = f"tags-{post_id}"
-    active_tags = post_tags
     tags_selector_id = f"tags-selector-{post_id}"
 
     def li_tag(tag: str):
@@ -308,7 +318,7 @@ def tags_component(
                     "hover:bg-gray-900",
                     "w-full",
                     "cursor-pointer",
-                    "bg-gray-800" if tag in active_tags else "",
+                    "bg-gray-800" if tag in post_tags else "",
                 ],
             )
             .text(tag)
@@ -320,11 +330,12 @@ def tags_component(
         )
 
     return div(id=element_id, classes=["relative"]).insert(
+        input(name="tags", type="text", value=post_tags, classes=["hidden"]),
         div(classes=["h-10", "flex", "rounded", "items-center", "w-full",]).insert(
             button(
                 classes=["border", "border-gray-400", "rounded-md", "px-2", "py-1"],
                 hyperscript=f"on click toggle .hidden on #{tags_selector_id}",
-            ).text(active_tags),
+            ).text(post_tags),
         ),
         div(
             id=tags_selector_id,
@@ -349,8 +360,11 @@ def tags_component(
     )
 
 
-def post_component(post_update_tags_url: PostUpdateTagsUrl, post: PostRead):
+def post_component(
+    post_update_tags_url: PostUpdateTagsUrl, post_url: PostUrlCallable, post: PostRead
+):
     search_content_id = f"search-content-{post.id}"
+    tags = tags_component(post_update_tags_url, post.id, post.tags)
     return div(
         classes=[
             "rounded-lg",
@@ -361,8 +375,10 @@ def post_component(post_update_tags_url: PostUpdateTagsUrl, post: PostRead):
             "md:p-4",
         ]
     ).insert(
-        p(classes=["text-2xl", "font-extrabold", "pb-4", "text-center"]).text(
-            post.title
+        a(href=post_url(post_id=post.id),).insert(
+            p(
+                classes=["text-2xl", "font-bold", "pb-4", "text-center", "w-full"]
+            ).text(post.title)
         ),
         img(
             src=post.source,
@@ -380,7 +396,7 @@ def post_component(post_update_tags_url: PostUpdateTagsUrl, post: PostRead):
                 "md:px-0",
             ]
         ).insert(
-            tags_component(post_update_tags_url, post.id, post.tags),
+            tags,
             div(classes=["space-x-2", "text-right", "py-3", "text-gray-500"]).insert(
                 button(
                     type="button",
@@ -425,6 +441,7 @@ def posts_wrapper(posts: Tag | list[Tag]):
 
 
 def upload_form(upload_url: Callable[[], str], post_update_tags_url: PostUpdateTagsUrl):
+    tags = tags_component(post_update_tags_url)
     return div(
         id="upload-form",
         classes=[
@@ -453,17 +470,21 @@ def upload_form(upload_url: Callable[[], str], post_update_tags_url: PostUpdateT
                 "z-50",
                 "bg-gray-800",
                 "border",
-                "border-gray-500",
+                "border-gray-100",
                 "rounded-md",
                 "flex",
                 "flex-col",
                 "space-y-4",
-                "items-center",
+                "items-start",
                 "w-max",
                 "p-4",
             ]
         )
-        .hx_post(upload_url(), hx_swap="afterend", hx_encoding="multipart/form-data")
+        .hx_post(
+            upload_url(),
+            hx_swap="afterend",
+            hx_encoding="multipart/form-data",
+        )
         .insert(
             input(
                 type="text",
@@ -476,7 +497,7 @@ def upload_form(upload_url: Callable[[], str], post_update_tags_url: PostUpdateT
                 type="file",
                 name="file",
             ),
-            tags_component(post_update_tags_url),
+            tags,
             button(
                 type="submit",
                 classes=[
