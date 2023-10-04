@@ -17,13 +17,14 @@ from memecry.posts_service import (
     toggle_post_tag,
     upload_post,
     get_posts,
+    get_posts_by_search_query,
     update_post_searchable_content,
     delete_post
 )
 from memecry.schema import PostCreate, UserCreate, UserRead
 
 from memecry.views import common as common_views
-from yahgl_py.app import App, AuthScope, PathInt, Request
+from yahgl_py.app import App, AuthScope, PathInt,QueryStr, Request
 import memecry.user_service as user_service
 from memecry.depends import bootstrap
 import memecry.security as security
@@ -143,7 +144,6 @@ async def update_tags(request: Request, *, post_id: PathInt):
 @app.put("/posts/{post_id}/searchable-content")
 async def update_searchable_content(request: Request, *, post_id: PathInt):
     async with request.form() as form:
-        print(form)
         new_content = cast(str, form[f"content-input-{post_id}"])
         await update_post_searchable_content(post_id, new_content)
     return Response("success")
@@ -157,8 +157,13 @@ async def post_delete(request: Request, *, post_id: PathInt):
 @app.get("/")
 async def get_homepage(
     request: Request,
+    query: QueryStr | None = None
 ):
-    posts = await get_posts()
+    print(query)
+    if query:
+        posts = await get_posts_by_search_query(query)
+    else:
+        posts = await get_posts()
     resp = HTMLResponse(
         common_views.page_root(
             [

@@ -101,9 +101,9 @@ def page_nav(
     ).insert(
         input(
             id="search",
-            name="search",
+            name="query",
             type="text",
-            classes=["rounded", "mr-4", "text-black", "hidden"],
+            classes=["rounded", "mr-4", "text-black"],
         ),
         button(classes=[], hyperscript="on click toggle .hidden on #search").insert(
             i(classes=["fa", "fa-search", "fa-lg"])
@@ -197,7 +197,16 @@ def page_nav(
         ).text("Library"),
     ]
     return nav(
-        classes=["bg-gray-900", "shadow-lg", "fixed", "top-0", "left-0", "w-full"]
+        classes=[
+            "bg-gray-900",
+            "shadow-lg",
+            "fixed",
+            "top-0",
+            "left-0",
+            "w-full",
+            "z-50",
+        ],
+        attrs={"style": "min-height: 2.5rem;"},
     ).insert(
         div(classes=["px-4"]).insert(
             div(classes=["flex", "justify-evenly"]).insert(
@@ -234,10 +243,12 @@ def page_nav(
                         upload_button if user else None,
                         signout_button if user else None,
                     ),
-                    div(classes=["md:hidden", "flex", "items-center"]).insert(
+                    div(
+                        classes=["md:hidden", "flex", "items-center", "ml-auto"]
+                    ).insert(
                         button(
                             type="button",
-                            classes=["outline-none"],
+                            classes=["outline-none", "mt-2"],
                             hyperscript="on click toggle .hidden on #menu",
                         ).insert(
                             hamburger_svg(),
@@ -462,6 +473,27 @@ def post_component(
                     classes=[
                         "py-2",
                         "px-4",
+                        "bg-red-600",
+                        "rounded-lg",
+                        "text-white",
+                        "font-semibold",
+                        "hover:bg-red-700",
+                        "duration-300",
+                    ],
+                )
+                .hx_delete(
+                    # TODO: use url callable
+                    f"/posts/{post.id}",
+                    hx_trigger="click",
+                    hx_swap="delete",
+                    hx_target=f"#{post_id}",
+                )
+                .text("Delete post"),
+                button(
+                    type="button",
+                    classes=[
+                        "py-2",
+                        "px-4",
                         "rounded-lg",
                         "text-white",
                         "font-semibold",
@@ -479,27 +511,6 @@ def post_component(
                     hx_include=f"[name='content-input-{post.id}']",
                     hx_encoding="multipart/form-data",
                 ),
-                button(
-                    type="button",
-                    classes=[
-                        "py-2",
-                        "px-4",
-                        "bg-red-600",
-                        "rounded-lg",
-                        "text-white",
-                        "font-semibold",
-                        "hover:bg-red-700",
-                        "duration-300",
-                    ],
-                )
-                .hx_delete(
-                    # TODO: use url callable
-                    f"/posts/{post.id}",
-                    hx_trigger="click",
-                    hx_swap="delete",
-                    hx_target=f"#{post_id}",
-                )
-                .text("Delete post"),
             ),
         ),
     )

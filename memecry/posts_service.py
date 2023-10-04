@@ -37,6 +37,11 @@ async def upload_post(
 
         new_post.source = str(Path("/media") / str(dest.name))
         session.add(new_post)
+        conn = await session.connection()
+        await conn.exec_driver_sql(
+            "INSERT INTO posts_data (rowid, title, content) VALUES (?, ?, ?)",
+            (new_post.id, new_post.title, new_post.searchable_content),
+        )
         await session.commit()
     return new_post.id
 
@@ -54,6 +59,34 @@ async def get_posts(
             select(Post).order_by(Post.created_at.desc()).limit(limit).offset(offset)
         )
         result = await session.execute(query)
+        return [PostRead.model_validate(post) for post in result.scalars().all()]
+
+
+@injectable
+async def get_posts_by_search_query(
+    query: str,
+    limit=5,
+    offset=0,
+    viewer: UserRead | None = None,
+    *,
+    asession: async_sessionmaker[AsyncSession] = Injected,
+):
+    async with asession() as session:
+        conn = await session.connection()
+        result = await conn.exec_driver_sql(
+            "SELECT rowid FROM posts_data WHERE posts_data MATCH ? LIMIT ? OFFSET ?",
+            (query, limit, offset),
+        )
+        post_ids: list[int] = [res[0] for res in result.fetchall()]
+
+        db_query = (
+            select(Post)
+            .order_by(Post.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+            .where(Post.id.in_(post_ids))
+        )
+        result = await session.execute(db_query)
         return [PostRead.model_validate(post) for post in result.scalars().all()]
 
 
@@ -119,9 +152,15 @@ async def update_post_searchable_content(
             .where(Post.id == post_id)
             .values(searchable_content=new_content)
         )
+        conn = await session.connection()
+        await conn.exec_driver_sql(
+            "UPDATE posts_data SET content = ? WHERE rowid = ?", (new_content, post_id)
+        )
+
         await session.execute(query)
         await session.commit()
         return new_content
+
 
 @injectable
 async def delete_post(
@@ -130,9 +169,8 @@ async def delete_post(
     asession: async_sessionmaker[AsyncSession] = Injected,
 ):
     async with asession() as session:
-        query = (
-            delete(Post)
-            .where(Post.id == post_id)
-        )
+        # TODO: also remove the media file
+        # TODO: a soft delete
+        query = delete(Post).where(Post.id == post_id)
         await session.execute(query)
         await session.commit()
