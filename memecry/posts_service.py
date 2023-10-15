@@ -59,7 +59,12 @@ async def get_posts(
             select(Post).order_by(Post.created_at.desc()).limit(limit).offset(offset)
         )
         result = await session.execute(query)
-        return [PostRead.model_validate(post) for post in result.scalars().all()]
+        post_reads = [PostRead.model_validate(post) for post in result.scalars().all()]
+        if viewer:
+            for post in post_reads:
+                if viewer.id == post.user_id:
+                    post.editable = True
+        return post_reads
 
 
 @injectable
@@ -87,7 +92,12 @@ async def get_posts_by_search_query(
             .where(Post.id.in_(post_ids))
         )
         result = await session.execute(db_query)
-        return [PostRead.model_validate(post) for post in result.scalars().all()]
+        post_reads = [PostRead.model_validate(post) for post in result.scalars().all()]
+        if viewer:
+            for post in post_reads:
+                if viewer.id == post.user_id:
+                    post.editable = True
+        return post_reads
 
 
 @injectable
@@ -101,26 +111,34 @@ async def get_post_by_id(
         query = select(Post).where(Post.id == post_id)
         result = await session.execute(query)
         post = result.scalars().one_or_none()
-        if post:
-            return PostRead.model_validate(post)
-        else:
+        if not post:
             return None
+        # TODO: method in PostRead to compute "editable"
+        view_post = PostRead.model_validate(post)
+        if viewer and viewer.id == post.user_id:
+            view_post.editable = True
+        return view_post
 
 
 @injectable
 async def toggle_post_tag(
     post_id: int,
     tag: str,
+    user_id: int,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
 ):
     async with asession() as session:
         get_old_tags_query = (
-            select(Post).where(Post.id == post_id).options(load_only(Post.tags))
+            select(Post)
+            .where(Post.id == post_id)
+            .options(load_only(Post.tags, Post.user_id))
         )
         result = await session.execute(get_old_tags_query)
-        old_tags = result.scalars().one()
-        old_tags = old_tags.tags.split(", ")
+        post_in_db = result.scalars().one()
+        if post_in_db.user_id != user_id:
+            raise PermissionError()
+        old_tags = post_in_db.tags.split(", ")
 
         if tag in old_tags:
             old_tags.remove(tag)
@@ -143,21 +161,26 @@ async def toggle_post_tag(
 async def update_post_searchable_content(
     post_id: int,
     new_content: str,
+    user_id: int,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
 ):
     async with asession() as session:
-        query = (
-            update(Post)
+        result = await session.execute(
+            select(Post)
             .where(Post.id == post_id)
-            .values(searchable_content=new_content)
+            .options(load_only(Post.searchable_content, Post.user_id))
         )
+        post_in_db = result.scalars().one()
+        if post_in_db.user_id != user_id:
+            raise PermissionError()
+        post_in_db.searchable_content = new_content
+
         conn = await session.connection()
         await conn.exec_driver_sql(
             "UPDATE posts_data SET content = ? WHERE rowid = ?", (new_content, post_id)
         )
 
-        await session.execute(query)
         await session.commit()
         return new_content
 

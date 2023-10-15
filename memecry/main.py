@@ -19,12 +19,12 @@ from memecry.posts_service import (
     get_posts,
     get_posts_by_search_query,
     update_post_searchable_content,
-    delete_post
+    delete_post,
 )
 from memecry.schema import PostCreate, UserCreate, UserRead
 
 from memecry.views import common as common_views
-from yahgl_py.app import App, AuthScope, PathInt,QueryStr, Request
+from yahgl_py.app import App, AuthScope, PathInt, QueryStr, Request
 import memecry.user_service as user_service
 from memecry.depends import bootstrap
 import memecry.security as security
@@ -75,7 +75,9 @@ app.routes.append(
 
 @app.get("/posts/{post_id}")
 async def get_post(request: Request, *, post_id: PathInt):
-    post = await get_post_by_id(post_id)
+    post = await get_post_by_id(
+        post_id, viewer=request.user if request.user.is_authenticated else None
+    )
     if not post:
         return HTMLResponse(common_views.response_404().render())
     if request.scope["from_htmx"]:
@@ -110,14 +112,17 @@ async def get_post(request: Request, *, post_id: PathInt):
     )
 
 
-@app.put("/posts/{post_id}/tags")
+@app.put("/posts/{post_id}/tags", auth_scopes=[AuthScope.Authenticated])
 # TODO: PathInt should actually be an int
 async def update_tags(request: Request, *, post_id: PathInt):
     async with request.form() as form:
         new_tag = cast(str, form["tag"])
         old_tags = cast(str, form.get("tags", "no tags"))
         if int(post_id) != 0:
-            updated_tags = await toggle_post_tag(post_id, new_tag)
+            try:
+                updated_tags = await toggle_post_tag(post_id, new_tag, request.user.id)
+            except PermissionError:
+                return Response("permission denied", status_code=403)
         else:
             old_tags = old_tags.split(", ")
 
@@ -136,34 +141,38 @@ async def update_tags(request: Request, *, post_id: PathInt):
                 app.url_wrapper(update_tags),
                 post_id,
                 updated_tags,
+                editable=True,
                 hidden_dropdown=False,
             ).render()
         )
 
 
-@app.put("/posts/{post_id}/searchable-content")
+@app.put("/posts/{post_id}/searchable-content", auth_scopes=[AuthScope.Authenticated])
 async def update_searchable_content(request: Request, *, post_id: PathInt):
     async with request.form() as form:
         new_content = cast(str, form[f"content-input-{post_id}"])
-        await update_post_searchable_content(post_id, new_content)
+        await update_post_searchable_content(
+            post_id, new_content, user_id=request.user.id
+        )
     return Response("success")
 
 
-@app.delete("/posts/{post_id}")
+@app.delete("/posts/{post_id}", auth_scopes=[AuthScope.Authenticated])
 async def post_delete(request: Request, *, post_id: PathInt):
     await delete_post(post_id)
     return Response("success")
 
+
 @app.get("/")
-async def get_homepage(
-    request: Request,
-    query: QueryStr | None = None
-):
-    print(query)
+async def get_homepage(request: Request, query: QueryStr | None = None):
     if query:
-        posts = await get_posts_by_search_query(query)
+        posts = await get_posts_by_search_query(
+            query, viewer=request.user if request.user.is_authenticated else None
+        )
     else:
-        posts = await get_posts()
+        posts = await get_posts(
+            viewer=request.user if request.user.is_authenticated else None
+        )
     resp = HTMLResponse(
         common_views.page_root(
             [
@@ -183,7 +192,7 @@ async def get_homepage(
     return resp
 
 
-@app.get("/upload-form")
+@app.get("/upload-form", auth_scopes=[AuthScope.Authenticated])
 async def upload_form(request: Request):
     if request.scope["from_htmx"]:
         return HTMLResponse(
@@ -279,7 +288,7 @@ async def signin(request: Request):
         return resp
 
 
-@app.get("/signout")
+@app.get("/signout", auth_scopes=[AuthScope.Authenticated])
 async def signout(_: Request):
     response = Response()
     response.delete_cookie(key="authorization")

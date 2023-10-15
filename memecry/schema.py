@@ -31,6 +31,7 @@ class PostRead(BaseModel):
     user_id: int
     tags: str
     searchable_content: str
+    editable: bool = False
 
     class Config:
         from_attributes = True

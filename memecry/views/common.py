@@ -315,6 +315,7 @@ def tags_component(
     post_update_tags_url: PostUpdateTagsUrl,
     post_id: int = 0,
     post_tags: str = "no tags",
+    editable: bool = False,
     hidden_dropdown: bool = True,
 ):
     element_id = f"tags-{post_id}"
@@ -345,8 +346,17 @@ def tags_component(
         input(name="tags", type="text", value=post_tags, classes=["hidden"]),
         div(classes=["h-10", "flex", "rounded", "items-center", "w-full",]).insert(
             button(
-                classes=["border", "border-gray-400", "rounded-md", "px-2", "py-1"],
-                hyperscript=f"on click toggle .hidden on #{tags_selector_id}",
+                classes=[
+                    "border",
+                    "border-gray-400",
+                    "rounded-md",
+                    "px-2",
+                    "py-1",
+                    "cursor-default" if not editable else "cursor-pointer",
+                ],
+                hyperscript=f"on click toggle .hidden on #{tags_selector_id}"
+                if editable
+                else "",
             ).text(post_tags),
         ),
         div(
@@ -376,7 +386,9 @@ def post_component(
     post_update_tags_url: PostUpdateTagsUrl, post_url: PostUrlCallable, post: PostRead
 ):
     search_content_id = f"search-{post.id}"
-    tags = tags_component(post_update_tags_url, post.id, post.tags)
+    tags = tags_component(
+        post_update_tags_url, post.id, post.tags, editable=post.editable
+    )
     post_id = f"post-{post.id}"
     return div(
         id=post_id,
@@ -463,7 +475,7 @@ def post_component(
                     "outline-none",
                 ],
                 attrs={
-                    "contenteditable": "true",
+                    "contenteditable": "true" if post.editable else "false",
                     "name": f"content-{post.id}",
                 },
             ).text(post.searchable_content),
@@ -480,14 +492,14 @@ def post_component(
                         "hover:bg-red-700",
                         "duration-300",
                     ],
-                )
-                .hx_delete(
+                ).hx_delete(
                     # TODO: use url callable
                     f"/posts/{post.id}",
                     hx_trigger="click",
                     hx_swap="delete",
                     hx_target=f"#{post_id}",
                 )
+                # TODO: confirmation popup
                 .text("Delete post"),
                 button(
                     type="button",
@@ -501,6 +513,7 @@ def post_component(
                         "hover:bg-green-700",
                         "duration-300",
                     ],
+                    hyperscript=f"on click toggle .hidden on #{search_content_id}",
                 )
                 .text("Save")
                 .hx_put(
@@ -511,7 +524,9 @@ def post_component(
                     hx_include=f"[name='content-input-{post.id}']",
                     hx_encoding="multipart/form-data",
                 ),
-            ),
+            )
+            if post.editable
+            else div(),
         ),
     )
 
@@ -533,7 +548,7 @@ def posts_wrapper(posts: Tag | list[Tag]):
 
 
 def upload_form(upload_url: Callable[[], str], post_update_tags_url: PostUpdateTagsUrl):
-    tags = tags_component(post_update_tags_url)
+    tags = tags_component(post_update_tags_url, editable=False)
     return div(
         id="upload-form",
         classes=[
