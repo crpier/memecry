@@ -184,6 +184,32 @@ async def update_post_searchable_content(
         await session.commit()
         return new_content
 
+@injectable
+async def update_post_title(
+    post_id: int,
+    new_title: str,
+    user_id: int,
+    *,
+    asession: async_sessionmaker[AsyncSession] = Injected,
+):
+    async with asession() as session:
+        result = await session.execute(
+            select(Post)
+            .where(Post.id == post_id)
+            .options(load_only(Post.title, Post.user_id))
+        )
+        post_in_db = result.scalars().one()
+        if post_in_db.user_id != user_id:
+            raise PermissionError()
+        post_in_db.title = new_title
+
+        conn = await session.connection()
+        await conn.exec_driver_sql(
+            "UPDATE posts_data SET title = ? WHERE rowid = ?", (new_title, post_id)
+        )
+
+        await session.commit()
+        return new_title
 
 @injectable
 async def delete_post(

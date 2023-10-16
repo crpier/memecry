@@ -389,9 +389,9 @@ def post_component(
     tags = tags_component(
         post_update_tags_url, post.id, post.tags, editable=post.editable
     )
-    post_id = f"post-{post.id}"
+    element_id = f"post-{post.id}"
     return div(
-        id=post_id,
+        id=element_id,
         classes=[
             "rounded-lg",
             "shadow-xl",
@@ -401,10 +401,65 @@ def post_component(
             "md:p-4",
         ],
     ).insert(
-        a(href=post_url(post_id=post.id),).insert(
-            p(classes=["text-2xl", "font-bold", "pb-4", "text-center", "w-full"]).text(
-                post.title
-            )
+        div(
+            classes=[
+                "flex",
+                "flex-row",
+                "flex-nowrap",
+                "items-center",
+                "justify-center",
+                "text-black",
+                "hover:text-white",
+                "duration-300",
+            ],
+        ).insert(
+            input(
+                id=f"title-{post.id}",
+                classes=["hidden"],
+                type="text",
+                name=f"title-{post.id}",
+                value=post.title,
+            ),
+            div(classes=["flex-1"]).text(""),
+            span(
+                id=f"title-display-{post.id}",
+                classes=["text-white", "text-2xl", "font-bold", "mb-4", "px-2"],
+                attrs={
+                    "contenteditable": "true" if post.editable else "false",
+                    "spellcheck": "false",
+                },
+            ).text(post.title),
+            script(
+                js=textwrap.dedent(
+                    f"""
+                    setTimeout(() => {{
+                        let editableElement = document.getElementById("title-display-{post.id}")
+                        editableElement.addEventListener("input", function(event) {{
+                            console.log(event.target.innerText)
+                            let targetInput = document.getElementById("title-{post.id}")
+                            targetInput.value = event.target.innerText
+                        }})
+                    }})
+                """
+                ),
+            ),
+            div(
+                classes=[
+                    "flex-1",
+                    "mx-auto",
+                    "text-right",
+                    "invisible" if not post.editable else "",
+                ],
+            ).insert(
+                button(classes=["w-max", "pb-4", "px-2"])
+                .insert(i(classes=["fa", "fa-lg", "fa-gear"]))
+                .hx_put(
+                    f"/posts/{post.id}/title",
+                    hx_swap="none",
+                    hx_encoding="multipart/form-data",
+                    hx_include=f"#title-{post.id}",
+                ),
+            ),
         ),
         img(
             src=post.source,
@@ -497,7 +552,7 @@ def post_component(
                     f"/posts/{post.id}",
                     hx_trigger="click",
                     hx_swap="delete",
-                    hx_target=f"#{post_id}",
+                    hx_target=f"#{element_id}",
                 )
                 # TODO: confirmation popup
                 .text("Delete post"),

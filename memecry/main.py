@@ -18,6 +18,7 @@ from memecry.posts_service import (
     upload_post,
     get_posts,
     get_posts_by_search_query,
+    update_post_title,
     update_post_searchable_content,
     delete_post,
 )
@@ -156,9 +157,17 @@ async def update_searchable_content(request: Request, *, post_id: PathInt):
         )
     return Response("success")
 
+@app.put("/posts/{post_id}/title", auth_scopes=[AuthScope.Authenticated])
+async def update_title(request: Request, *, post_id: PathInt):
+    async with request.form() as form:
+        new_title = cast(str, form[f"title-{post_id}"])
+        await update_post_title(
+            post_id, new_title, user_id=request.user.id
+        )
+    return Response("success")
 
 @app.delete("/posts/{post_id}", auth_scopes=[AuthScope.Authenticated])
-async def post_delete(request: Request, *, post_id: PathInt):
+async def post_delete(_: Request, *, post_id: PathInt):
     await delete_post(post_id)
     return Response("success")
 
