@@ -10,8 +10,7 @@ import aiofiles
 
 from memecry.model import User, Post
 from memecry.schema import PostCreate, PostRead, UserRead
-
-MEDIA_UPLOAD_STORAGE = Path("./testdata/media")
+from memecry.config import Config
 
 
 @injectable
@@ -20,6 +19,7 @@ async def upload_post(
     uploaded_file: UploadFile,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
+    config: Config = Injected,
 ) -> int:
     async with asession() as session:
         new_post = Post(**post_data.__dict__)
@@ -29,7 +29,7 @@ async def upload_post(
         await session.commit()
         print(f"New post has id: {new_post.id}")
         assert uploaded_file.filename
-        dest = (MEDIA_UPLOAD_STORAGE / uploaded_file.filename).with_stem(
+        dest = (config.MEDIA_UPLOAD_STORAGE / uploaded_file.filename).with_stem(
             str(new_post.id)
         )
         async with aiofiles.open(dest, "wb") as f:
@@ -70,12 +70,15 @@ async def get_posts(
 @injectable
 async def get_posts_by_search_query(
     query: str,
-    limit=5,
+    limit=-1,
     offset=0,
     viewer: UserRead | None = None,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
+    config: Config = Injected,
 ):
+    if limit == -1:
+        limit = config.DEFAULT_POSTS_LIMIT
     async with asession() as session:
         conn = await session.connection()
         result = await conn.exec_driver_sql(

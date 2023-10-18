@@ -45,7 +45,7 @@ class BasicAuthBackend(AuthenticationBackend):
             return
         token = conn.cookies["authorization"]
         try:
-            payload = jose.jwt.decode(token, "abcd", algorithms=["HS256"])
+            payload = await security.decode_payload(token)
         except ExpiredSignatureError:
             return None
         if payload.get("sub") is None:
@@ -58,8 +58,15 @@ class BasicAuthBackend(AuthenticationBackend):
 
 
 @contextlib.asynccontextmanager
-async def lifespan(_: App):
-    await bootstrap()
+async def lifespan(app: App):
+    config = await bootstrap()
+    app.routes.append(
+        Mount(
+            "/media",
+            app=StaticFiles(directory=config.MEDIA_UPLOAD_STORAGE),
+            name="media",
+        )
+    )
     yield
 
 
@@ -68,10 +75,6 @@ app = App(
     lifespan=lifespan,
 )
 Request = Request[UserRead]
-
-app.routes.append(
-    Mount("/media", app=StaticFiles(directory="testdata/media"), name="media")
-)
 
 
 @app.get("/posts/{post_id}")
@@ -157,14 +160,14 @@ async def update_searchable_content(request: Request, *, post_id: PathInt):
         )
     return Response("success")
 
+
 @app.put("/posts/{post_id}/title", auth_scopes=[AuthScope.Authenticated])
 async def update_title(request: Request, *, post_id: PathInt):
     async with request.form() as form:
         new_title = cast(str, form[f"title-{post_id}"])
-        await update_post_title(
-            post_id, new_title, user_id=request.user.id
-        )
+        await update_post_title(post_id, new_title, user_id=request.user.id)
     return Response("success")
+
 
 @app.delete("/posts/{post_id}", auth_scopes=[AuthScope.Authenticated])
 async def post_delete(_: Request, *, post_id: PathInt):
@@ -271,7 +274,7 @@ async def signup(request: Request):
         new_user_id = await user_service.create_user(user_create)
         if new_user_id is None:
             raise HTTPException(400, "Username already taken")
-        access_token = security.create_access_token(data={"sub": username})
+        access_token = await security.create_access_token(data={"sub": username})
         resp = HTMLResponse()
         resp.set_cookie(key="authorization", value=access_token, httponly=True)
         resp.headers["HX-Refresh"] = "true"
@@ -290,7 +293,7 @@ async def signin(request: Request):
                 401, "Invalid username or password", {"WWW-Authenticate": "Bearer"}
             )
         resp = Response()
-        access_token = security.create_access_token(data={"sub": username})
+        access_token = await security.create_access_token(data={"sub": username})
         resp.set_cookie(key="authorization", value=access_token, httponly=True)
         resp.headers["HX-Refresh"] = "true"
         resp.status_code = 303

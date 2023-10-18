@@ -603,7 +603,7 @@ def posts_wrapper(posts: Tag | list[Tag]):
 
 
 def upload_form(upload_url: Callable[[], str], post_update_tags_url: PostUpdateTagsUrl):
-    tags = tags_component(post_update_tags_url, editable=False)
+    tags = tags_component(post_update_tags_url, editable=True)
     return div(
         id="upload-form",
         classes=[
@@ -747,7 +747,6 @@ def signin_form(get_signing_url: Callable[[], str]):
                     classes=["p-1", "rounded-sm", "text-black", "w-full"],
                 ),
             ),
-            # TODO: enum for button types
             button(
                 classes=["p-2", "bg-blue-800", "rounded-sm"],
                 type="submit",
@@ -826,7 +825,6 @@ def signup_form(get_signup_url: Callable[[], str]):
                     classes=["p-1", "rounded-sm", "text-black", "w-full"],
                 ),
             ),
-            # TODO: enum for button types
             button(
                 classes=["p-2", "bg-blue-800", "rounded-sm"],
                 type="submit",
