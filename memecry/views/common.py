@@ -26,10 +26,10 @@ from yahgl_py.html import (
     Tag,
     p,
 )
+from yahgl_py.injection import Injected, injectable_sync
+from memecry.config import Config
 
 from memecry.schema import PostRead, UserRead
-
-DEFAULT_TAGS = ["reaction", "animals", "postironic", "romemes", "meirl"]
 
 
 class PostUpdateTagsUrl(Protocol):
@@ -311,12 +311,15 @@ def home_view(
     )
 
 
+@injectable_sync
 def tags_component(
     post_update_tags_url: PostUpdateTagsUrl,
     post_id: int = 0,
     post_tags: str = "no tags",
     editable: bool = False,
     hidden_dropdown: bool = True,
+    *,
+    config: Config = Injected,
 ):
     element_id = f"tags-{post_id}"
     tags_selector_id = f"tags-selector-{post_id}"
@@ -376,7 +379,7 @@ def tags_component(
             ],
         ).insert(
             ul().insert(
-                [li_tag(tag) for tag in DEFAULT_TAGS],
+                [li_tag(tag) for tag in config.DEFAULT_TAGS],
             ),
         ),
     )
@@ -714,7 +717,11 @@ def signin_form(get_signing_url: Callable[[], str]):
                 "w-96",
             ],
         )
-        .hx_post(get_signing_url(), hx_encoding="multipart/form-data")
+        .hx_post(
+            get_signing_url(),
+            hx_encoding="multipart/form-data",
+            hx_target="#signin-error",
+        )
         .insert(
             button(
                 classes=["px-2", "bg-red-800", "ml-auto", "mr-2", "rounded-sm"],
@@ -752,7 +759,12 @@ def signin_form(get_signing_url: Callable[[], str]):
                 type="submit",
             ).text("Sign in"),
         ),
+        div(id="signin-error"),
     )
+
+
+def error_element(error: str):
+    return div(classes=["bg-red-800", "my-4", "p-2", "border-lg", "w-max"]).text(error)
 
 
 def signup_form(get_signup_url: Callable[[], str]):
@@ -792,7 +804,11 @@ def signup_form(get_signup_url: Callable[[], str]):
                 "w-96",
             ],
         )
-        .hx_post(get_signup_url(), hx_encoding="multipart/form-data")
+        .hx_post(
+            get_signup_url(),
+            hx_encoding="multipart/form-data",
+            hx_target="#signup-error",
+        )
         .insert(
             button(
                 classes=["px-2", "bg-red-800", "ml-auto", "mr-2", "rounded-sm"],
@@ -830,6 +846,7 @@ def signup_form(get_signup_url: Callable[[], str]):
                 type="submit",
             ).text("Sign up"),
         ),
+        div(id="signup-error"),
     )
 
 

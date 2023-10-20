@@ -1,9 +1,16 @@
+import json
 from pathlib import Path
-from typing import Annotated
-from pydantic import Field, UrlConstraints
+from typing import Annotated, Any, Type
+from pydantic import BeforeValidator, Field, UrlConstraints, validator
+from pydantic.fields import FieldInfo
 from pydantic_core import Url
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import (
+    BaseSettings,
+    SettingsConfigDict,
+    DotEnvSettingsSource,
+    PydanticBaseSettingsSource,
+)
 
 
 SqliteDSN = Annotated[
@@ -11,11 +18,12 @@ SqliteDSN = Annotated[
     UrlConstraints(
         host_required=True,
         allowed_schemes=[
-            'sqlite+aiosqlite',
+            "sqlite+aiosqlite",
         ],
-        default_host=''
+        default_host="",
     ),
 ]
+
 
 class Config(BaseSettings):
     SECRET_KEY: str = Field(default=...)
@@ -25,5 +33,37 @@ class Config(BaseSettings):
     COMMENT_SUBDIR: Path = Path("comments")
     DB_URL: SqliteDSN = SqliteDSN("sqlite+aiosqlite:///dev.db")
     DEFAULT_POSTS_LIMIT: int = 5
+    SEARCH_TABLE: str = "posts_data"
+    DEFAULT_TAGS: list[str] = Field(
+        default=[
+            "reaction",
+            "animals",
+            "postironic",
+            "meirl",
+        ],
+        validate_default=False,
+    )
 
-    model_config= SettingsConfigDict(env_file=".env")
+    model_config = SettingsConfigDict(env_file=".env")
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: Type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        return (MyCustomSource(settings_cls),)
+
+
+# copied straight from the docs https://docs.pydantic.dev/latest/concepts/pydantic_settings/#parsing-environment-variable-values
+# in order to allow writing in .env: "DEFAULT_TAGS=tag1,tag2,tag3"
+class MyCustomSource(DotEnvSettingsSource):
+    def prepare_field_value(
+        self, field_name: str, field: FieldInfo, value: Any, value_is_complex: bool
+    ) -> Any:
+        if field_name == "DEFAULT_TAGS":
+            return value.split(",")
+        return value

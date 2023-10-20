@@ -39,7 +39,7 @@ async def upload_post(
         session.add(new_post)
         conn = await session.connection()
         await conn.exec_driver_sql(
-            "INSERT INTO posts_data (rowid, title, content) VALUES (?, ?, ?)",
+            f"INSERT INTO {config.SEARCH_TABLE} (rowid, title, content) VALUES (?, ?, ?)",
             (new_post.id, new_post.title, new_post.searchable_content),
         )
         await session.commit()
@@ -82,7 +82,7 @@ async def get_posts_by_search_query(
     async with asession() as session:
         conn = await session.connection()
         result = await conn.exec_driver_sql(
-            "SELECT rowid FROM posts_data WHERE posts_data MATCH ? LIMIT ? OFFSET ?",
+            f"SELECT rowid FROM {config.SEARCH_TABLE} WHERE {config.SEARCH_TABLE} MATCH ? LIMIT ? OFFSET ?",
             (query, limit, offset),
         )
         post_ids: list[int] = [res[0] for res in result.fetchall()]
@@ -167,6 +167,7 @@ async def update_post_searchable_content(
     user_id: int,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
+    config: Config = Injected,
 ):
     async with asession() as session:
         result = await session.execute(
@@ -181,11 +182,13 @@ async def update_post_searchable_content(
 
         conn = await session.connection()
         await conn.exec_driver_sql(
-            "UPDATE posts_data SET content = ? WHERE rowid = ?", (new_content, post_id)
+            f"UPDATE {config.SEARCH_TABLE} SET content = ? WHERE rowid = ?",
+            (new_content, post_id),
         )
 
         await session.commit()
         return new_content
+
 
 @injectable
 async def update_post_title(
@@ -194,6 +197,7 @@ async def update_post_title(
     user_id: int,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
+    config: Config = Injected,
 ):
     async with asession() as session:
         result = await session.execute(
@@ -208,11 +212,13 @@ async def update_post_title(
 
         conn = await session.connection()
         await conn.exec_driver_sql(
-            "UPDATE posts_data SET title = ? WHERE rowid = ?", (new_title, post_id)
+            f"UPDATE {config.SEARCH_TABLE} SET title = ? WHERE rowid = ?",
+            (new_title, post_id),
         )
 
         await session.commit()
         return new_title
+
 
 @injectable
 async def delete_post(

@@ -24,7 +24,7 @@ async def bootstrap():
     c = db.cursor()
     # TODO: set table name in config
     c.execute(
-        "CREATE VIRTUAL TABLE IF NOT EXISTS posts_data USING fts4(title, content)"
+        f"CREATE VIRTUAL TABLE IF NOT EXISTS {config.SEARCH_TABLE} USING fts4(title, content)"
     )
 
     engine = create_async_engine(str(config.DB_URL))

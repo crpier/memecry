@@ -22,6 +22,7 @@ class PostCreate(BaseModel):
     title: str
     user_id: int
     tags: str
+    searchable_content: str
 
 class PostRead(BaseModel):
     id: int

@@ -229,11 +229,16 @@ async def upload(request: Request):
         title = cast(str, form["title"])
         tags = cast(str, form["tags"])
         file = cast(UploadFile, form["file"])
+        try:
+            searchable_content = cast(str, form["searchable-content"])
+        except KeyError:
+            searchable_content = ""
 
         post_data = PostCreate(
             title=title,
             user_id=request.user.id,
             tags=tags,
+            searchable_content=searchable_content,
         )
         new_post_id = await upload_post(post_data=post_data, uploaded_file=file)
     resp = Response()
@@ -273,7 +278,11 @@ async def signup(request: Request):
         user_create = UserCreate(username=username, password=password)
         new_user_id = await user_service.create_user(user_create)
         if new_user_id is None:
-            raise HTTPException(400, "Username already taken")
+            return HTMLResponse(
+                common_views.error_element(
+                    f'Username "{username}" already exists'
+                ).render()
+            )
         access_token = await security.create_access_token(data={"sub": username})
         resp = HTMLResponse()
         resp.set_cookie(key="authorization", value=access_token, httponly=True)
@@ -289,8 +298,8 @@ async def signin(request: Request):
         username = cast(str, form["username"])
         password = cast(str, form["password"])
         if await user_service.authenticate_user(username, password) is None:
-            raise HTTPException(
-                401, "Invalid username or password", {"WWW-Authenticate": "Bearer"}
+            return HTMLResponse(
+                common_views.error_element("Invalid username or password").render()
             )
         resp = Response()
         access_token = await security.create_access_token(data={"sub": username})
