@@ -24,6 +24,7 @@ sqlalchemy = {extras = ["asyncio"], version = "^2.0.20"}
 aiosqlite = "^0.19.0"
 pydantic = {extras = ["email"], version = "^2.4.2"}
 pydantic-settings = "^2.0.3"
+relax-py = "^0.1.0"
 
 
 [tool.poetry.group.dev.dependencies]

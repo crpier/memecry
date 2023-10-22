@@ -1,7 +1,7 @@
 import textwrap
 from typing import Callable, Protocol
 
-from yahgl_py.html import (
+from relax.html import (
     div,
     main,
     input,
@@ -26,7 +26,7 @@ from yahgl_py.html import (
     Tag,
     p,
 )
-from yahgl_py.injection import Injected, injectable_sync
+from relax.injection import Injected, injectable_sync
 from memecry.config import Config
 
 from memecry.schema import PostRead, UserRead

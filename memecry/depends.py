@@ -4,7 +4,7 @@ from sqlite_fts4 import register_functions
 
 from memecry.model import Base
 from memecry.config import Config
-from yahgl_py.injection import add_injectable
+from relax.injection import add_injectable
 
 
 async def bootstrap():

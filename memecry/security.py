@@ -4,7 +4,7 @@ import functools
 import jose
 import jose.jwt
 import passlib.context
-from yahgl_py.injection import Injected, injectable
+from relax.injection import Injected, injectable
 
 from memecry.config import Config
 

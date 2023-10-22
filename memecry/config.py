@@ -65,5 +65,7 @@ class MyCustomSource(DotEnvSettingsSource):
         self, field_name: str, field: FieldInfo, value: Any, value_is_complex: bool
     ) -> Any:
         if field_name == "DEFAULT_TAGS":
+            if value is None:
+                return field.default
             return value.split(",")
         return value

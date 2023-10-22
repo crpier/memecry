@@ -10,7 +10,7 @@ from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 from sqlalchemy.orm import relationship
-from yahgl_py.app import StrEnum
+from relax.app import StrEnum
 
 
 class Base(AsyncAttrs, DeclarativeBase):

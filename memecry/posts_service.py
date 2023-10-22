@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload, load_only
 from starlette.datastructures import UploadFile
-from yahgl_py.injection import Injected, injectable
+from relax.injection import Injected, injectable
 import aiofiles
 
 from memecry.model import User, Post

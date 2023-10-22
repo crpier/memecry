@@ -25,7 +25,7 @@ from memecry.posts_service import (
 from memecry.schema import PostCreate, UserCreate, UserRead
 
 from memecry.views import common as common_views
-from yahgl_py.app import App, AuthScope, PathInt, QueryStr, Request
+from relax.app import App, AuthScope, PathInt, QueryStr, Request
 import memecry.user_service as user_service
 from memecry.depends import bootstrap
 import memecry.security as security
