@@ -18,4 +18,4 @@ FROM python as runtime
 RUN apt-get update && apt-get install -y python3-opencv libleptonica-dev tesseract-ocr libtesseract-dev python3-pil tesseract-ocr-eng tesseract-ocr-script-latn
 ENV PATH="/app/.venv/bin:$PATH"
 COPY --from=poetry /app /app
-CMD uvicorn src.main:app --host 0.0.0.0 --port $PORT
+CMD uvicorn uvicorn src.main:app --host 0.0.0.0 --port $PORT
