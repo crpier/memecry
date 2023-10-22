@@ -18,7 +18,7 @@ async def bootstrap():
     assert config.DB_URL.path
 
     # strip the leading slash as for sqlite "/dev.db" means "./dev.db"
-    db_path = config.DB_URL.path.lstrip("/")
+    db_path = config.DB_URL.path[1:]
     db = sqlite3.connect(db_path)
     register_functions(db)
     c = db.cursor()
