@@ -3,25 +3,25 @@
 status=0
 
 echo "black:"
-if ! black src --check; then
+if ! black relax --check; then
   status=1
 fi
 echo -e "---------\n"
 
 echo "isort:"
-if ! isort src --check-only --profile black; then
+if ! isort relax --check-only --profile black; then
   status=1
 fi
 echo -e "---------\n"
 
 echo "ruff:"
-if ! ruff src; then
+if ! ruff relax; then
   status=1
 fi
 echo -e "---------\n"
 
 echo "mypy:"
-if ! mypy src; then
+if ! mypy relax; then
   status=1
 fi
 
