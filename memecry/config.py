@@ -9,6 +9,7 @@ from pydantic_settings import (
     BaseSettings,
     SettingsConfigDict,
     DotEnvSettingsSource,
+    EnvSettingsSource,
     PydanticBaseSettingsSource,
 )
 
@@ -44,7 +45,6 @@ class Config(BaseSettings):
         validate_default=False,
     )
 
-    model_config = SettingsConfigDict(env_file=".env")
 
     @classmethod
     def settings_customise_sources(
@@ -59,8 +59,8 @@ class Config(BaseSettings):
 
 
 # copied straight from the docs https://docs.pydantic.dev/latest/concepts/pydantic_settings/#parsing-environment-variable-values
-# in order to allow writing in .env: "DEFAULT_TAGS=tag1,tag2,tag3"
-class MyCustomSource(DotEnvSettingsSource):
+# in order to allow writing in env vars: "DEFAULT_TAGS=tag1,tag2,tag3"
+class MyCustomSource(EnvSettingsSource):
     def prepare_field_value(
         self, field_name: str, field: FieldInfo, value: Any, value_is_complex: bool
     ) -> Any:
