@@ -9,7 +9,7 @@ fi
 echo -e "---------\n"
 
 echo "isort:"
-if ! isort memecry --check-only --profile black; then
+if ! isort memecry --check-only; then
   status=1
 fi
 echo -e "---------\n"
