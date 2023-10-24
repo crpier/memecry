@@ -21,7 +21,6 @@ async def bootstrap() -> Config:
 
     register_functions(db)
     c = db.cursor()
-    # TODO: set table name in config
     c.execute(
         "CREATE VIRTUAL TABLE IF NOT EXISTS "
         f"{config.SEARCH_TABLE} USING fts4(title, content)",
