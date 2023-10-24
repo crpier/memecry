@@ -3,9 +3,11 @@ from datetime import datetime
 from pydantic import BaseModel
 from starlette.authentication import SimpleUser
 
+
 class UserCreate(BaseModel):
     password: str
     username: str
+
 
 class UserRead(BaseModel, SimpleUser):
     id: int
@@ -18,11 +20,13 @@ class UserRead(BaseModel, SimpleUser):
     class Config:
         from_attributes = True
 
+
 class PostCreate(BaseModel):
     title: str
     user_id: int
     tags: str
     searchable_content: str
+
 
 class PostRead(BaseModel):
     id: int

@@ -1,39 +1,34 @@
-from typing import cast
 import contextlib
-from jose import ExpiredSignatureError
-import jose.jwt
+from typing import cast
 
+import jose.jwt
+from jose import ExpiredSignatureError
+from relax.app import App, AuthScope, PathInt, QueryStr, Request
 from starlette.authentication import AuthCredentials, AuthenticationBackend
 from starlette.datastructures import UploadFile
+from starlette.exceptions import HTTPException
 from starlette.middleware import Middleware
-from starlette.routing import Mount
 from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.requests import HTTPConnection
 from starlette.responses import HTMLResponse, Response
-from starlette.exceptions import HTTPException
+from starlette.routing import Mount
 from starlette.staticfiles import StaticFiles
+
+import memecry.security as security
+import memecry.user_service as user_service
+from memecry.bootstrap import bootstrap
 from memecry.posts_service import (
+    delete_post,
     get_post_by_id,
-    toggle_post_tag,
-    upload_post,
     get_posts,
     get_posts_by_search_query,
-    update_post_title,
+    toggle_post_tag,
     update_post_searchable_content,
-    delete_post,
+    update_post_title,
+    upload_post,
 )
 from memecry.schema import PostCreate, UserCreate, UserRead
-
 from memecry.views import common as common_views
-from relax.app import App, AuthScope, PathInt, QueryStr, Request
-import memecry.user_service as user_service
-from memecry.depends import bootstrap
-import memecry.security as security
-
-
-from starlette.authentication import (
-    AuthCredentials,
-)
 
 
 class BasicAuthBackend(AuthenticationBackend):

@@ -1,16 +1,15 @@
 from pathlib import Path
 
-from sqlalchemy import delete, select, update
-from sqlalchemy.ext.asyncio import async_sessionmaker
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload, load_only
-from starlette.datastructures import UploadFile
-from relax.injection import Injected, injectable
 import aiofiles
+from relax.injection import Injected, injectable
+from sqlalchemy import delete, select, update
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from sqlalchemy.orm import load_only, selectinload
+from starlette.datastructures import UploadFile
 
-from memecry.model import User, Post
-from memecry.schema import PostCreate, PostRead, UserRead
 from memecry.config import Config
+from memecry.model import Post, User
+from memecry.schema import PostCreate, PostRead, UserRead
 
 
 @injectable

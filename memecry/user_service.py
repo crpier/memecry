@@ -1,13 +1,11 @@
+from relax.injection import Injected, injectable
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import load_only
 
-from memecry.model import User
-from relax.injection import Injected, injectable
-
-from memecry.schema import UserCreate
-from memecry.schema import UserRead
 import memecry.security as security
+from memecry.model import User
+from memecry.schema import UserCreate, UserRead
 
 
 @injectable

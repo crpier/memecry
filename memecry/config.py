@@ -1,18 +1,17 @@
 import json
 from pathlib import Path
-from typing import Annotated, Any, Type
+from typing import Annotated, Any, Type, override
+
 from pydantic import BeforeValidator, Field, UrlConstraints, validator
 from pydantic.fields import FieldInfo
 from pydantic_core import Url
-
 from pydantic_settings import (
     BaseSettings,
-    SettingsConfigDict,
     DotEnvSettingsSource,
     EnvSettingsSource,
     PydanticBaseSettingsSource,
+    SettingsConfigDict,
 )
-
 
 SqliteDSN = Annotated[
     Url,
@@ -44,7 +43,6 @@ class Config(BaseSettings):
         ],
         validate_default=False,
     )
-
 
     @classmethod
     def settings_customise_sources(

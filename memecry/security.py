@@ -29,6 +29,7 @@ def get_password_hash(password: str):
 def verify_password(plain_password, hashed_password):
     return pwd_context().verify(plain_password, hashed_password)
 
+
 @injectable
 async def decode_payload(token: str, *, config: Config = Injected):
     return jose.jwt.decode(token, config.SECRET_KEY, algorithms=["HS256"])

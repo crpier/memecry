@@ -2,33 +2,33 @@ import textwrap
 from typing import Callable, Protocol
 
 from relax.html import (
-    div,
-    main,
-    input,
-    form,
-    path,
-    ul,
-    i,
-    img,
-    button,
-    li,
-    nav,
-    svg,
-    span,
+    Tag,
     a,
-    title,
-    meta,
-    script,
-    link,
+    body,
+    button,
+    div,
+    form,
     head,
     html,
-    body,
-    Tag,
+    i,
+    img,
+    input,
+    li,
+    link,
+    main,
+    meta,
+    nav,
     p,
+    path,
+    script,
+    span,
+    svg,
+    title,
+    ul,
 )
 from relax.injection import Injected, injectable_sync
-from memecry.config import Config
 
+from memecry.config import Config
 from memecry.schema import PostRead, UserRead
 
 
@@ -347,7 +347,15 @@ def tags_component(
 
     return div(id=element_id, classes=["relative"]).insert(
         input(name="tags", type="text", value=post_tags, classes=["hidden"]),
-        div(classes=["h-10", "flex", "rounded", "items-center", "w-full",]).insert(
+        div(
+            classes=[
+                "h-10",
+                "flex",
+                "rounded",
+                "items-center",
+                "w-full",
+            ]
+        ).insert(
             button(
                 classes=[
                     "border",

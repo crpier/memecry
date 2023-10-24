@@ -3,14 +3,10 @@ from __future__ import annotations
 import datetime
 from typing import List
 
-from sqlalchemy import ForeignKey
-from sqlalchemy import func
-from sqlalchemy.ext.asyncio import AsyncAttrs
-from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.orm import Mapped
-from sqlalchemy.orm import mapped_column
-from sqlalchemy.orm import relationship
 from relax.app import StrEnum
+from sqlalchemy import ForeignKey, func
+from sqlalchemy.ext.asyncio import AsyncAttrs
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
 class Base(AsyncAttrs, DeclarativeBase):
@@ -53,6 +49,7 @@ class Post(Base):
         "Reaction", back_populates="post", cascade="all, delete"
     )
 
+
 class Comment(Base):
     __tablename__ = "comments"
 
@@ -68,13 +65,21 @@ class Comment(Base):
 
     user: Mapped[User] = relationship("User", back_populates="comments")
     post: Mapped[Post] = relationship("Post", back_populates="comments")
-    replies: Mapped[list[Comment]] = relationship("Comment", back_populates="parent", cascade="all, delete")
-    parent: Mapped[Comment] = relationship("Comment", back_populates="replies", remote_side=[id])
-    reactions: Mapped[list[Reaction]] = relationship("Reaction", back_populates="comment", cascade="all, delete")
+    replies: Mapped[list[Comment]] = relationship(
+        "Comment", back_populates="parent", cascade="all, delete"
+    )
+    parent: Mapped[Comment] = relationship(
+        "Comment", back_populates="replies", remote_side=[id]
+    )
+    reactions: Mapped[list[Reaction]] = relationship(
+        "Reaction", back_populates="comment", cascade="all, delete"
+    )
+
 
 class ReactionKind(StrEnum):
     Like = "Like"
     Dislike = "Dislike"
+
 
 class Reaction(Base):
     __tablename__ = "reactions"
