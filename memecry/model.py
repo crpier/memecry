@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import datetime
-from typing import List
+import datetime  # noqa: TCH003
+from enum import StrEnum
 
-from relax.app import StrEnum
 from sqlalchemy import ForeignKey, func
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -24,9 +23,9 @@ class User(Base):
     verified: Mapped[bool] = mapped_column(default=False)
     pfp_src: Mapped[str] = mapped_column(default="default.png")
 
-    posts: Mapped[List[Post]] = relationship()
-    comments: Mapped[List[Comment]] = relationship()
-    reactions: Mapped[List[Reaction]] = relationship()
+    posts: Mapped[list[Post]] = relationship()
+    comments: Mapped[list[Comment]] = relationship()
+    reactions: Mapped[list[Reaction]] = relationship()
 
 
 class Post(Base):
@@ -43,10 +42,14 @@ class Post(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     user: Mapped[User] = relationship("User", back_populates="posts", lazy="joined")
     comments: Mapped[Comment] = relationship(
-        "Comment", back_populates="post", cascade="all, delete"
+        "Comment",
+        back_populates="post",
+        cascade="all, delete",
     )
     reactions: Mapped[list[Reaction]] = relationship(
-        "Reaction", back_populates="post", cascade="all, delete"
+        "Reaction",
+        back_populates="post",
+        cascade="all, delete",
     )
 
 
@@ -66,13 +69,19 @@ class Comment(Base):
     user: Mapped[User] = relationship("User", back_populates="comments")
     post: Mapped[Post] = relationship("Post", back_populates="comments")
     replies: Mapped[list[Comment]] = relationship(
-        "Comment", back_populates="parent", cascade="all, delete"
+        "Comment",
+        back_populates="parent",
+        cascade="all, delete",
     )
     parent: Mapped[Comment] = relationship(
-        "Comment", back_populates="replies", remote_side=[id]
+        "Comment",
+        back_populates="replies",
+        remote_side=[id],
     )
     reactions: Mapped[list[Reaction]] = relationship(
-        "Reaction", back_populates="comment", cascade="all, delete"
+        "Reaction",
+        back_populates="comment",
+        cascade="all, delete",
     )
 
 

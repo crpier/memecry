@@ -3,25 +3,25 @@
 status=0
 
 echo "black:"
-if ! black relax --check; then
+if ! black memecry --check; then
   status=1
 fi
 echo -e "---------\n"
 
 echo "isort:"
-if ! isort relax --check-only --profile black; then
+if ! isort memecry --check-only --profile black; then
   status=1
 fi
 echo -e "---------\n"
 
 echo "ruff:"
-if ! ruff relax; then
+if ! ruff memecry; then
   status=1
 fi
 echo -e "---------\n"
 
 echo "mypy:"
-if ! mypy relax; then
+if ! mypy memecry; then
   status=1
 fi
 

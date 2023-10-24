@@ -42,7 +42,7 @@ class PostUrlCallable(Protocol):
         ...
 
 
-def hamburger_svg():
+def hamburger_svg() -> svg:
     return svg(
         classes=["h-6", "w-6", "text-gray-500"],
         attrs={
@@ -57,7 +57,7 @@ def hamburger_svg():
     ).insert(path(attrs={"d": "M4 6h16M4 12h16M4 18h16"}))
 
 
-def page_head():
+def page_head() -> head:
     return head().insert(
         title("Memecry"),
         meta(charset="UTF-8"),
@@ -71,16 +71,17 @@ def page_head():
         ),
         script(
             src="https://unpkg.com/htmx.org@1.9.5",
-            attrs=dict(
-                integrity="sha384-xcuj3WpfgjlKF+FXhSQFQ0ZNr39ln+hwjN3npfM9VBnUskLolQAcN80McRIVOPuO",
-                crossorigin="anonymous",
-            ),
+            attrs={
+                "integrity": "sha384-xcuj3WpfgjlKF+FXhSQF"
+                "Q0ZNr39ln+hwjN3npfM9VBnUskLolQAcN80McRIVOPuO",
+                "crossorigin": "anonymous",
+            },
         ),
         script(src="https://unpkg.com/hyperscript.org@0.9.11"),
     )
 
 
-def page_root(child: Tag | list[Tag]):
+def page_root(child: Tag | list[Tag]) -> html:
     return html(lang="en").insert(
         page_head(),
         body(classes=["bg-black", "text-white", "pt-20"]).insert(
@@ -95,9 +96,9 @@ def page_nav(
     signout_url: Callable[[], str],
     upload_form_url: Callable[[], str],
     user: UserRead | None = None,
-):
+) -> nav:
     search_form = form(
-        classes=["flex", "flex-row", "items-center", "justify-end"]
+        classes=["flex", "flex-row", "items-center", "justify-end"],
     ).insert(
         input(
             id="search",
@@ -106,7 +107,7 @@ def page_nav(
             classes=["rounded", "mr-4", "text-black"],
         ),
         button(classes=[], hyperscript="on click toggle .hidden on #search").insert(
-            i(classes=["fa", "fa-search", "fa-lg"])
+            i(classes=["fa", "fa-search", "fa-lg"]),
         ),
     )
 
@@ -174,7 +175,7 @@ def page_nav(
         .text("Sign out")
     )
 
-    nav_links = [
+    nav_links: list[Tag] = [
         a(
             href="#",
             classes=[
@@ -214,7 +215,7 @@ def page_nav(
                     # Logo
                     # Primary Navbar items
                     div(
-                        classes=["hidden", "md:flex", "items-center", "space-x-1"]
+                        classes=["hidden", "md:flex", "items-center", "space-x-1"],
                     ).insert(
                         div().insert(
                             a(
@@ -227,15 +228,15 @@ def page_nav(
                                         "text-xl",
                                         "md:hover:text-green-500",
                                         "duration-300",
-                                    ]
+                                    ],
                                 ).text("Memecry"),
-                            )
+                            ),
                         ),
-                        nav_links if user else [],  # type: ignore
+                        nav_links if user else None,
                     ),
                     # Secondary Navbar items
                     div(
-                        classes=["hidden", "md:flex", "items-center", "space-x-3"]
+                        classes=["hidden", "md:flex", "items-center", "space-x-3"],
                     ).insert(
                         search_form,
                         signin_button if not user else None,
@@ -244,7 +245,7 @@ def page_nav(
                         signout_button if user else None,
                     ),
                     div(
-                        classes=["md:hidden", "flex", "items-center", "ml-auto"]
+                        classes=["md:hidden", "flex", "items-center", "ml-auto"],
                     ).insert(
                         button(
                             type="button",
@@ -252,10 +253,10 @@ def page_nav(
                             hyperscript="on click toggle .hidden on #menu",
                         ).insert(
                             hamburger_svg(),
-                        )
+                        ),
                     ),
-                )
-            )
+                ),
+            ),
         ),
         # Mobile menu
         div(id="menu", classes=["hidden"]).insert(
@@ -270,7 +271,7 @@ def page_nav(
                             "py-4",
                             "font-semibold",
                         ],
-                    ).text("Memes")
+                    ).text("Memes"),
                 ),
                 li(classes=["text-right"]).insert(
                     a(
@@ -282,7 +283,7 @@ def page_nav(
                             "py-4",
                             "font-semibold",
                         ],
-                    ).text("Account")
+                    ).text("Account"),
                 ),
                 li(classes=["text-right"]).insert(
                     a(
@@ -294,9 +295,9 @@ def page_nav(
                             "py-4",
                             "font-semibold",
                         ],
-                    ).text("Library")
+                    ).text("Library"),
                 ),
-            )
+            ),
         ),
     )
 
@@ -307,24 +308,24 @@ def home_view(
     posts: list[PostRead],
 ) -> Tag:
     return posts_wrapper(
-        [post_component(post_update_tags_url, post_url, post) for post in posts]
+        [post_component(post_update_tags_url, post_url, post) for post in posts],
     )
 
 
 @injectable_sync
-def tags_component(
+def tags_component(  # noqa: PLR0913
     post_update_tags_url: PostUpdateTagsUrl,
     post_id: int = 0,
     post_tags: str = "no tags",
+    *,
     editable: bool = False,
     hidden_dropdown: bool = True,
-    *,
     config: Config = Injected,
-):
+) -> div:
     element_id = f"tags-{post_id}"
     tags_selector_id = f"tags-selector-{post_id}"
 
-    def li_tag(tag: str):
+    def li_tag(tag: str) -> li:
         return li().insert(
             button(
                 attrs={"name": "tag", "value": tag},
@@ -342,7 +343,7 @@ def tags_component(
                 post_update_tags_url(post_id=post_id),
                 hx_target=f"#{element_id}",
                 hx_swap="outerHTML",
-            )
+            ),
         )
 
     return div(id=element_id, classes=["relative"]).insert(
@@ -354,7 +355,7 @@ def tags_component(
                 "rounded",
                 "items-center",
                 "w-full",
-            ]
+            ],
         ).insert(
             button(
                 classes=[
@@ -393,12 +394,46 @@ def tags_component(
     )
 
 
+def edit_hidden_title_script(post: PostRead) -> str:
+    return textwrap.dedent(
+        f"""
+        setTimeout(() => {{
+            let editableElement = document.getElementById("title-display-{post.id}")
+            editableElement.addEventListener("input", function(event) {{
+                console.log(event.target.innerText)
+                let targetInput = document.getElementById("title-{post.id}")
+                targetInput.value = event.target.innerText
+            }})
+        }})""",
+    )
+
+
+def edit_hidden_content_script(post: PostRead) -> str:
+    return textwrap.dedent(
+        f"""
+        setTimeout(() => {{
+            let editableElement = document.getElementsByName("content-{post.id}")[0]
+            editableElement.addEventListener("input", function(event) {{
+                let targetInput = document.getElementsByName(
+                        "content-input-{post.id}"
+                    )[0]
+                targetInput.value = event.target.innerText
+            }})
+        }})""",
+    )
+
+
 def post_component(
-    post_update_tags_url: PostUpdateTagsUrl, post_url: PostUrlCallable, post: PostRead
-):
+    post_update_tags_url: PostUpdateTagsUrl,
+    _: PostUrlCallable,
+    post: PostRead,
+) -> div:
     search_content_id = f"search-{post.id}"
     tags = tags_component(
-        post_update_tags_url, post.id, post.tags, editable=post.editable
+        post_update_tags_url,
+        post.id,
+        post.tags,
+        editable=post.editable,
     )
     element_id = f"post-{post.id}"
     return div(
@@ -441,18 +476,7 @@ def post_component(
                 },
             ).text(post.title),
             script(
-                js=textwrap.dedent(
-                    f"""
-                    setTimeout(() => {{
-                        let editableElement = document.getElementById("title-display-{post.id}")
-                        editableElement.addEventListener("input", function(event) {{
-                            console.log(event.target.innerText)
-                            let targetInput = document.getElementById("title-{post.id}")
-                            targetInput.value = event.target.innerText
-                        }})
-                    }})
-                """
-                ),
+                js=edit_hidden_title_script(post),
             ),
             div(
                 classes=[
@@ -486,7 +510,7 @@ def post_component(
                 "pt-4",
                 "px-4",
                 "md:px-0",
-            ]
+            ],
         ).insert(
             tags,
             div(classes=["space-x-2", "text-right", "py-3", "text-gray-500"]).insert(
@@ -519,17 +543,7 @@ def post_component(
         ).insert(
             input(name=f"content-input-{post.id}", type="text", classes=["hidden"]),
             script(
-                js=textwrap.dedent(
-                    f"""
-                    setTimeout(() => {{
-                        let editableElement = document.getElementsByName("content-{post.id}")[0]
-                        editableElement.addEventListener("input", function(event) {{
-                            let targetInput = document.getElementsByName("content-input-{post.id}")[0]
-                            targetInput.value = event.target.innerText
-                        }})
-                    }})
-                """
-                ),
+                js=edit_hidden_content_script(post),
             ),
             div(
                 classes=[
@@ -597,7 +611,7 @@ def post_component(
     )
 
 
-def posts_wrapper(posts: Tag | list[Tag]):
+def posts_wrapper(posts: Tag | list[Tag]) -> main:
     return main(
         classes=[
             "flex",
@@ -609,11 +623,14 @@ def posts_wrapper(posts: Tag | list[Tag]):
             "lg: max-w-2xl",
             "mx-auto",
             "space-y-8",
-        ]
+        ],
     ).insert(posts)
 
 
-def upload_form(upload_url: Callable[[], str], post_update_tags_url: PostUpdateTagsUrl):
+def upload_form(
+    upload_url: Callable[[], str],
+    post_update_tags_url: PostUpdateTagsUrl,
+) -> div:
     tags = tags_component(post_update_tags_url, editable=True)
     return div(
         id="upload-form",
@@ -651,7 +668,7 @@ def upload_form(upload_url: Callable[[], str], post_update_tags_url: PostUpdateT
                 "items-start",
                 "w-max",
                 "p-4",
-            ]
+            ],
         )
         .hx_post(
             upload_url(),
@@ -688,7 +705,7 @@ def upload_form(upload_url: Callable[[], str], post_update_tags_url: PostUpdateT
     )
 
 
-def signin_form(get_signing_url: Callable[[], str]):
+def signin_form(get_signing_url: Callable[[], str]) -> div:
     return div(
         classes=[
             "fixed",
@@ -771,11 +788,11 @@ def signin_form(get_signing_url: Callable[[], str]):
     )
 
 
-def error_element(error: str):
+def error_element(error: str) -> div:
     return div(classes=["bg-red-800", "my-4", "p-2", "border-lg", "w-max"]).text(error)
 
 
-def signup_form(get_signup_url: Callable[[], str]):
+def signup_form(get_signup_url: Callable[[], str]) -> div:
     return div(
         classes=[
             "fixed",
@@ -858,5 +875,5 @@ def signup_form(get_signup_url: Callable[[], str]):
     )
 
 
-def response_404():
+def response_404() -> Tag:
     return div().text("404 resource not found")

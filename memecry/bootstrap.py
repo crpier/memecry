@@ -1,5 +1,6 @@
 import sqlite3
 
+from loguru import logger
 from relax.injection import add_injectable
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlite_fts4 import register_functions
@@ -8,26 +9,25 @@ from memecry.config import Config
 from memecry.model import Base
 
 
-async def bootstrap():
+@logger.catch
+async def bootstrap() -> Config:
     config = Config()
     add_injectable(Config, config)
 
     # ensure media folder exists
     config.MEDIA_UPLOAD_STORAGE.mkdir(parents=True, exist_ok=True)
     # we need a bit of an sync piece on startup lel
-    assert config.DB_URL.path
-    # strip the leading slash as for sqlite "/dev.db" means "./dev.db"
-    db_path = config.DB_URL.path[1:]
-    db = sqlite3.connect(db_path)
+    db = sqlite3.connect(config.DB_FILE)
 
     register_functions(db)
     c = db.cursor()
     # TODO: set table name in config
     c.execute(
-        f"CREATE VIRTUAL TABLE IF NOT EXISTS {config.SEARCH_TABLE} USING fts4(title, content)"
+        "CREATE VIRTUAL TABLE IF NOT EXISTS "
+        f"{config.SEARCH_TABLE} USING fts4(title, content)",
     )
 
-    engine = create_async_engine(str(config.DB_URL))
+    engine = create_async_engine(f"sqlite+aiosqlite:///{config.DB_FILE}")
 
     async_session = async_sessionmaker(engine, expire_on_commit=False)
     add_injectable(async_sessionmaker[AsyncSession], async_session)
