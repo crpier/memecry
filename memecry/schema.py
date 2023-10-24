@@ -1,7 +1,11 @@
+import zoneinfo
 from datetime import datetime
 
+import babel.dates
 from pydantic import BaseModel
 from starlette.authentication import SimpleUser
+
+from memecry import model
 
 
 class UserCreate(BaseModel):
@@ -40,3 +44,23 @@ class PostRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+    @staticmethod
+    def from_model(
+        post_in_db: model.Post,
+        *,
+        editable: bool = False,
+    ) -> "PostRead":
+        now = datetime.now(tz=zoneinfo.ZoneInfo("UTC"))
+        post_in_db.created_at = post_in_db.created_at.replace(
+            tzinfo=zoneinfo.ZoneInfo("UTC"),
+        )
+
+        post_dict = post_in_db.__dict__
+        post_dict["created_since"] = babel.dates.format_timedelta(
+            post_in_db.created_at - now,
+            add_direction=True,
+            locale="en_US",
+        )
+        post_dict["editable"] = editable
+        return PostRead(**post_dict)

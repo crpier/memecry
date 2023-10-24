@@ -120,11 +120,10 @@ async def get_post_by_id(
         post = result.scalars().one_or_none()
         if not post:
             return None
-        # TODO: method in PostRead to compute "editable"
-        view_post = PostRead.model_validate(post)
-        if viewer and viewer.id == post.user_id:
-            view_post.editable = True
-        return view_post
+        return PostRead.from_model(
+            post,
+            editable=bool(viewer and viewer.id == post.user_id),
+        )
 
 
 @injectable

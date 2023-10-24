@@ -62,9 +62,9 @@ def page_head() -> head:
         title("Memecry"),
         meta(charset="UTF-8"),
         meta(name="viewport", content="width=device-width, initial-scale=1.0"),
-        # TODO: use pytailwindcss instead
+        # TODO: only use this in dev
         script(src="https://cdn.tailwindcss.com"),
-        script(src="https://unpkg.com/tailwindcss-jit-cdn"),
+        link(href="/static/css/tailwind.css", rel="stylesheet"),
         link(
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css",
             rel="stylesheet",
@@ -78,6 +78,7 @@ def page_head() -> head:
             },
         ),
         script(src="https://unpkg.com/hyperscript.org@0.9.11"),
+        script(src="https://cdn.jsdelivr.net/npm/sweetalert2@11"),
     )
 
 
@@ -90,6 +91,7 @@ def page_root(child: Tag | list[Tag]) -> html:
     )
 
 
+# TODO: think of a way to group urls in a single variable
 def page_nav(
     signup_url: Callable[[], str],
     signin_url: Callable[[], str],
@@ -99,6 +101,7 @@ def page_nav(
 ) -> nav:
     search_form = form(
         classes=["flex", "flex-row", "items-center", "justify-end"],
+        action="/",
     ).insert(
         input(
             id="search",
@@ -305,10 +308,19 @@ def page_nav(
 def home_view(
     post_update_tags_url: PostUpdateTagsUrl,
     post_url: PostUrlCallable,
+    update_searchable_content_url: PostUrlCallable,
     posts: list[PostRead],
 ) -> Tag:
     return posts_wrapper(
-        [post_component(post_update_tags_url, post_url, post) for post in posts],
+        [
+            post_component(
+                post_update_tags_url,
+                post_url,
+                update_searchable_content_url,
+                post,
+            )
+            for post in posts
+        ],
     )
 
 
@@ -425,7 +437,8 @@ def edit_hidden_content_script(post: PostRead) -> str:
 
 def post_component(
     post_update_tags_url: PostUpdateTagsUrl,
-    _: PostUrlCallable,
+    post_url: PostUrlCallable,
+    update_searchable_content_url: PostUrlCallable,
     post: PostRead,
 ) -> div:
     search_content_id = f"search-{post.id}"
@@ -572,14 +585,27 @@ def post_component(
                         "hover:bg-red-700",
                         "duration-300",
                     ],
-                ).hx_delete(
-                    # TODO: use url callable
-                    f"/posts/{post.id}",
+                    hyperscript="""on htmx:confirm(issueRequest)
+             halt the event
+             call Swal.fire({
+                 title: 'Confirm',
+                 text: 'Are you sure you want to delete this post?',
+                 // same color as the navbar
+                 background: '#111827',
+                 color: '#ffffff',
+                 buttonsStyling: false,
+                 customClass: {
+                     confirmButton: 'bg-green-600 px-4 py-1 rounded-md text-lg'
+                 }
+             })
+             if result.isConfirmed issueRequest()""",
+                )
+                .hx_delete(
+                    post_url(post_id=post.id),
                     hx_trigger="click",
                     hx_swap="delete",
                     hx_target=f"#{element_id}",
                 )
-                # TODO: confirmation popup
                 .text("Delete post"),
                 button(
                     type="button",
@@ -597,8 +623,7 @@ def post_component(
                 )
                 .text("Save")
                 .hx_put(
-                    # TODO: use url callable
-                    f"/posts/{post.id}/searchable-content",
+                    update_searchable_content_url(post_id=post.id),
                     hx_trigger="click",
                     hx_swap="none",
                     hx_include=f"[name='content-input-{post.id}']",
@@ -680,27 +705,28 @@ def upload_form(
                 type="text",
                 name="title",
                 placeholder="Title",
-                classes=["w-96", "text-black"],
+                classes=["w-96", "text-black", "px-2"],
             ),
             input(
-                classes=["p-2"],
                 type="file",
                 name="file",
             ),
             tags,
-            button(
-                type="submit",
-                classes=[
-                    "py-2",
-                    "px-2",
-                    "font-medium",
-                    "text-white",
-                    "bg-green-600",
-                    "rounded",
-                    "hover:bg-green-400",
-                    "duration-300",
-                ],
-            ).text("Upload"),
+            div(classes=["w-full", "flex", "flex-col", "items-end"]).insert(
+                button(
+                    type="submit",
+                    classes=[
+                        "py-2",
+                        "px-2",
+                        "font-medium",
+                        "text-white",
+                        "bg-green-600",
+                        "rounded",
+                        "hover:bg-green-400",
+                        "duration-300",
+                    ],
+                ).text("Upload"),
+            ),
         ),
     )
 

@@ -1,8 +1,3 @@
-html {
-    font-size: calc(15px + 0.390625vw);
-}
-
-img {
-  max-width: 100%;
-  display: block;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

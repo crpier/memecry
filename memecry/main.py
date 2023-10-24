@@ -61,6 +61,20 @@ async def lifespan(app: App) -> AsyncIterator[None]:
             name="media",
         ),
     )
+    app.routes.append(
+        Mount(
+            "/static",
+            app=StaticFiles(directory="static"),
+            name="static",
+        ),
+    )
+    app.routes.append(
+        Mount(
+            "/",
+            app=StaticFiles(directory="static/favicon"),
+            name="favicon",
+        ),
+    )
     yield
 
 
@@ -84,7 +98,10 @@ async def get_post(request: Request, *, post_id: PathInt) -> HTMLResponse:
             common_views.posts_wrapper(
                 common_views.post_component(
                     post_update_tags_url=app.url_wrapper(update_tags),
-                    _=app.url_wrapper(get_post),
+                    post_url=app.url_wrapper(get_post),
+                    update_searchable_content_url=app.url_wrapper(
+                        update_searchable_content,
+                    ),
                     post=post,
                 ),
             ).render(),
@@ -102,7 +119,10 @@ async def get_post(request: Request, *, post_id: PathInt) -> HTMLResponse:
                 common_views.posts_wrapper(
                     common_views.post_component(
                         post_update_tags_url=app.url_wrapper(update_tags),
-                        _=app.url_wrapper(get_post),
+                        post_url=app.url_wrapper(get_post),
+                        update_searchable_content_url=app.url_wrapper(
+                            update_searchable_content,
+                        ),
                         post=post,
                     ),
                 ),
@@ -196,6 +216,9 @@ async def get_homepage(request: Request, query: QueryStr | None = None) -> HTMLR
                 common_views.home_view(
                     app.url_wrapper(update_tags),
                     app.url_wrapper(get_post),
+                    app.url_wrapper(
+                        update_searchable_content,
+                    ),
                     posts,
                 ),
             ],
