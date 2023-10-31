@@ -41,9 +41,9 @@ class BasicAuthBackend(AuthenticationBackend):
             payload = await security.decode_payload(token)
         except ExpiredSignatureError:
             return None
-        if payload.get("sub") is None:
+        if payload.path_function("GET", "sub") is None:  # type: ignore[attr-defined]
             return None
-        username: str = cast(str, payload.get("sub"))
+        username: str = cast(str, payload.path_function("GET", "sub"))  # type: ignore[attr-defined]
         if user := await user_service.get_user_by_username(username):
             return AuthCredentials([AuthScope.Authenticated]), UserRead.model_validate(
                 user,
@@ -85,8 +85,8 @@ app = App(
 Request: TypeAlias = BaseRequest[UserRead]
 
 
-@app.get("/posts/{post_id}")
-async def get_post(request: Request, *, post_id: PathInt) -> HTMLResponse:
+@app.path_function("GET", "/posts/{post_id}")
+async def get_post(request: Request, post_id: PathInt) -> HTMLResponse:
     post = await get_post_by_id(
         post_id,
         viewer=request.user if request.user.is_authenticated else None,
@@ -131,12 +131,16 @@ async def get_post(request: Request, *, post_id: PathInt) -> HTMLResponse:
     )
 
 
-@app.put("/posts/{post_id}/tags", auth_scopes=[AuthScope.Authenticated])
+@app.path_function(
+    "PUT",
+    "/posts/{post_id}/tags",
+    auth_scopes=[AuthScope.Authenticated],
+)
 # FIXME: at runtime, post_id is actually an string
-async def update_tags(request: Request, *, post_id: PathInt) -> Response | HTMLResponse:
+async def update_tags(request: Request, post_id: PathInt) -> Response | HTMLResponse:
     async with request.form() as form:
         new_tag = cast(str, form["tag"])
-        old_tags_in_form = cast(str, form.get("tags", "no tags"))
+        old_tags_in_form = cast(str, form.path_function("GET", "tags", "no tags"))  # type: ignore[attr-defined]
         if int(post_id) != 0:
             try:
                 updated_tags = await toggle_post_tag(post_id, new_tag, request.user.id)
@@ -166,8 +170,12 @@ async def update_tags(request: Request, *, post_id: PathInt) -> Response | HTMLR
         )
 
 
-@app.put("/posts/{post_id}/searchable-content", auth_scopes=[AuthScope.Authenticated])
-async def update_searchable_content(request: Request, *, post_id: PathInt) -> Response:
+@app.path_function(
+    "PUT",
+    "/posts/{post_id}/searchable-content",
+    auth_scopes=[AuthScope.Authenticated],
+)
+async def update_searchable_content(request: Request, post_id: PathInt) -> Response:
     async with request.form() as form:
         new_content = cast(str, form[f"content-input-{post_id}"])
         await update_post_searchable_content(
@@ -178,21 +186,25 @@ async def update_searchable_content(request: Request, *, post_id: PathInt) -> Re
     return Response("success")
 
 
-@app.put("/posts/{post_id}/title", auth_scopes=[AuthScope.Authenticated])
-async def update_title(request: Request, *, post_id: PathInt) -> Response:
+@app.path_function(
+    "PUT",
+    "/posts/{post_id}/title",
+    auth_scopes=[AuthScope.Authenticated],
+)
+async def update_title(request: Request, post_id: PathInt) -> Response:
     async with request.form() as form:
         new_title = cast(str, form[f"title-{post_id}"])
         await update_post_title(post_id, new_title, user_id=request.user.id)
     return Response("success")
 
 
-@app.delete("/posts/{post_id}", auth_scopes=[AuthScope.Authenticated])
-async def post_delete(_: Request, *, post_id: PathInt) -> Response:
+@app.path_function("DELETE", "/posts/{post_id}", auth_scopes=[AuthScope.Authenticated])
+async def post_delete(_: Request, post_id: PathInt) -> Response:
     await delete_post(post_id)
     return Response("success")
 
 
-@app.get("/")
+@app.path_function("GET", "/")
 async def get_homepage(request: Request, query: QueryStr | None = None) -> HTMLResponse:
     if query:
         posts = await get_posts_by_search_query(
@@ -226,7 +238,7 @@ async def get_homepage(request: Request, query: QueryStr | None = None) -> HTMLR
     )
 
 
-@app.get("/upload-form", auth_scopes=[AuthScope.Authenticated])
+@app.path_function("GET", "/upload-form", auth_scopes=[AuthScope.Authenticated])
 async def upload_form(request: Request) -> HTMLResponse:
     if request.scope["from_htmx"]:
         return HTMLResponse(
@@ -247,7 +259,7 @@ async def upload_form(request: Request) -> HTMLResponse:
     )
 
 
-@app.post("/upload", auth_scopes=[AuthScope.Authenticated])
+@app.path_function("POST", "/upload", auth_scopes=[AuthScope.Authenticated])
 async def upload(request: Request) -> Response:
     async with request.form() as form:
         title = cast(str, form["title"])
@@ -271,7 +283,7 @@ async def upload(request: Request) -> Response:
     return resp
 
 
-@app.get("/signup-form")
+@app.path_function("GET", "/signup-form")
 async def signup_form(request: Request) -> HTMLResponse:
     if request.scope["from_htmx"]:
         return HTMLResponse(common_views.signup_form(app.url_wrapper(signup)).render())
@@ -282,7 +294,7 @@ async def signup_form(request: Request) -> HTMLResponse:
     )
 
 
-@app.get("/signin-form")
+@app.path_function("GET", "/signin-form")
 async def signin_form(request: Request) -> HTMLResponse:
     if request.scope["from_htmx"]:
         return HTMLResponse(common_views.signin_form(app.url_wrapper(signin)).render())
@@ -293,7 +305,7 @@ async def signin_form(request: Request) -> HTMLResponse:
     )
 
 
-@app.post("/signup")
+@app.path_function("POST", "/signup")
 async def signup(request: Request) -> HTMLResponse:
     async with request.form() as form:
         # lolwtf
@@ -315,7 +327,7 @@ async def signup(request: Request) -> HTMLResponse:
         return resp
 
 
-@app.post("/signin")
+@app.path_function("POST", "/signin")
 async def signin(request: Request) -> HTMLResponse | Response:
     async with request.form() as form:
         # lolwtf
@@ -333,7 +345,7 @@ async def signin(request: Request) -> HTMLResponse | Response:
         return resp
 
 
-@app.get("/signout", auth_scopes=[AuthScope.Authenticated])
+@app.path_function("GET", "/signout", auth_scopes=[AuthScope.Authenticated])
 async def signout(_: Request) -> Response:
     response = Response()
     response.delete_cookie(key="authorization")

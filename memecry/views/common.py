@@ -86,7 +86,7 @@ def page_root(child: Tag | list[Tag]) -> html:
     return html(lang="en").insert(
         page_head(),
         body(classes=["bg-black", "text-white", "pt-20"]).insert(
-            child,
+            child,  # type: ignore[arg-type]
         ),
     )
 
@@ -235,7 +235,7 @@ def page_nav(
                                 ).text("Memecry"),
                             ),
                         ),
-                        nav_links if user else None,
+                        nav_links if user else None,  # type: ignore[arg-type]
                     ),
                     # Secondary Navbar items
                     div(
@@ -649,7 +649,9 @@ def posts_wrapper(posts: Tag | list[Tag]) -> main:
             "mx-auto",
             "space-y-8",
         ],
-    ).insert(posts)
+    ).insert(
+        posts,  # type: ignore[arg-type]
+    )
 
 
 def upload_form(
