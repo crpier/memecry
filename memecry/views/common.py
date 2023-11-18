@@ -34,8 +34,8 @@ from relax.injection import Injected, injectable_sync
 from memecry.config import Config
 from memecry.schema import PostRead, UserRead
 
-IMAGE_FORMATS = [".jpg", ".png"]
-VIDEO_FORMATS = [".mp4"]
+IMAGE_FORMATS = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
+VIDEO_FORMATS = [".mp4", ".webm"]
 
 
 class PostUpdateTagsUrl(Protocol):
