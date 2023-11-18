@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Callable, Protocol
 
 from relax.html import (
+    SelfClosingTag,
     Tag,
     a,
     body,
@@ -13,7 +14,6 @@ from relax.html import (
     html,
     i,
     img,
-    video,
     input,
     li,
     link,
@@ -27,6 +27,7 @@ from relax.html import (
     svg,
     title,
     ul,
+    video,
 )
 from relax.injection import Injected, injectable_sync
 
@@ -447,6 +448,7 @@ def post_component(
     post: PostRead,
 ) -> div:
     search_content_id = f"search-{post.id}"
+    content: Tag | SelfClosingTag
     if Path(post.source).suffix in IMAGE_FORMATS:
         content = img(
             src=post.source,

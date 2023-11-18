@@ -1007,13 +1007,13 @@ dev = ["atomicwrites (==1.2.1)", "attrs (==19.2.0)", "coverage (==6.5.0)", "hatc
 
 [[package]]
 name = "relax-py"
-version = "0.1.3"
+version = "0.1.4"
 description = ""
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "relax_py-0.1.3-py3-none-any.whl", hash = "sha256:f2e9635032d7567b8e56a18d1447fbdb8e1b96519ad4f3835aadae8ea083aef7"},
-    {file = "relax_py-0.1.3.tar.gz", hash = "sha256:2abf7beb852fb37eaeb4df819d107a8bc0e5b045e1c6f7142d95e14a5bb55ed2"},
+    {file = "relax_py-0.1.4-py3-none-any.whl", hash = "sha256:3d9516690b7e3c85b27f03e4501bdbb5b3fbf5031e32e77323e60828e025e513"},
+    {file = "relax_py-0.1.4.tar.gz", hash = "sha256:ba70ad46e838d575491a4807d2774c1716002f7ecda05fe71d3b5e4538870eb4"},
 ]
 
 [package.dependencies]
@@ -1439,4 +1439,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "e24412fb1621ac480bb4b9cd2b25e30f14cdd5e8f7cda6cb83d0cd64fe0fc701"
+content-hash = "d365e11ac491ce077ca4fe38f4a0578666a026dad22faca330676de1bc940d8b"
