@@ -238,7 +238,7 @@ async def delete_post(
 
         conn = await session.connection()
         await conn.exec_driver_sql(
-            f"DELETE FROM {config.SEARCH_TABLE} where rowid = ?",
+            f"DELETE FROM {config.SEARCH_TABLE} where rowid = ?",  # noqa: S608
             (post_id,),
         )
 

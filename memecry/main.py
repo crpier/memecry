@@ -43,7 +43,7 @@ class BasicAuthBackend(AuthenticationBackend):
             return None
         if (username := cast(str, payload.get("sub"))) is None:
             return None
-        
+
         if user := await user_service.get_user_by_username(username):
             return AuthCredentials([AuthScope.Authenticated]), UserRead.model_validate(
                 user,
