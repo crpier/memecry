@@ -1,4 +1,5 @@
 import textwrap
+from pathlib import Path
 from typing import Callable, Protocol
 
 from relax.html import (
@@ -12,6 +13,7 @@ from relax.html import (
     html,
     i,
     img,
+    video,
     input,
     li,
     link,
@@ -30,6 +32,9 @@ from relax.injection import Injected, injectable_sync
 
 from memecry.config import Config
 from memecry.schema import PostRead, UserRead
+
+IMAGE_FORMATS = [".jpg", ".png"]
+VIDEO_FORMATS = [".mp4"]
 
 
 class PostUpdateTagsUrl(Protocol):
@@ -442,6 +447,20 @@ def post_component(
     post: PostRead,
 ) -> div:
     search_content_id = f"search-{post.id}"
+    if Path(post.source).suffix in IMAGE_FORMATS:
+        content = img(
+            src=post.source,
+            alt=post.title,
+            classes=["w-full"],
+        )
+    elif Path(post.source).suffix in VIDEO_FORMATS:
+        content = video(
+            src=post.source,
+            classes=["w-full"],
+            controls=True,
+        )
+    else:
+        content = div().text(f"Unsupported format: {Path(post.source).suffix}")
     tags = tags_component(
         post_update_tags_url,
         post.id,
@@ -509,11 +528,7 @@ def post_component(
                 ),
             ),
         ),
-        img(
-            src=post.source,
-            alt=post.title,
-            classes=["w-full"],
-        ),
+        content,
         div(
             classes=[
                 "flex",
