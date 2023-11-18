@@ -41,9 +41,9 @@ class BasicAuthBackend(AuthenticationBackend):
             payload = await security.decode_payload(token)
         except ExpiredSignatureError:
             return None
-        if payload.path_function("GET", "sub") is None:  # type: ignore[attr-defined]
+        if (username := cast(str, payload.get("sub"))) is None:
             return None
-        username: str = cast(str, payload.path_function("GET", "sub"))  # type: ignore[attr-defined]
+        
         if user := await user_service.get_user_by_username(username):
             return AuthCredentials([AuthScope.Authenticated]), UserRead.model_validate(
                 user,
@@ -140,7 +140,7 @@ async def get_post(request: Request, post_id: PathInt) -> HTMLResponse:
 async def update_tags(request: Request, post_id: PathInt) -> Response | HTMLResponse:
     async with request.form() as form:
         new_tag = cast(str, form["tag"])
-        old_tags_in_form = cast(str, form.path_function("GET", "tags", "no tags"))  # type: ignore[attr-defined]
+        old_tags_in_form = cast(str, form.get("tags", "no tags"))
         if int(post_id) != 0:
             try:
                 updated_tags = await toggle_post_tag(post_id, new_tag, request.user.id)

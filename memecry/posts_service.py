@@ -227,6 +227,7 @@ async def update_post_title(
 async def delete_post(
     post_id: int,
     *,
+    config: Config = Injected,
     asession: async_sessionmaker[AsyncSession] = Injected,
 ) -> None:
     async with asession() as session:
@@ -234,4 +235,11 @@ async def delete_post(
         # TODO: a soft delete
         query = delete(Post).where(Post.id == post_id)
         await session.execute(query)
+
+        conn = await session.connection()
+        await conn.exec_driver_sql(
+            f"DELETE FROM {config.SEARCH_TABLE} where rowid = ?",
+            (post_id,),
+        )
+
         await session.commit()
