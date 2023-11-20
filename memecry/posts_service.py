@@ -56,11 +56,15 @@ async def get_posts(
     viewer: UserRead | None = None,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
+    config: Config = Injected,
 ) -> list[PostRead]:
     async with asession() as session:
         query = (
             select(Post).order_by(Post.created_at.desc()).limit(limit).offset(offset)
         )
+        if not viewer:
+            for tag in config.RESTRICTED_TAGS:
+                query = query.where(Post.tags.not_like(f"%{tag}%"))
         result = await session.execute(query)
         post_reads = [PostRead.model_validate(post) for post in result.scalars().all()]
         if viewer:

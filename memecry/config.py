@@ -24,3 +24,9 @@ class Config(BaseSettings):
         ],
         validate_default=False,
     )
+    RESTRICTED_TAGS: list[str] = Field(
+        default=[
+            "postironic",
+        ],
+        validate_default=False,
+    )
