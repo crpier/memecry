@@ -1,4 +1,7 @@
+import contextlib
+import datetime
 import textwrap
+import time
 from pathlib import Path
 from typing import Callable, Protocol
 
@@ -316,18 +319,26 @@ def home_view(
     post_url: PostUrlCallable,
     update_searchable_content_url: PostUrlCallable,
     posts: list[PostRead],
+    offset: int = 0,
+    limit: int = 5,
 ) -> Tag:
-    return posts_wrapper(
-        [
-            post_component(
-                post_update_tags_url,
-                post_url,
-                update_searchable_content_url,
-                post,
-            )
-            for post in posts
-        ],
-    )
+    post_views = [
+        post_component(
+            post_update_tags_url,
+            post_url,
+            update_searchable_content_url,
+            post,
+        )
+        for post in posts
+    ]
+    with contextlib.suppress(IndexError):
+        post_views[-1].hx_get(
+            f"/?offset={offset+limit}",
+            hx_trigger="revealed",
+            hx_swap="afterend",
+        )
+
+    return posts_wrapper(post_views)
 
 
 @injectable_sync

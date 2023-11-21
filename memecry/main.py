@@ -1,4 +1,5 @@
 import contextlib
+import time
 from typing import AsyncIterator, TypeAlias, cast
 
 from jose import ExpiredSignatureError
@@ -205,7 +206,14 @@ async def post_delete(_: Request, post_id: PathInt) -> Response:
 
 
 @app.path_function("GET", "/")
-async def get_homepage(request: Request, query: QueryStr | None = None) -> HTMLResponse:
+async def get_homepage(
+    request: Request,
+    query: QueryStr | None = None,
+    limit: QueryStr = "5",
+    offset: QueryStr = "0",
+) -> HTMLResponse:
+    int_offset = int(offset)
+    int_limit = int(limit)
     if query:
         posts = await get_posts_by_search_query(
             query,
@@ -214,6 +222,29 @@ async def get_homepage(request: Request, query: QueryStr | None = None) -> HTMLR
     else:
         posts = await get_posts(
             viewer=request.user if request.user.is_authenticated else None,
+            limit=int_limit,
+            offset=int_offset,
+        )
+    if request.scope["from_htmx"]:
+        post_views = [
+            common_views.post_component(
+                app.url_wrapper(update_tags),
+                app.url_wrapper(get_post),
+                app.url_wrapper(
+                    update_searchable_content,
+                ),
+                post=post,
+            )
+            for post in posts
+        ]
+        with contextlib.suppress(IndexError):
+            post_views[-1].hx_get(
+                f"/?offset={int_offset+int_limit}",
+                hx_trigger="revealed",
+                hx_swap="afterend",
+            )
+        return HTMLResponse(
+            "\n".join([post_view.render() for post_view in post_views]),
         )
     return HTMLResponse(
         common_views.page_root(
@@ -232,6 +263,8 @@ async def get_homepage(request: Request, query: QueryStr | None = None) -> HTMLR
                         update_searchable_content,
                     ),
                     posts,
+                    offset=int_offset,
+                    limit=int_limit,
                 ),
             ],
         ).render(),

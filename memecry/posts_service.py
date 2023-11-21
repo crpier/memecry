@@ -51,7 +51,7 @@ async def upload_post(
 
 @injectable
 async def get_posts(
-    limit: int = 5,
+    limit: int = 10,
     offset: int = 0,
     viewer: UserRead | None = None,
     *,
