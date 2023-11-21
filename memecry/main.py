@@ -237,12 +237,15 @@ async def get_homepage(
             )
             for post in posts
         ]
-        with contextlib.suppress(IndexError):
-            post_views[-1].hx_get(
-                f"/?offset={int_offset+int_limit}",
-                hx_trigger="revealed",
-                hx_swap="afterend",
-            )
+        # search results don't need infinite scroll
+        # because we return all results at once
+        if not query:
+            with contextlib.suppress(IndexError):
+                post_views[-1].hx_get(
+                    f"/?offset={int_offset+int_limit}",
+                    hx_trigger="revealed",
+                    hx_swap="afterend",
+                )
         return HTMLResponse(
             "\n".join([post_view.render() for post_view in post_views]),
         )
