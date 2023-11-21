@@ -321,6 +321,8 @@ def home_view(
     posts: list[PostRead],
     offset: int = 0,
     limit: int = 5,
+    *,
+    keep_scrolling: bool = False,
 ) -> Tag:
     post_views = [
         post_component(
@@ -331,12 +333,13 @@ def home_view(
         )
         for post in posts
     ]
-    with contextlib.suppress(IndexError):
-        post_views[-1].hx_get(
-            f"/?offset={offset+limit}",
-            hx_trigger="revealed",
-            hx_swap="afterend",
-        )
+    if keep_scrolling:
+        with contextlib.suppress(IndexError):
+            post_views[-1].hx_get(
+                f"/?offset={offset+limit}",
+                hx_trigger="revealed",
+                hx_swap="afterend",
+            )
 
     return posts_wrapper(post_views)
 

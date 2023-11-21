@@ -268,6 +268,7 @@ async def get_homepage(
                     posts,
                     offset=int_offset,
                     limit=int_limit,
+                    keep_scrolling=query is None,
                 ),
             ],
         ).render(),
