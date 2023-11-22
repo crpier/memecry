@@ -1,11 +1,10 @@
 import contextlib
-import datetime
 import textwrap
-import time
 from pathlib import Path
 from typing import Callable, Protocol
 
 from relax.html import (
+    Fragment,
     SelfClosingTag,
     Tag,
     a,
@@ -323,6 +322,7 @@ def home_view(
     limit: int = 5,
     *,
     keep_scrolling: bool = False,
+    partial: bool = False,
 ) -> Tag:
     post_views = [
         post_component(
@@ -341,7 +341,23 @@ def home_view(
                 hx_swap="afterend",
             )
 
-    return posts_wrapper(post_views)
+    if partial:
+        return Fragment(post_views)  # type: ignore[arg-type]
+    return main(
+        classes=[
+            "flex",
+            "flex-col",
+            "items-center",
+            "justify-center",
+            "justify-items-center",
+            "w-full",
+            "lg: max-w-2xl",
+            "mx-auto",
+            "space-y-8",
+        ],
+    ).insert(
+        post_views,  # type: ignore[arg-type]
+    )
 
 
 @injectable_sync
@@ -664,24 +680,6 @@ def post_component(
             if post.editable
             else div(),
         ),
-    )
-
-
-def posts_wrapper(posts: Tag | list[Tag]) -> main:
-    return main(
-        classes=[
-            "flex",
-            "flex-col",
-            "items-center",
-            "justify-center",
-            "justify-items-center",
-            "w-full",
-            "lg: max-w-2xl",
-            "mx-auto",
-            "space-y-8",
-        ],
-    ).insert(
-        posts,  # type: ignore[arg-type]
     )
 
 

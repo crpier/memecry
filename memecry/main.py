@@ -1,5 +1,4 @@
 import contextlib
-import time
 from typing import AsyncIterator, TypeAlias, cast
 
 from jose import ExpiredSignatureError
@@ -18,7 +17,6 @@ from memecry import security, user_service
 from memecry.bootstrap import bootstrap
 from memecry.posts_service import (
     delete_post,
-    get_post_by_id,
     get_posts,
     get_posts_by_search_query,
     toggle_post_tag,
@@ -88,48 +86,7 @@ Request: TypeAlias = BaseRequest[UserRead]
 
 @app.path_function("GET", "/posts/{post_id}")
 async def get_post(request: Request, post_id: PathInt) -> HTMLResponse:
-    post = await get_post_by_id(
-        post_id,
-        viewer=request.user if request.user.is_authenticated else None,
-    )
-    if not post:
-        return HTMLResponse(common_views.response_404().render())
-    if request.scope["from_htmx"]:
-        return HTMLResponse(
-            common_views.posts_wrapper(
-                common_views.post_component(
-                    post_update_tags_url=app.url_wrapper(update_tags),
-                    post_url=app.url_wrapper(get_post),
-                    update_searchable_content_url=app.url_wrapper(
-                        update_searchable_content,
-                    ),
-                    post=post,
-                ),
-            ).render(),
-        )
-    return HTMLResponse(
-        common_views.page_root(
-            [
-                common_views.page_nav(
-                    signup_url=app.url_wrapper(signup_form),
-                    signin_url=app.url_wrapper(signin_form),
-                    signout_url=app.url_wrapper(signout),
-                    upload_form_url=app.url_wrapper(upload_form),
-                    user=request.user if request.user.is_authenticated else None,
-                ),
-                common_views.posts_wrapper(
-                    common_views.post_component(
-                        post_update_tags_url=app.url_wrapper(update_tags),
-                        post_url=app.url_wrapper(get_post),
-                        update_searchable_content_url=app.url_wrapper(
-                            update_searchable_content,
-                        ),
-                        post=post,
-                    ),
-                ),
-            ],
-        ).render(),
-    )
+    return HTMLResponse("")
 
 
 @app.path_function(
@@ -137,7 +94,7 @@ async def get_post(request: Request, post_id: PathInt) -> HTMLResponse:
     "/posts/{post_id}/tags",
     auth_scopes=[AuthScope.Authenticated],
 )
-# FIXME: at runtime, post_id is actually an string
+# TODO: at runtime, post_id is actually an string
 async def update_tags(request: Request, post_id: PathInt) -> Response | HTMLResponse:
     async with request.form() as form:
         new_tag = cast(str, form["tag"])
@@ -225,30 +182,20 @@ async def get_homepage(
             limit=int_limit,
             offset=int_offset,
         )
+    home_view = common_views.home_view(
+        app.url_wrapper(update_tags),
+        app.url_wrapper(get_post),
+        app.url_wrapper(
+            update_searchable_content,
+        ),
+        posts,
+        offset=int_offset,
+        limit=int_limit,
+        keep_scrolling=query is None,
+        partial=request.scope["from_htmx"],
+    )
     if request.scope["from_htmx"]:
-        post_views = [
-            common_views.post_component(
-                app.url_wrapper(update_tags),
-                app.url_wrapper(get_post),
-                app.url_wrapper(
-                    update_searchable_content,
-                ),
-                post=post,
-            )
-            for post in posts
-        ]
-        # search results don't need infinite scroll
-        # because we return all results at once
-        if not query:
-            with contextlib.suppress(IndexError):
-                post_views[-1].hx_get(
-                    f"/?offset={int_offset+int_limit}",
-                    hx_trigger="revealed",
-                    hx_swap="afterend",
-                )
-        return HTMLResponse(
-            "\n".join([post_view.render() for post_view in post_views]),
-        )
+        return HTMLResponse(home_view.render())
     return HTMLResponse(
         common_views.page_root(
             [
@@ -259,17 +206,7 @@ async def get_homepage(
                     upload_form_url=app.url_wrapper(upload_form),
                     user=request.user if request.user.is_authenticated else None,
                 ),
-                common_views.home_view(
-                    app.url_wrapper(update_tags),
-                    app.url_wrapper(get_post),
-                    app.url_wrapper(
-                        update_searchable_content,
-                    ),
-                    posts,
-                    offset=int_offset,
-                    limit=int_limit,
-                    keep_scrolling=query is None,
-                ),
+                home_view,
             ],
         ).render(),
     )
