@@ -94,7 +94,7 @@ def page_root(child: Tag | list[Tag]) -> html:
     return html(lang="en").insert(
         page_head(),
         body(classes=["bg-black", "text-white", "pt-20"]).insert(
-            child,  # type: ignore[arg-type]
+            child,
         ),
     )
 
@@ -243,7 +243,7 @@ def page_nav(
                                 ).text("Memecry"),
                             ),
                         ),
-                        nav_links if user else None,  # type: ignore[arg-type]
+                        nav_links if user else None,
                     ),
                     # Secondary Navbar items
                     div(
@@ -313,7 +313,7 @@ def page_nav(
     )
 
 
-def home_view(
+def home_view(  # noqa: PLR0913
     post_update_tags_url: PostUpdateTagsUrl,
     post_url: PostUrlCallable,
     update_searchable_content_url: PostUrlCallable,
@@ -342,7 +342,7 @@ def home_view(
             )
 
     if partial:
-        return Fragment(post_views)  # type: ignore[arg-type]
+        return Fragment(post_views)
     return main(
         classes=[
             "flex",
@@ -356,7 +356,7 @@ def home_view(
             "space-y-8",
         ],
     ).insert(
-        post_views,  # type: ignore[arg-type]
+        post_views,
     )
 
 

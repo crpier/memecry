@@ -2,19 +2,13 @@
 
 status=0
 
-echo "black:"
-if ! black memecry --check; then
+echo "ruff format:"
+if ! ruff format --check memecry; then
   status=1
 fi
 echo -e "---------\n"
 
-echo "isort:"
-if ! isort memecry --check-only; then
-  status=1
-fi
-echo -e "---------\n"
-
-echo "ruff:"
+echo "ruff lint:"
 if ! ruff memecry; then
   status=1
 fi

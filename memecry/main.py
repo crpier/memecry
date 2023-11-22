@@ -86,6 +86,7 @@ Request: TypeAlias = BaseRequest[UserRead]
 
 @app.path_function("GET", "/posts/{post_id}")
 async def get_post(request: Request, post_id: PathInt) -> HTMLResponse:
+    _ = request, post_id
     return HTMLResponse("")
 
 

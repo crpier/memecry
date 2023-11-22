@@ -13,7 +13,6 @@ class Config(BaseSettings):
     # TODO: allow using a remote sqlite db
     DB_FILE: Path = Path("dev.db")
     DEFAULT_POSTS_LIMIT: int = 5
-    SEARCH_TABLE: str = "posts_data"
     # This should be in the db instead
     DEFAULT_TAGS: list[str] = Field(
         default=[

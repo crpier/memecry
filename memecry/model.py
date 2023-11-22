@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import datetime  # noqa: TCH003
+import datetime
 from enum import StrEnum
 
 from sqlalchemy import ForeignKey, func

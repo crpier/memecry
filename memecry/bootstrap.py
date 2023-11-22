@@ -22,8 +22,7 @@ async def bootstrap() -> Config:
     register_functions(db)
     c = db.cursor()
     c.execute(
-        "CREATE VIRTUAL TABLE IF NOT EXISTS "
-        f"{config.SEARCH_TABLE} USING fts4(title, content)",
+        "CREATE VIRTUAL TABLE IF NOT EXISTS posts_data USING fts4(title, content)",
     )
 
     engine = create_async_engine(f"sqlite+aiosqlite:///{config.DB_FILE}")

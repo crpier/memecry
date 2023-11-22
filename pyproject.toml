@@ -24,7 +24,7 @@ sqlalchemy = {extras = ["asyncio"], version = "^2.0.20"}
 aiosqlite = "^0.19.0"
 pydantic = "^2.4.2"
 pydantic-settings = "^2.0.3"
-relax-py = "^0.1.5"
+relax-py = "^0.1.6"
 pendulum = "3.0.0b1"
 loguru = "^0.7.2"
 icecream = "^2.1.3"
@@ -33,8 +33,6 @@ pytailwindcss = "^0.2.0"
 
 
 [tool.poetry.group.dev.dependencies]
-isort = "^5.11.4"
-black = "^23.10.1"
 mypy = "^1.2.0"
 ruff = "^0.1.1"
 pydeps = "^1.12.8"
@@ -49,8 +47,11 @@ extend-select = ["F", "E", "W", "C90", "I", "N", "UP", "YTT", "ANN", "S", "BLE",
 ignore = [
 "ANN101", # No need for type annotation on `self`
 "A003", # Allow me to use the "id" field
-"I001", # Let black/isort handle this
+"COM812",
+"ISC001",
 ]
+[tool.ruff.extend-per-file-ignores]
+"memecry/model.py" = ["TCH003"] # don't make me move imports into a type checking block as they are used by sqlalchemy
 
 [tool.isort]
 profile = "black"

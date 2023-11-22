@@ -41,8 +41,7 @@ async def upload_post(
         session.add(new_post)
         conn = await session.connection()
         await conn.exec_driver_sql(
-            f"INSERT INTO {config.SEARCH_TABLE} "  # noqa: S608 we can't use the sql driver to interpolate table names
-            "(rowid, title, content) VALUES (?, ?, ?)",
+            "INSERT INTO posts_data (rowid, title, content) VALUES (?, ?, ?)",
             (new_post.id, new_post.title, new_post.searchable_content),
         )
         await session.commit()
@@ -89,8 +88,7 @@ async def get_posts_by_search_query(  # noqa: PLR0913
     async with asession() as session:
         conn = await session.connection()
         result = await conn.exec_driver_sql(
-            f"SELECT rowid FROM {config.SEARCH_TABLE} WHERE {config.SEARCH_TABLE} "  # noqa: S608
-            "MATCH ? LIMIT ? OFFSET ?",
+            "SELECT rowid FROM posts_data WHERE posts_data MATCH ? LIMIT ? OFFSET ?",
             (query, limit, offset),
         )
         post_ids: list[int] = [res[0] for res in result.fetchall()]
@@ -174,7 +172,6 @@ async def update_post_searchable_content(
     user_id: int,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
-    config: Config = Injected,
 ) -> str:
     async with asession() as session:
         result = await session.execute(
@@ -189,7 +186,7 @@ async def update_post_searchable_content(
 
         conn = await session.connection()
         await conn.exec_driver_sql(
-            f"UPDATE {config.SEARCH_TABLE} SET content = ? WHERE rowid = ?",  # noqa: S608
+            "UPDATE posts_data SET content = ? WHERE rowid = ?",
             (new_content, post_id),
         )
 
@@ -204,7 +201,6 @@ async def update_post_title(
     user_id: int,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
-    config: Config = Injected,
 ) -> str:
     async with asession() as session:
         result = await session.execute(
@@ -219,7 +215,7 @@ async def update_post_title(
 
         conn = await session.connection()
         await conn.exec_driver_sql(
-            f"UPDATE {config.SEARCH_TABLE} SET title = ? WHERE rowid = ?",  # noqa: S608
+            "UPDATE posts_data SET title = ? WHERE rowid = ?",
             (new_title, post_id),
         )
 
@@ -231,7 +227,6 @@ async def update_post_title(
 async def delete_post(
     post_id: int,
     *,
-    config: Config = Injected,
     asession: async_sessionmaker[AsyncSession] = Injected,
 ) -> None:
     async with asession() as session:
@@ -242,7 +237,7 @@ async def delete_post(
 
         conn = await session.connection()
         await conn.exec_driver_sql(
-            f"DELETE FROM {config.SEARCH_TABLE} where rowid = ?",  # noqa: S608
+            "DELETE FROM posts_data where rowid = ?",
             (post_id,),
         )
 
