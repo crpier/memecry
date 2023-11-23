@@ -2,7 +2,7 @@ import contextlib
 from typing import AsyncIterator, TypeAlias, cast
 
 from jose import ExpiredSignatureError
-from relax.app import App, AuthScope, PathInt, QueryStr
+from relax.app import App, AuthScope, PathInt, QueryInt, QueryStr
 from relax.app import Request as BaseRequest
 from starlette.authentication import AuthCredentials, AuthenticationBackend
 from starlette.datastructures import UploadFile
@@ -96,15 +96,15 @@ async def get_post(request: Request, post_id: PathInt) -> HTMLResponse:
     auth_scopes=[AuthScope.Authenticated],
 )
 # TODO: at runtime, post_id is actually an string
-async def update_tags(request: Request, post_id: PathInt) -> Response | HTMLResponse:
+async def update_tags(request: Request, post_id: PathInt) -> HTMLResponse:
     async with request.form() as form:
         new_tag = cast(str, form["tag"])
         old_tags_in_form = cast(str, form.get("tags", "no tags"))
-        if int(post_id) != 0:
+        if post_id != 0:
             try:
                 updated_tags = await toggle_post_tag(post_id, new_tag, request.user.id)
             except PermissionError:
-                return Response("permission denied", status_code=403)
+                return HTMLResponse("permission denied", status_code=403)
         else:
             old_tags = old_tags_in_form.split(", ")
 
@@ -118,11 +118,12 @@ async def update_tags(request: Request, post_id: PathInt) -> Response | HTMLResp
                 old_tags.append(new_tag)
 
             updated_tags = ", ".join(old_tags)
+        kek = app.url_wrapper(update_tags)
         return HTMLResponse(
             common_views.tags_component(
-                app.url_wrapper(update_tags),
-                post_id,
-                updated_tags,
+                post_update_tags_url=kek,
+                post_id=post_id,
+                post_tags=updated_tags,
                 editable=True,
                 hidden_dropdown=False,
             ).render(),
@@ -167,11 +168,9 @@ async def post_delete(_: Request, post_id: PathInt) -> Response:
 async def get_homepage(
     request: Request,
     query: QueryStr | None = None,
-    limit: QueryStr = "5",
-    offset: QueryStr = "0",
+    limit: QueryInt = 5,
+    offset: QueryInt = 0,
 ) -> HTMLResponse:
-    int_offset = int(offset)
-    int_limit = int(limit)
     if query:
         posts = await get_posts_by_search_query(
             query,
@@ -180,8 +179,8 @@ async def get_homepage(
     else:
         posts = await get_posts(
             viewer=request.user if request.user.is_authenticated else None,
-            limit=int_limit,
-            offset=int_offset,
+            limit=limit,
+            offset=offset,
         )
     home_view = common_views.home_view(
         app.url_wrapper(update_tags),
@@ -190,8 +189,8 @@ async def get_homepage(
             update_searchable_content,
         ),
         posts,
-        offset=int_offset,
-        limit=int_limit,
+        offset=offset,
+        limit=limit,
         keep_scrolling=query is None,
         partial=request.scope["from_htmx"],
     )
