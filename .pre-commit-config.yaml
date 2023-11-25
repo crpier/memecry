@@ -1,0 +1,7 @@
+repos:
+  - repo: local
+    hooks:
+      - id: run linting
+        name: linting script
+        entry: ./scripts/lint.sh
+        language: script
