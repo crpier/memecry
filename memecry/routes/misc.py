@@ -1,3 +1,4 @@
+from loguru import logger
 from relax.app import HTMLResponse, QueryInt, QueryStr, Router
 
 import memecry.posts_service
@@ -21,6 +22,8 @@ async def get_homepage(
     limit: QueryInt = 5,
     offset: QueryInt = 0,
 ) -> HTMLResponse:
+    logger.debug(request.headers)
+    logger.debug(request.url_for("signup"))
     if query:
         posts = await get_posts_by_search_query(
             query,
