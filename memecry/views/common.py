@@ -1,9 +1,10 @@
 import contextlib
 import textwrap
 from pathlib import Path
-from typing import Callable, Protocol
+from typing import Protocol
 
 from relax.html import (
+    Element,
     Fragment,
     SelfClosingTag,
     Tag,
@@ -32,6 +33,7 @@ from relax.html import (
     video,
 )
 from relax.injection import Injected, injectable_sync
+from starlette.datastructures import URL
 
 from memecry.config import Config
 from memecry.schema import PostRead, UserRead
@@ -41,12 +43,12 @@ VIDEO_FORMATS = [".mp4", ".webm"]
 
 
 class PostUpdateTagsUrl(Protocol):
-    def __call__(self, *, post_id: int) -> str:
+    def __call__(self, *, post_id: int) -> URL:
         ...
 
 
 class PostUrlCallable(Protocol):
-    def __call__(self, *, post_id: int) -> str:
+    def __call__(self, *, post_id: int) -> URL:
         ...
 
 
@@ -90,7 +92,7 @@ def page_head() -> head:
     )
 
 
-def page_root(child: Tag | list[Tag]) -> html:
+def page_root(child: Element | list[Element]) -> html:
     return html(lang="en").insert(
         page_head(),
         body(classes=["bg-black", "text-white", "pt-20"]).insert(
@@ -101,10 +103,10 @@ def page_root(child: Tag | list[Tag]) -> html:
 
 # TODO: think of a way to group urls in a single variable
 def page_nav(
-    signup_url: Callable[[], str],
-    signin_url: Callable[[], str],
-    signout_url: Callable[[], str],
-    upload_form_url: Callable[[], str],
+    signup_url: URL,
+    signin_url: URL,
+    signout_url: URL,
+    upload_form_url: URL,
     user: UserRead | None = None,
 ) -> nav:
     search_form = form(
@@ -135,7 +137,7 @@ def page_nav(
                 "duration-300",
             ],
         )
-        .hx_get(target=signup_url(), hx_target="body", hx_swap="beforeend")
+        .hx_get(target=signup_url, hx_target="body", hx_swap="beforeend")
         .text("Sign up")
     )
 
@@ -150,7 +152,7 @@ def page_nav(
                 "duration-300",
             ],
         )
-        .hx_get(target=signin_url(), hx_target="body", hx_swap="beforeend")
+        .hx_get(target=signin_url, hx_target="body", hx_swap="beforeend")
         .text("Sign in")
     )
 
@@ -167,7 +169,7 @@ def page_nav(
                 "duration-300",
             ],
         )
-        .hx_get(target=upload_form_url(), hx_target="body", hx_swap="beforeend")
+        .hx_get(target=upload_form_url, hx_target="body", hx_swap="beforeend")
         .text("Upload")
     )
 
@@ -182,7 +184,7 @@ def page_nav(
                 "duration-300",
             ],
         )
-        .hx_get(target=signout_url(), hx_target="body", hx_swap="beforeend")
+        .hx_get(target=signout_url, hx_target="body", hx_swap="beforeend")
         .text("Sign out")
     )
 
@@ -684,7 +686,7 @@ def post_component(
 
 
 def upload_form(
-    upload_url: Callable[[], str],
+    upload_url: URL,
     post_update_tags_url: PostUpdateTagsUrl,
 ) -> div:
     tags = tags_component(post_update_tags_url, editable=True)
@@ -727,7 +729,7 @@ def upload_form(
             ],
         )
         .hx_post(
-            upload_url(),
+            upload_url,
             hx_swap="afterend",
             hx_encoding="multipart/form-data",
         )
@@ -762,7 +764,7 @@ def upload_form(
     )
 
 
-def signin_form(get_signing_url: Callable[[], str]) -> div:
+def signin_form(signin_url: URL) -> div:
     return div(
         classes=[
             "fixed",
@@ -800,7 +802,7 @@ def signin_form(get_signing_url: Callable[[], str]) -> div:
             ],
         )
         .hx_post(
-            get_signing_url(),
+            signin_url,
             hx_encoding="multipart/form-data",
             hx_target="#signin-error",
         )
@@ -849,7 +851,7 @@ def error_element(error: str) -> div:
     return div(classes=["bg-red-800", "my-4", "p-2", "border-lg", "w-max"]).text(error)
 
 
-def signup_form(get_signup_url: Callable[[], str]) -> div:
+def signup_form(signup_url: URL) -> div:
     return div(
         classes=[
             "fixed",
@@ -887,7 +889,7 @@ def signup_form(get_signup_url: Callable[[], str]) -> div:
             ],
         )
         .hx_post(
-            get_signup_url(),
+            signup_url,
             hx_encoding="multipart/form-data",
             hx_target="#signup-error",
         )
