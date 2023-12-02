@@ -3,19 +3,19 @@ from pathlib import Path
 import aiofiles
 from loguru import logger
 from relax.injection import Injected, injectable
-from sqlalchemy import delete, select, update
+from sqlalchemy import delete, not_, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import load_only
 from starlette.datastructures import UploadFile
 
+import memecry.schema
 from memecry.config import Config
 from memecry.model import Post
-from memecry.schema import PostCreate, PostRead, UserRead
 
 
 @injectable
 async def upload_post(
-    post_data: PostCreate,
+    post_data: memecry.schema.PostCreate,
     uploaded_file: UploadFile,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
@@ -52,11 +52,11 @@ async def upload_post(
 async def get_posts(
     limit: int = 10,
     offset: int = 0,
-    viewer: UserRead | None = None,
+    viewer: memecry.schema.UserRead | None = None,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
     config: Config = Injected,
-) -> list[PostRead]:
+) -> list[memecry.schema.PostRead]:
     async with asession() as session:
         query = (
             select(Post).order_by(Post.created_at.desc()).limit(limit).offset(offset)
@@ -65,7 +65,10 @@ async def get_posts(
             for tag in config.RESTRICTED_TAGS:
                 query = query.where(Post.tags.not_like(f"%{tag}%"))
         result = await session.execute(query)
-        post_reads = [PostRead.model_validate(post) for post in result.scalars().all()]
+        post_reads = [
+            memecry.schema.PostRead.model_validate(post)
+            for post in result.scalars().all()
+        ]
         if viewer:
             for post in post_reads:
                 if viewer.id == post.user_id:
@@ -75,33 +78,40 @@ async def get_posts(
 
 @injectable
 async def get_posts_by_search_query(  # noqa: PLR0913
-    query: str,
+    query: memecry.schema.Query,
     limit: int = -1,
     offset: int = 0,
-    viewer: UserRead | None = None,
+    viewer: memecry.schema.UserRead | None = None,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
     config: Config = Injected,
-) -> list[PostRead]:
+) -> list[memecry.schema.PostRead]:
     if limit == -1:
         limit = config.DEFAULT_POSTS_LIMIT
     async with asession() as session:
-        conn = await session.connection()
-        result = await conn.exec_driver_sql(
-            "SELECT rowid FROM posts_data WHERE posts_data MATCH ? LIMIT ? OFFSET ?",
-            (query, limit, offset),
-        )
-        post_ids: list[int] = [res[0] for res in result.fetchall()]
-
         db_query = (
-            select(Post)
-            .order_by(Post.created_at.desc())
-            .limit(limit)
-            .offset(offset)
-            .where(Post.id.in_(post_ids))
+            select(Post).order_by(Post.created_at.desc()).limit(limit).offset(offset)
         )
+        if tags := query.tags["included"]:
+            db_query = db_query.where(or_(*[Post.tags.contains(tag) for tag in tags]))
+
+        for tag in query.tags["excluded"]:
+            db_query = db_query.where(not_(Post.tags.contains(tag)))
+
+        if query.content:
+            conn = await session.connection()
+            result = await conn.exec_driver_sql(
+                "SELECT rowid FROM posts_data WHERE posts_data "
+                "MATCH ? LIMIT ? OFFSET ?",
+                (query.content, limit, offset),
+            )
+            post_ids: list[int] = [res[0] for res in result.fetchall()]
+            db_query = db_query.where(Post.id.in_(post_ids))
+
         res = await session.execute(db_query)
-        post_reads = [PostRead.model_validate(post) for post in res.scalars().all()]
+        post_reads = [
+            memecry.schema.PostRead.model_validate(post) for post in res.scalars().all()
+        ]
         if viewer:
             for post in post_reads:
                 if viewer.id == post.user_id:
@@ -112,17 +122,17 @@ async def get_posts_by_search_query(  # noqa: PLR0913
 @injectable
 async def get_post_by_id(
     post_id: int,
-    viewer: UserRead | None = None,
+    viewer: memecry.schema.UserRead | None = None,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
-) -> PostRead | None:
+) -> memecry.schema.PostRead | None:
     async with asession() as session:
         query = select(Post).where(Post.id == post_id)
         result = await session.execute(query)
         post = result.scalars().one_or_none()
         if not post:
             return None
-        return PostRead.from_model(
+        return memecry.schema.PostRead.from_model(
             post,
             editable=bool(viewer and viewer.id == post.user_id),
         )

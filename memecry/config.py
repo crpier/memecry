@@ -14,6 +14,8 @@ class Config(BaseSettings):
     DB_FILE: Path = Path("dev.db")
     DEFAULT_POSTS_LIMIT: int = 5
     # This should be in the db instead
+    # TODO: constraint that tags are one word only
+    # guess alphanumeric chars and hyphens are ok?
     DEFAULT_TAGS: list[str] = Field(
         default=[
             "reaction",

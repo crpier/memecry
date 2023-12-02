@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import TypedDict
 
 import babel.dates
 import zoneinfo
@@ -64,3 +65,33 @@ class PostRead(BaseModel):
         )
         post_dict["editable"] = editable
         return PostRead(**post_dict)
+
+
+class QueryTags(TypedDict):
+    included: list[str]
+    excluded: list[str]
+
+
+class Query:
+    def __init__(self, raw_input: str) -> None:
+        # Example query:
+        # wawa >animals !reaction
+        self._raw_input = raw_input
+        parts = raw_input.split(" ")
+        self._content_parts: list[str] = []
+        self.tags: QueryTags = {"included": [], "excluded": []}
+        for part in parts:
+            match part[0]:
+                case ">":
+                    self.tags["included"].append(part[1:])
+                case "!":
+                    self.tags["excluded"].append(part[1:])
+                case _:
+                    self._content_parts.append(part)
+
+    def __str__(self) -> str:
+        return " ".join(self._content_parts)
+
+    @property
+    def content(self) -> str:
+        return " ".join(self._content_parts)

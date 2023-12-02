@@ -1,4 +1,3 @@
-from loguru import logger
 from relax.app import HTMLResponse, QueryInt, QueryStr, Router
 
 import memecry.posts_service
@@ -22,11 +21,14 @@ async def get_homepage(
     limit: QueryInt = 5,
     offset: QueryInt = 0,
 ) -> HTMLResponse:
-    logger.debug(request.headers)
-    logger.debug(request.url_for("signup"))
     if query:
+        try:
+            # TODO: good candidate for using Option type
+            parsed_query = memecry.schema.Query(query)
+        except ValueError as e:
+            return HTMLResponse(memecry.views.common.error_element(str(e)))
         posts = await get_posts_by_search_query(
-            query,
+            parsed_query,
             viewer=request.user if request.user.is_authenticated else None,
         )
     else:
