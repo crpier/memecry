@@ -9,6 +9,8 @@ import memecry.posts_service
 import memecry.routes.auth
 import memecry.schema
 import memecry.views.common
+import memecry.views.misc
+import memecry.views.post
 from memecry.types import Request
 
 post_router = Router()
@@ -53,7 +55,7 @@ async def update_tags(request: Request, post_id: PathInt) -> HTMLResponse:
             updated_tags = ", ".join(old_tags)
 
         return HTMLResponse(
-            memecry.views.common.tags_component(
+            memecry.views.post.tags_component(
                 post_update_tags_url=request.url_wrapper(update_tags),
                 post_id=post_id,
                 post_tags=updated_tags,
@@ -105,16 +107,16 @@ async def post_delete(_: Request, post_id: PathInt) -> Response:
 async def upload_form(request: Request) -> HTMLResponse:
     if request.scope["from_htmx"]:
         return HTMLResponse(
-            memecry.views.common.upload_form(
+            memecry.views.misc.upload_form(
                 request.url_of(upload),
                 # TODO: encode somewhere the post_id=0 magic spell
                 request.url_wrapper(update_tags),
             ),
         )
     return HTMLResponse(
-        memecry.views.common.page_root(
+        memecry.views.misc.page_root(
             [
-                memecry.views.common.upload_form(
+                memecry.views.misc.upload_form(
                     request.url_of(upload),
                     request.url_wrapper(update_tags),
                 ),

@@ -5,9 +5,11 @@ from relax.html import div
 from starlette.responses import Response
 
 import memecry.schema
+import memecry.views.common
+import memecry.views.misc
+import memecry.views.post
 from memecry import security, user_service
 from memecry.types import Request
-from memecry.views import common as common_views
 
 auth_router = Router()
 
@@ -21,7 +23,7 @@ async def signin(request: Request) -> HTMLResponse | Response:
         password = cast(str, form["password"])
         if await user_service.authenticate_user(username, password) is None:
             return HTMLResponse(
-                common_views.error_element("Invalid username or password"),
+                memecry.views.common.error_element("Invalid username or password"),
             )
         resp = Response()
         access_token = await security.create_access_token(data={"sub": username})
@@ -34,9 +36,11 @@ async def signin(request: Request) -> HTMLResponse | Response:
 @auth_router.path_function("GET", "/signin-form")
 async def signin_form(request: Request) -> HTMLResponse:
     if request.scope["from_htmx"]:
-        return HTMLResponse(common_views.signin_form(request.url_of(signin)))
+        return HTMLResponse(memecry.views.misc.signin_form(request.url_of(signin)))
     return HTMLResponse(
-        common_views.page_root(common_views.signin_form(request.url_of(signin))),
+        memecry.views.misc.page_root(
+            memecry.views.misc.signin_form(request.url_of(signin))
+        ),
     )
 
 
@@ -44,10 +48,10 @@ async def signin_form(request: Request) -> HTMLResponse:
 @auth_router.path_function("GET", "/signup-form")
 async def signup_form(request: Request) -> HTMLResponse:
     if request.scope["from_htmx"]:
-        return HTMLResponse(common_views.signup_form(request.url_of(signup)))
+        return HTMLResponse(memecry.views.misc.signup_form(request.url_of(signup)))
     return HTMLResponse(
-        common_views.page_root(
-            common_views.signup_form(request.url_of(signup)),
+        memecry.views.misc.page_root(
+            memecry.views.misc.signup_form(request.url_of(signup)),
         ),
     )
 
@@ -62,7 +66,7 @@ async def signup(request: Request) -> HTMLResponse:
         new_user_id = await user_service.create_user(user_create)
         if new_user_id is None:
             return HTMLResponse(
-                common_views.error_element(
+                memecry.views.common.error_element(
                     f'Username "{username}" already exists',
                 ),
             )

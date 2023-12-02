@@ -5,6 +5,8 @@ import memecry.routes.auth
 import memecry.routes.post
 import memecry.schema
 import memecry.views.common
+import memecry.views.misc
+import memecry.views.post
 from memecry.posts_service import (
     get_posts,
     get_posts_by_search_query,
@@ -37,7 +39,7 @@ async def get_homepage(
             limit=limit,
             offset=offset,
         )
-    home_view = memecry.views.common.home_view(
+    home_view = memecry.views.misc.home_view(
         request.url_wrapper(memecry.routes.post.update_tags),
         request.url_wrapper(memecry.routes.post.get_post),
         request.url_wrapper(
@@ -52,9 +54,9 @@ async def get_homepage(
     if request.scope["from_htmx"]:
         return HTMLResponse(home_view)
     return HTMLResponse(
-        memecry.views.common.page_root(
+        memecry.views.misc.page_root(
             [
-                memecry.views.common.page_nav(
+                memecry.views.misc.page_nav(
                     signup_url=request.url_of(memecry.routes.auth.signup_form),
                     signin_url=request.url_of(memecry.routes.auth.signin_form),
                     signout_url=request.url_of(memecry.routes.auth.signout),
