@@ -28,11 +28,10 @@ async def get_post(request: Request, post_id: PathInt) -> HTMLResponse:
     "/posts/{post_id}/tags",
     auth_scopes=[AuthScope.Authenticated],
 )
-# TODO: at runtime, post_id is actually an string
 async def update_tags(request: Request, post_id: PathInt) -> HTMLResponse:
     async with request.form() as form:
         new_tag = cast(str, form["tag"])
-        old_tags_in_form = cast(str, form.get("tags", "no tags"))
+        old_tags_in_form = cast(str, form.get("tags", "no-tags"))
         if post_id != 0:
             try:
                 updated_tags = await memecry.posts_service.toggle_post_tag(

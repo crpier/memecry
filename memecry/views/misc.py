@@ -88,7 +88,7 @@ def page_nav(
 ) -> nav:
     search_form = form(
         classes=["flex", "flex-row", "items-center", "justify-end"],
-        action="/",
+        action="/search",
     ).insert(
         input(
             id="search",

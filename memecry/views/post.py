@@ -40,7 +40,7 @@ class PostUrlCallable(Protocol):
 def tags_component(  # noqa: PLR0913
     post_update_tags_url: PostUpdateTagsUrl,
     post_id: int = 0,
-    post_tags: str = "no tags",
+    post_tags: str = "no-tags",
     *,
     editable: bool = False,
     hidden_dropdown: bool = True,

@@ -77,34 +77,45 @@ async def get_posts(
 
 
 @injectable
-async def get_posts_by_search_query(  # noqa: PLR0913
+async def get_posts_by_search_query(  # noqa: PLR0913, C901
     query: memecry.schema.Query,
-    limit: int = -1,
+    # TODO: limit should have default value of None instead
+    # TODO: offset and limit should always come together
+    limit: int = 0,
     offset: int = 0,
     viewer: memecry.schema.UserRead | None = None,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
     config: Config = Injected,
 ) -> list[memecry.schema.PostRead]:
-    if limit == -1:
-        limit = config.DEFAULT_POSTS_LIMIT
     async with asession() as session:
-        db_query = (
-            select(Post).order_by(Post.created_at.desc()).limit(limit).offset(offset)
-        )
+        db_query = select(Post).order_by(Post.created_at.desc())
+        if limit:
+            db_query = db_query.limit(limit).offset(offset)
+
         if tags := query.tags["included"]:
             db_query = db_query.where(or_(*[Post.tags.contains(tag) for tag in tags]))
 
         for tag in query.tags["excluded"]:
             db_query = db_query.where(not_(Post.tags.contains(tag)))
 
+        if not viewer:
+            for tag in config.RESTRICTED_TAGS:
+                db_query = db_query.where(Post.tags.not_like(f"%{tag}%"))
+
         if query.content:
             conn = await session.connection()
-            result = await conn.exec_driver_sql(
-                "SELECT rowid FROM posts_data WHERE posts_data "
-                "MATCH ? LIMIT ? OFFSET ?",
-                (query.content, limit, offset),
-            )
+            if limit:
+                result = await conn.exec_driver_sql(
+                    "SELECT rowid FROM posts_data WHERE posts_data "
+                    "MATCH ? LIMIT ? OFFSET ?",
+                    (query.content, limit, offset),
+                )
+            else:
+                result = await conn.exec_driver_sql(
+                    "SELECT rowid FROM posts_data WHERE posts_data MATCH ?",
+                    (query.content,),
+                )
             post_ids: list[int] = [res[0] for res in result.fetchall()]
             db_query = db_query.where(Post.id.in_(post_ids))
 
@@ -161,9 +172,9 @@ async def toggle_post_tag(
         if tag in old_tags:
             old_tags.remove(tag)
             if old_tags == []:
-                old_tags = ["no tags"]
+                old_tags = ["no-tags"]
         else:
-            if old_tags == ["no tags"]:
+            if old_tags == ["no-tags"]:
                 old_tags = []
             old_tags.append(tag)
 
