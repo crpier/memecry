@@ -13,7 +13,7 @@ from memecry.model import Base
 
 @logger.catch
 def run_migrations(script_location: str, dsn: str) -> None:
-    logger.info("Running DB migrations in %r on %r", script_location)
+    logger.info("Running DB migrations in {}", script_location)
     alembic_cfg = alembic.config.Config("alembic.ini")
     alembic_cfg.set_main_option("script_location", script_location)
     alembic_cfg.set_main_option("sqlalchemy.url", dsn)
