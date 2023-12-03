@@ -1,15 +1,15 @@
 """add score column to posts table
 
-Revision ID: 103e638cc33e
+Revision ID: fbcf0920dd16
 Revises:
-Create Date: 2023-12-03 20:18:28.222575
+Create Date: 2023-12-03 21:48:59.355540
 
 """
 
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "103e638cc33e"
+revision: str = "fbcf0920dd16"
 down_revision: str | None = None
 branch_labels: str | list[str] | None = None
 depends_on: str | list[str] | None = None

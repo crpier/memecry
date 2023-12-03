@@ -1,10 +1,7 @@
-import asyncio
+from logging.config import fileConfig
 
 from alembic import context
-from loguru import logger
-from sqlalchemy import pool
-from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy import engine_from_config, pool
 
 import memecry.config
 
@@ -12,13 +9,12 @@ import memecry.config
 # access to the values within the .ini file in use.
 config = context.config
 
-# add your model's MetaData object here
-# for 'autogenerate' support
-target_metadata = None
+# Interpret the config file for Python logging.
+# This line sets up loggers basically.
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
 
-# other values from the config, defined by the needs of env.py,
-# can be acquired:
-# ... etc.
+target_metadata = None
 
 
 def run_migrations_offline() -> None:
@@ -45,50 +41,28 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
+def run_migrations_online() -> None:
+    """Run migrations in 'online' mode.
 
-    with context.begin_transaction():
-        context.run_migrations()
-
-
-async def run_async_migrations() -> None:
-    """In this scenario we need to create an Engine
+    In this scenario we need to create an Engine
     and associate a connection with the context.
 
     """
-    configuration = config.get_section(config.config_ini_section, {})
-    configuration[
-        "sqlalchemy.url"
-    ] = f"sqlite+aiosqlite:///{memecry.config.Config().DB_FILE}"
 
-    connectable = async_engine_from_config(
+    configuration = config.get_section(config.config_ini_section, {})
+    configuration["sqlalchemy.url"] = f"sqlite:///{memecry.config.Config().DB_FILE}"
+
+    connectable = engine_from_config(
         configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
-    async with connectable.connect() as connection:
-        await connection.run_sync(do_run_migrations)
+    with connectable.connect() as connection:
+        context.configure(connection=connection, target_metadata=target_metadata)
 
-    await connectable.dispose()
-
-
-def run_migrations_online() -> None:
-    """Run migrations in 'online' mode."""
-
-    logger.info("Running migration in online mode")
-    # When running from inside bootstrap.py, there is
-    # an event loop already
-    try:
-        loop = asyncio.get_running_loop()
-        logger.info("Trying to run migration in existing event loop")
-        asyncio.ensure_future(run_async_migrations(), loop=loop)  # noqa: RUF006
-        logger.info("Ran migration in existing event loop")
-    except RuntimeError:
-        logger.info("Trying to run in new event loop")
-        asyncio.run(run_async_migrations())
-        logger.info("Ran migration in new event loop")
+        with context.begin_transaction():
+            context.run_migrations()
 
 
 if context.is_offline_mode():
