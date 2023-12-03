@@ -82,7 +82,13 @@ async def run_async_migrations() -> None:
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode."""
 
-    asyncio.run(run_async_migrations())
+    # When running from inside bootstrap.py, there is
+    # an event loop already
+    try:
+        loop = asyncio.get_running_loop()
+        asyncio.ensure_future(run_async_migrations(), loop=loop)  # noqa: RUF006
+    except RuntimeError:
+        asyncio.run(run_async_migrations())
 
 
 if context.is_offline_mode():
