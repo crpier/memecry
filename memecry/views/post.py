@@ -5,6 +5,7 @@ from typing import Protocol
 from relax.html import (
     SelfClosingTag,
     Tag,
+    a,
     button,
     div,
     i,
@@ -70,7 +71,7 @@ def tags_component(  # noqa: PLR0913
             ),
         )
 
-    return div(id=element_id, classes=["relative"]).insert(
+    return div(id=element_id).insert(
         input(name="tags", type="text", value=post_tags, classes=["hidden"]),
         div(
             classes=[
@@ -84,7 +85,6 @@ def tags_component(  # noqa: PLR0913
             button(
                 classes=[
                     "border",
-                    "border-gray-400",
                     "rounded-md",
                     "px-2",
                     "py-1",
@@ -107,7 +107,6 @@ def tags_component(  # noqa: PLR0913
                 "w-max",
                 "mt-1",
                 "border",
-                "border-gray-400",
                 "bg-black",
             ],
         ).insert(
@@ -169,12 +168,101 @@ def post_component(
         )
     else:
         content = div().text(f"Unsupported format: {Path(post.source).suffix}")
+    info_pane = div(
+        classes=[
+            "flex",
+            "flex-row",
+            "justify-between",
+            "items-center",
+            "pt-4",
+            "px-4",
+            "md:px-0",
+        ]
+    ).insert(
+        div(classes=["font-semibold"]).text(f"{post.score} good boi points"),
+        div(classes=["space-x-1"]).insert(
+            span(classes=["font-semibold"]).text(f"{post.created_since} by"),
+            a(href="#", classes=["font-semibold", "text-green-300"]).text(
+                post.author_name
+            ),
+        ),
+    )
     tags = tags_component(
         post_update_tags_url,
         post.id,
         post.tags,
         editable=post.editable,
     )
+    info_button = div(classes=["space-x-2", "text-right", "text-gray-500"]).insert(
+        button(
+            type="button",
+            classes=[
+                "py-1",
+                "px-3",
+                "rounded-lg",
+                "text-white",
+                "font-semibold",
+                "duration-300",
+                "border",
+                "border-black",
+                "hover:border-gray-100",
+                "hover:text-gray-100",
+            ],
+            hyperscript=f"on click toggle .hidden on #{search_content_id}",
+        ).insert(i(classes=["fa", "fa-gear", "fa-lg"])),
+    )
+    interaction_pane = div(
+        classes=[
+            "flex",
+            "flex-row",
+            "justify-between",
+            "items-center",
+            "px-4",
+            "py-2",
+            "md:px-0",
+            "space-x-4",
+        ]
+    ).insert(
+        div(classes=["space-x-2"]).insert(
+            button(
+                type="button",
+                classes=[
+                    "py-1",
+                    "px-2",
+                    "border",
+                    "rounded-lg",
+                    "text-white",
+                    "font-semibold",
+                    "hover:text-green-700",
+                    "hover:border-green-700",
+                    "duration-300",
+                    # "border-green-800",
+                    # "text-green-800",
+                ],
+            ).insert(i(classes=["fa", "fa-arrow-up"])),
+            button(
+                type="button",
+                classes=[
+                    "py-1",
+                    "px-2",
+                    "border",
+                    "rounded-lg",
+                    "text-white",
+                    "font-semibold",
+                    "hover:text-red-800",
+                    "hover:border-red-800",
+                    "duration-300",
+                    # "border-red-800",
+                    # "text-red-800",
+                ],
+            ).insert(i(classes=["fa", "fa-arrow-down"])),
+        ),
+        tags,
+        div(classes=["flex-grow"]),
+        info_button,
+        button(classes=["border", "rounded-md", "py-1", "px-2"]).text("0 comments"),
+    )
+
     element_id = f"post-{post.id}"
     return div(
         id=element_id,
@@ -237,35 +325,8 @@ def post_component(
             ),
         ),
         content,
-        div(
-            classes=[
-                "flex",
-                "flex-row",
-                "justify-between",
-                "items-center",
-                "pt-4",
-                "px-4",
-                "md:px-0",
-            ],
-        ).insert(
-            tags,
-            div(classes=["space-x-2", "text-right", "py-3", "text-gray-500"]).insert(
-                button(
-                    type="button",
-                    classes=[
-                        "py-2",
-                        "px-4",
-                        "bg-green-500",
-                        "rounded-lg",
-                        "text-white",
-                        "font-semibold",
-                        "hover:bg-green-600",
-                        "duration-300",
-                    ],
-                    hyperscript=f"on click toggle .hidden on #{search_content_id}",
-                ).insert(i(classes=["fa", "fa-info", "fa-lg"])),
-            ),
-        ),
+        info_pane,
+        interaction_pane,
         div(
             classes=[
                 "border-t",

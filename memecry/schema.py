@@ -39,9 +39,12 @@ class PostRead(BaseModel):
     title: str
     source: str
     user_id: int
+    author_name: str
     tags: str
     searchable_content: str
     editable: bool = False
+    created_since: str
+    score: int
 
     class Config:
         from_attributes = True
@@ -64,6 +67,7 @@ class PostRead(BaseModel):
             locale="en_US",
         )
         post_dict["editable"] = editable
+        post_dict["author_name"] = post_in_db.user.username
         return PostRead(**post_dict)
 
 

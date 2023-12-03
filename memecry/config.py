@@ -4,6 +4,9 @@ from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
+# TODO: use starlette config instead of pydantic; allow .env files?
+# TODO: make sure that alembic can use this
+# (i.e. we don't need unnecessary vars to be set)
 class Config(BaseSettings):
     SECRET_KEY: str = Field(default=...)
     ALGORITHM: str = "HS256"

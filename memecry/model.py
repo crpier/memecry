@@ -38,6 +38,7 @@ class Post(Base):
     source: Mapped[str]
     tags: Mapped[str]
     searchable_content: Mapped[str] = mapped_column(default="")
+    score: Mapped[int] = mapped_column(default=0)
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     user: Mapped[User] = relationship("User", back_populates="posts", lazy="joined")

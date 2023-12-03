@@ -66,8 +66,7 @@ async def get_posts(
                 query = query.where(Post.tags.not_like(f"%{tag}%"))
         result = await session.execute(query)
         post_reads = [
-            memecry.schema.PostRead.model_validate(post)
-            for post in result.scalars().all()
+            memecry.schema.PostRead.from_model(post) for post in result.scalars().all()
         ]
         if viewer:
             for post in post_reads:
