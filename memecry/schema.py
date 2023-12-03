@@ -80,11 +80,15 @@ class Query:
     def __init__(self, raw_input: str) -> None:
         # Example query:
         # wawa >animals !reaction
-        self._raw_input = raw_input
-        parts = raw_input.split(" ")
+        self._raw_input = raw_input.strip()
+
         self._content_parts: list[str] = []
         self.tags: QueryTags = {"included": [], "excluded": []}
+
+        parts = self._raw_input.split(" ")
         for part in parts:
+            if part == "":
+                continue
             match part[0]:
                 case ">":
                     self.tags["included"].append(part[1:])
@@ -92,6 +96,13 @@ class Query:
                     self.tags["excluded"].append(part[1:])
                 case _:
                     self._content_parts.append(part)
+        if (
+            self.tags["included"] == []
+            and self.tags["excluded"] == []
+            and self._content_parts == []
+        ):
+            msg = "An empty query was provided"
+            raise ValueError(msg)
 
     def __str__(self) -> str:
         return " ".join(self._content_parts)

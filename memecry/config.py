@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 from pydantic import Field
 from pydantic_settings import BaseSettings
@@ -8,6 +9,7 @@ from pydantic_settings import BaseSettings
 # TODO: make sure that alembic can use this
 # (i.e. we don't need unnecessary vars to be set)
 class Config(BaseSettings):
+    ENV: Literal["dev", "prod", "unit", "acceptance"] = "prod"
     SECRET_KEY: str = Field(default=...)
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 720  # 30 days

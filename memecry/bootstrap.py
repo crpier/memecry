@@ -46,9 +46,10 @@ async def bootstrap() -> Config:
     async_session = async_sessionmaker(engine, expire_on_commit=False)
     add_injectable(async_sessionmaker[AsyncSession], async_session)
 
-    # TODO: only do this in prod
-    run_migrations("./memecry/alembic", dsn)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    if config.ENV == "prod":
+        run_migrations("./memecry/alembic", dsn)
+        async with engine.begin() as conn:
+            # TODO: have a migration to create tables and stuff instead?
+            await conn.run_sync(Base.metadata.create_all)
 
     return config

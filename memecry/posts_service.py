@@ -120,7 +120,7 @@ async def get_posts_by_search_query(  # noqa: PLR0913, C901
 
         res = await session.execute(db_query)
         post_reads = [
-            memecry.schema.PostRead.model_validate(post) for post in res.scalars().all()
+            memecry.schema.PostRead.from_model(post) for post in res.scalars().all()
         ]
         if viewer:
             for post in post_reads:

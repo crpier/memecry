@@ -26,7 +26,7 @@ def hamburger_svg() -> svg:
 
 
 def error_element(error: str) -> div:
-    return div(classes=["bg-red-800", "my-4", "p-2", "border-lg", "w-max"]).text(error)
+    return div(classes=["bg-red-700", "p-2", "rounded-md", "w-max"]).text(error)
 
 
 def response_404() -> Tag:

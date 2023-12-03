@@ -1,4 +1,7 @@
+from html import escape
+
 from relax.app import HTMLResponse, QueryInt, QueryStr, Router
+from starlette.responses import Response
 
 import memecry.posts_service
 import memecry.routes.auth
@@ -17,14 +20,22 @@ misc_router = Router()
 
 
 @misc_router.path_function("GET", "/search")
-async def search_posts(request: Request, query: QueryStr) -> HTMLResponse:
-    if request.scope["from_htmx"]:
-        return HTMLResponse(memecry.views.common.error_element("Page not implemented"))
+async def search_posts(request: Request, query: QueryStr) -> HTMLResponse | Response:
     try:
         # TODO: good candidate for using Option type
         parsed_query = memecry.schema.Query(query)
     except ValueError as e:
         return HTMLResponse(memecry.views.common.error_element(str(e)))
+
+    if request.scope["from_htmx"]:
+        resp = Response()
+        resp.headers[
+            "HX-Redirect"
+            # TODO:relax should handle query params too
+        ] = f"{request.url_of(search_posts)}?query={escape(query)}"  # type: ignore # noqa: PGH003
+        resp.status_code = 201
+        return resp
+
     posts = await get_posts_by_search_query(
         parsed_query,
         viewer=request.user if request.user.is_authenticated else None,

@@ -86,19 +86,24 @@ def page_nav(
     upload_form_url: URL,
     user: UserRead | None = None,
 ) -> nav:
-    search_form = form(
-        classes=["flex", "flex-row", "items-center", "justify-end"],
-        action="/search",
-    ).insert(
-        input(
-            id="search",
-            name="query",
-            type="text",
-            classes=["rounded", "mr-4", "text-black"],
-        ),
-        button(classes=[], hyperscript="on click toggle .hidden on #search").insert(
-            i(classes=["fa", "fa-search", "fa-lg"]),
-        ),
+    search_form = (
+        form(
+            classes=["flex", "flex-row", "items-center", "justify-end", "space-x-4"],
+        )
+        .insert(
+            div(id="search-error"),
+            input(
+                id="search",
+                name="query",
+                type="text",
+                classes=["rounded", "mr-4", "text-black"],
+            ),
+            button(classes=[], hyperscript="on click toggle .hidden on #search").insert(
+                i(classes=["fa", "fa-search", "fa-lg"]),
+            ),
+            # TODO: get url as param
+        )
+        .hx_get("/search", hx_target="#search-error")
     )
 
     signup_button = (
