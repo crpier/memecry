@@ -1,5 +1,3 @@
-from html import escape
-
 from relax.app import HTMLResponse, QueryInt, QueryStr, Router
 from starlette.responses import Response
 
@@ -32,7 +30,7 @@ async def search_posts(request: Request, query: QueryStr) -> HTMLResponse | Resp
         resp.headers[
             "HX-Redirect"
             # TODO:relax should handle query params too
-        ] = f"{request.url_of(search_posts)}?query={escape(query)}"  # type: ignore # noqa: PGH003
+        ] = f"{request.url_of(search_posts)}?query={query}"  # type: ignore # noqa: PGH003
         resp.status_code = 201
         return resp
 
