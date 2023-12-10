@@ -25,8 +25,10 @@ from relax.html import (
     title,
     ul,
 )
+from relax.injection import Injected, injectable_sync
 from starlette.datastructures import URL
 
+import memecry.config
 import memecry.views.common
 import memecry.views.post
 from memecry.schema import PostRead, UserRead
@@ -45,13 +47,18 @@ class PostUrlCallable(Protocol):
         ...
 
 
-def page_head() -> head:
+@injectable_sync
+def page_head(*, config: memecry.config.Config = Injected) -> head:
+    tailwind_source: Element = (
+        link(href="/static/css/tailwind.css", rel="stylesheet")
+        if config.ENV == "prod"
+        else script(src="https://cdn.tailwindcss.com")
+    )
+
     return head().insert(
         title("Memecry"),
         meta(charset="UTF-8"),
-        meta(name="viewport", content="width=device-width, initial-scale=1.0"),
-        # TODO: only use this in dev
-        script(src="https://cdn.tailwindcss.com"),
+        tailwind_source,
         link(href="/static/css/tailwind.css", rel="stylesheet"),
         link(
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css",
