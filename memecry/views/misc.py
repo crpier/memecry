@@ -104,7 +104,7 @@ def page_nav(
                 id="search",
                 name="query",
                 type="text",
-                classes=["rounded", "mr-4", "text-black"],
+                classes=["rounded", "px-1", "mr-4", "text-black"],
             ),
             button(classes=[], hyperscript="on click toggle .hidden on #search").insert(
                 i(classes=["fa", "fa-search", "fa-lg"]),

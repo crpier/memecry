@@ -1,6 +1,7 @@
 let currentPostIdx = -1;
 /** @type  Element[] */
 let availablePosts = [];
+const searchBox = document.getElementById("search");
 
 function scrollDown(count) {
   try {
@@ -84,33 +85,64 @@ function resetCompositeKeys() {
   compositeKey = undefined;
 }
 
+function inputIsFocused() {
+  if (document.activeElement && document.activeElement.tagName == "INPUT") {
+    return true
+  }
+  return false;
+}
+
 document.onkeydown = function (e) {
   const { key } = e;
   switch (key) {
     case "j":
-      scrollDown(1);
-      resetCompositeKeys();
+      if (!inputIsFocused()) {
+        scrollDown(1);
+        resetCompositeKeys();
+      }
       break;
     case "k":
-      scrollUp(1);
-      resetCompositeKeys();
+      if (!inputIsFocused()) {
+        scrollUp(1);
+        resetCompositeKeys();
+      }
       break;
     case "u":
-      scrollUp(5);
-      resetCompositeKeys();
+      if (!inputIsFocused()) {
+        scrollUp(5);
+        resetCompositeKeys();
+      }
       break;
     case "d":
-      scrollDown(5);
+      if (!inputIsFocused()) {
+        scrollDown(5);
+        resetCompositeKeys();
+      }
+      break;
+    case "/":
+      if (!inputIsFocused()) {
+        e.preventDefault();
+        // TODO: if there is text in the box already, we should put the cursor at the end
+        searchBox.focus();
+      }
+      resetCompositeKeys();
+      break;
+    case "Escape":
+      if (inputIsFocused()) {
+        document.activeElement.blur();
+      }
       resetCompositeKeys();
       break;
     case "g":
-      switch (compositeKey) {
-        case undefined:
-          compositeKey = "g";
-          break;
-        case "g":
-          scrollToTop();
-          break;
+      if (!inputIsFocused()) {
+        switch (compositeKey) {
+          case undefined:
+            compositeKey = "g";
+            break;
+          case "g":
+            scrollToTop();
+            break;
+        }
       }
 
     default:
