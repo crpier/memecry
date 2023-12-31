@@ -273,6 +273,7 @@ def post_component(
             "border-2",
             "border-gray-500",
             "md:p-4",
+            "post-component",
         ],
     ).insert(
         div(

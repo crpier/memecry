@@ -64,6 +64,7 @@ def page_head(*, config: memecry.config.Config = Injected) -> head:
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css",
             rel="stylesheet",
         ),
+        script(src="/static/js/key_handler.js", attrs={"defer": "true"}),
         script(
             src="https://unpkg.com/htmx.org@1.9.5",
             attrs={
@@ -116,7 +117,7 @@ def page_nav(
     signup_button = (
         button(
             classes=[
-                "py-2",
+                "py-1",
                 "px-2",
                 "font-medium",
                 "text-white",
@@ -133,7 +134,7 @@ def page_nav(
     signin_button = (
         button(
             classes=[
-                "py-2",
+                "py-1",
                 "px-2",
                 "font-medium",
                 "rounded",
@@ -222,7 +223,7 @@ def page_nav(
                         div().insert(
                             a(
                                 href="/",
-                                classes=["flex", "items-center", "py-4", "px-2"],
+                                classes=["flex", "items-center", "px-2"],
                             ).insert(
                                 span(
                                     classes=[
@@ -561,7 +562,7 @@ def signup_form(signup_url: URL) -> div:
                 hyperscript="on click trigger closeModal",
                 type="button",
             ).text("X"),
-            p(classes=["text-2xl"]).text("Sign up"),
+            p(classes=["text-xl"]).text("Sign up"),
             div(
                 classes=[
                     "flex",
