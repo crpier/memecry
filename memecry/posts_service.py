@@ -3,7 +3,7 @@ from pathlib import Path
 import aiofiles
 from loguru import logger
 from relax.injection import Injected, injectable
-from sqlalchemy import delete, not_, or_, select, update
+from sqlalchemy import delete, not_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import load_only
 from starlette.datastructures import UploadFile
@@ -92,8 +92,9 @@ async def get_posts_by_search_query(  # noqa: PLR0913, C901
         if limit:
             db_query = db_query.limit(limit).offset(offset)
 
-        if tags := query.tags["included"]:
-            db_query = db_query.where(or_(*[Post.tags.contains(tag) for tag in tags]))
+        # TODO: more consistent way to work with tags
+        for tag in query.tags["included"]:
+            db_query = db_query.where(Post.tags.contains(tag))
 
         for tag in query.tags["excluded"]:
             db_query = db_query.where(not_(Post.tags.contains(tag)))

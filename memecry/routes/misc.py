@@ -17,6 +17,47 @@ from memecry.types import Request
 misc_router = Router()
 
 
+@misc_router.path_function("GET", "/")
+async def get_homepage(
+    request: Request,
+    limit: QueryInt = 5,
+    offset: QueryInt = 0,
+) -> HTMLResponse:
+    posts = await get_posts(
+        viewer=request.user if request.user.is_authenticated else None,
+        limit=limit,
+        offset=offset,
+    )
+    home_view = memecry.views.misc.home_view(
+        request.url_wrapper(memecry.routes.post.update_tags),
+        request.url_wrapper(memecry.routes.post.get_post),
+        request.url_wrapper(
+            memecry.routes.post.update_searchable_content,
+        ),
+        posts,
+        offset=offset,
+        limit=limit,
+        keep_scrolling=True,
+        partial=request.scope["from_htmx"],
+    )
+    if request.scope["from_htmx"]:
+        return HTMLResponse(home_view)
+    return HTMLResponse(
+        memecry.views.misc.page_root(
+            [
+                memecry.views.misc.page_nav(
+                    signup_url=request.url_of(memecry.routes.auth.signup_form),
+                    signin_url=request.url_of(memecry.routes.auth.signin_form),
+                    signout_url=request.url_of(memecry.routes.auth.signout),
+                    upload_form_url=request.url_of(memecry.routes.post.upload_form),
+                    user=request.user if request.user.is_authenticated else None,
+                ),
+                home_view,
+            ],
+        ),
+    )
+
+
 @misc_router.path_function("GET", "/search")
 async def search_posts(request: Request, query: QueryStr) -> HTMLResponse | Response:
     try:
@@ -52,47 +93,6 @@ async def search_posts(request: Request, query: QueryStr) -> HTMLResponse | Resp
         keep_scrolling=False,
         partial=request.scope["from_htmx"],
     )
-    return HTMLResponse(
-        memecry.views.misc.page_root(
-            [
-                memecry.views.misc.page_nav(
-                    signup_url=request.url_of(memecry.routes.auth.signup_form),
-                    signin_url=request.url_of(memecry.routes.auth.signin_form),
-                    signout_url=request.url_of(memecry.routes.auth.signout),
-                    upload_form_url=request.url_of(memecry.routes.post.upload_form),
-                    user=request.user if request.user.is_authenticated else None,
-                ),
-                home_view,
-            ],
-        ),
-    )
-
-
-@misc_router.path_function("GET", "/")
-async def get_homepage(
-    request: Request,
-    limit: QueryInt = 5,
-    offset: QueryInt = 0,
-) -> HTMLResponse:
-    posts = await get_posts(
-        viewer=request.user if request.user.is_authenticated else None,
-        limit=limit,
-        offset=offset,
-    )
-    home_view = memecry.views.misc.home_view(
-        request.url_wrapper(memecry.routes.post.update_tags),
-        request.url_wrapper(memecry.routes.post.get_post),
-        request.url_wrapper(
-            memecry.routes.post.update_searchable_content,
-        ),
-        posts,
-        offset=offset,
-        limit=limit,
-        keep_scrolling=True,
-        partial=request.scope["from_htmx"],
-    )
-    if request.scope["from_htmx"]:
-        return HTMLResponse(home_view)
     return HTMLResponse(
         memecry.views.misc.page_root(
             [

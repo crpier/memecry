@@ -342,7 +342,7 @@ def home_view(  # noqa: PLR0913
             "justify-center",
             "justify-items-center",
             "w-full",
-            "lg: max-w-2xl",
+            "lg: max-w-xl",
             "mx-auto",
             "space-y-8",
         ],
