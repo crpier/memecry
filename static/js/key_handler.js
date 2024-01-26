@@ -27,6 +27,8 @@ function scrollDown(count) {
 }
 
 function scrollUp(count) {
+  // TODO: if we need to scroll 5 posts, but there are 3 left, we should scroll 3
+  // right now, we don't scroll at all
   try {
     currentPostIdx -= count;
     availablePosts[currentPostIdx].scrollIntoView({
@@ -92,6 +94,7 @@ function resetCompositeKeys() {
   compositeKey = undefined;
 }
 
+// TODO: G key should take us to the last post
 function handleSimpleKey(key, event) {
   switch (key) {
     case "j":
@@ -161,4 +164,6 @@ document.onkeydown = function (e) {
     }
   }
 };
-//
+// TODO: there is a bug where after using d/u we sometimes stop scrolling behavior
+// TODO: aargh, when posts are too tall, scrolling doesn't show the title; guess we'll have to
+// scroll to the top of the post, in the end
