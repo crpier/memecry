@@ -20,7 +20,7 @@ from relax.html import (
 from relax.injection import Injected, injectable_sync
 from starlette.datastructures import URL
 
-from memecry.config import Config
+from memecry.config import ViewContext
 from memecry.schema import PostRead
 from memecry.views.common import (
     DROPDOWN_CLASSES,
@@ -52,7 +52,7 @@ def tags_component(  # noqa: PLR0913
     *,
     editable: bool = False,
     hidden_dropdown: bool = True,
-    config: Config = Injected,
+    context: ViewContext = Injected,
 ) -> div:
     element_id = f"tags-{post_id}"
     tags_selector_id = f"tags-selector-{post_id}"
@@ -91,7 +91,7 @@ def tags_component(  # noqa: PLR0913
             classes=[*DROPDOWN_CLASSES, "hidden" if hidden_dropdown else ""],
         ).insert(
             ul().insert(
-                [li_tag(tag) for tag in config.DEFAULT_TAGS],
+                [li_tag(tag) for tag in context.tags],
             ),
         ),
     )

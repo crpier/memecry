@@ -28,8 +28,8 @@ from relax.html import (
 from relax.injection import Injected, injectable_sync
 from starlette.datastructures import URL
 
-import memecry.config
 import memecry.views.post
+from memecry.config import ViewContext
 from memecry.schema import PostRead, UserRead
 from memecry.views.common import (
     BASIC_FORM_CLASSES,
@@ -55,17 +55,19 @@ class PostUrlCallable(Protocol):
 
 
 @injectable_sync
-def page_head(*, config: memecry.config.Config = Injected) -> head:
-    tailwind_source: Element = (
+def tailwind_css(*, context: ViewContext = Injected) -> Element:
+    return (
         link(href="/static/css/tailwind.css", rel="stylesheet")
-        if config.ENV == "prod"
+        if context.prod
         else script(src="https://cdn.tailwindcss.com")
     )
 
+
+def page_head() -> head:
     return head().insert(
         title("Memecry"),
         meta(charset="UTF-8"),
-        tailwind_source,
+        tailwind_css(),
         link(href="/static/css/global.css", rel="stylesheet"),
         link(
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css",

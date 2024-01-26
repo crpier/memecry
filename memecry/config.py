@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings
 
 
@@ -21,6 +21,7 @@ class Config(BaseSettings):
     # This should be in the db instead
     # TODO: constraint that tags are one word only
     # guess alphanumeric chars and hyphens are ok?
+    # TODO: this can be converted into string only
     DEFAULT_TAGS: list[str] = Field(
         default=[
             "reaction",
@@ -36,3 +37,8 @@ class Config(BaseSettings):
         ],
         validate_default=False,
     )
+
+
+class ViewContext(BaseModel):
+    prod: bool
+    tags: list[str]

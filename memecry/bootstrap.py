@@ -7,7 +7,7 @@ from relax.injection import add_injectable
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlite_fts4 import register_functions
 
-from memecry.config import Config
+from memecry.config import Config, ViewContext
 from memecry.model import Base
 
 
@@ -29,6 +29,8 @@ async def bootstrap() -> Config:
     config = Config()
     add_injectable(Config, config)
 
+    context = ViewContext(prod=config.ENV == "prod", tags=config.DEFAULT_TAGS)
+    add_injectable(ViewContext, context)
     # ensure media folder exists
     config.MEDIA_UPLOAD_STORAGE.mkdir(parents=True, exist_ok=True)
     # we need a bit of an sync piece on startup lel
