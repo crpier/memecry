@@ -29,9 +29,16 @@ from relax.injection import Injected, injectable_sync
 from starlette.datastructures import URL
 
 import memecry.config
-import memecry.views.common
 import memecry.views.post
 from memecry.schema import PostRead, UserRead
+from memecry.views.common import (
+    BASIC_FORM_CLASSES,
+    FLEX_COL_WRAPPER_CLASSES,
+    FLEX_ROW_WRAPPER_CLASSES,
+    MODAL_UNDERLAY,
+    SIMPLE_BUTTON_CLASSES,
+    special_button_classes,
+)
 
 IMAGE_FORMATS = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
 VIDEO_FORMATS = [".mp4", ".webm"]
@@ -59,7 +66,7 @@ def page_head(*, config: memecry.config.Config = Injected) -> head:
         title("Memecry"),
         meta(charset="UTF-8"),
         tailwind_source,
-        link(href="/static/css/tailwind.css", rel="stylesheet"),
+        link(href="/static/css/global.css", rel="stylesheet"),
         link(
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css",
             rel="stylesheet",
@@ -96,7 +103,7 @@ def page_nav(
 ) -> nav:
     search_form = (
         form(
-            classes=["flex", "flex-row", "items-center", "justify-end", "space-x-4"],
+            classes=FLEX_ROW_WRAPPER_CLASSES,
         )
         .insert(
             div(id="search-error"),
@@ -116,16 +123,7 @@ def page_nav(
 
     signup_button = (
         button(
-            classes=[
-                "py-1",
-                "px-2",
-                "font-medium",
-                "text-white",
-                "bg-green-500",
-                "rounded",
-                "hover:bg-green-400",
-                "duration-300",
-            ],
+            classes=[*special_button_classes("green")],
         )
         .hx_get(target=signup_url, hx_target="body", hx_swap="beforeend")
         .text("Sign up")
@@ -133,14 +131,7 @@ def page_nav(
 
     signin_button = (
         button(
-            classes=[
-                "py-1",
-                "px-2",
-                "font-medium",
-                "rounded",
-                "hover:bg-gray-700",
-                "duration-300",
-            ],
+            classes=[*SIMPLE_BUTTON_CLASSES, "border-0"],
         )
         .hx_get(target=signin_url, hx_target="body", hx_swap="beforeend")
         .text("Sign in")
@@ -148,16 +139,7 @@ def page_nav(
 
     upload_button = (
         button(
-            classes=[
-                "py-2",
-                "px-2",
-                "font-medium",
-                "text-white",
-                "bg-green-500",
-                "rounded",
-                "hover:bg-green-400",
-                "duration-300",
-            ],
+            classes=[*special_button_classes("green")],
         )
         .hx_get(target=upload_form_url, hx_target="body", hx_swap="beforeend")
         .text("Upload")
@@ -165,14 +147,7 @@ def page_nav(
 
     signout_button = (
         button(
-            classes=[
-                "py-2",
-                "px-2",
-                "font-medium",
-                "rounded",
-                "hover:bg-gray-700",
-                "duration-300",
-            ],
+            classes=[*SIMPLE_BUTTON_CLASSES, "border-0"],
         )
         .hx_get(target=signout_url, hx_target="body", hx_swap="beforeend")
         .text("Sign out")
@@ -181,35 +156,15 @@ def page_nav(
     nav_links: list[Tag] = [
         a(
             href="#",
-            classes=[
-                "py-4",
-                "px-2",
-                "font-semibold",
-                "hover:text-green-500",
-                "duration-300",
-            ],
+            classes=["px-2", "font-semibold", "hover:text-green-500"],
         ).text("Account"),
         a(
             href="#",
-            classes=[
-                "py-4",
-                "px-2",
-                "font-semibold",
-                "hover:text-green-500",
-                "duration-300",
-            ],
+            classes=["px-2", "font-semibold", "hover:text-green-500"],
         ).text("Library"),
     ]
     return nav(
-        classes=[
-            "bg-gray-900",
-            "shadow-lg",
-            "fixed",
-            "top-0",
-            "left-0",
-            "w-full",
-            "z-50",
-        ],
+        classes=["bg-gray-900", "fixed", "top-0", "left-0", "w-full"],
         attrs={"style": "min-height: 2.5rem;"},
     ).insert(
         div(classes=["px-4"]).insert(
@@ -230,7 +185,6 @@ def page_nav(
                                         "font-semibold",
                                         "text-xl",
                                         "md:hover:text-green-500",
-                                        "duration-300",
                                     ],
                                 ).text("Memecry"),
                             ),
@@ -255,7 +209,7 @@ def page_nav(
                             classes=["outline-none", "mt-2"],
                             hyperscript="on click toggle .hidden on #menu",
                         ).insert(
-                            memecry.views.common.hamburger_svg(),
+                            i(classes=["fa", "fa-lg", "fa-bars"]),
                         ),
                     ),
                 ),
@@ -267,37 +221,19 @@ def page_nav(
                 li(classes=["text-right"]).insert(
                     a(
                         href="#",
-                        classes=[
-                            "block",
-                            "text-sm",
-                            "px-2",
-                            "py-4",
-                            "font-semibold",
-                        ],
+                        classes=["block", "text-sm", "px-2", "py-4", "font-semibold"],
                     ).text("Memes"),
                 ),
                 li(classes=["text-right"]).insert(
                     a(
                         href="#",
-                        classes=[
-                            "block",
-                            "text-sm",
-                            "px-2",
-                            "py-4",
-                            "font-semibold",
-                        ],
+                        classes=["block", "text-sm", "px-2", "py-4"],
                     ).text("Account"),
                 ),
                 li(classes=["text-right"]).insert(
                     a(
                         href="#",
-                        classes=[
-                            "block",
-                            "text-sm",
-                            "px-2",
-                            "py-4",
-                            "font-semibold",
-                        ],
+                        classes=["block", "text-sm", "px-2", "py-4"],
                     ).text("Library"),
                 ),
             ),
@@ -336,17 +272,7 @@ def home_view(  # noqa: PLR0913
     if partial:
         return Fragment(post_views)
     return main(
-        classes=[
-            "flex",
-            "flex-col",
-            "items-center",
-            "justify-center",
-            "justify-items-center",
-            "w-full",
-            "lg: max-w-xl",
-            "mx-auto",
-            "space-y-8",
-        ],
+        classes=[*FLEX_COL_WRAPPER_CLASSES, "lg:max-w-xl", "mx-auto", "space-y-8"],
     ).insert(
         post_views,
     )
@@ -359,41 +285,12 @@ def upload_form(
     tags = memecry.views.post.tags_component(post_update_tags_url, editable=True)
     return div(
         id="upload-form",
-        classes=[
-            "fixed",
-            "inset-48",
-            "z-40",
-            "flex",
-            "flex-col",
-            "items-center",
-        ],
+        classes=[*FLEX_COL_WRAPPER_CLASSES, "fixed", "inset-48", "z-40"],
+        hyperscript="on closeModal remove me",
     ).insert(
-        div(
-            id="underlay",
-            classes=[
-                "fixed",
-                "inset-0",
-                "w-screen",
-                "-z-10",
-                "bg-black",
-                "bg-opacity-50",
-            ],
-            hyperscript="on click remove #upload-form",
-        ),
+        MODAL_UNDERLAY,
         form(
-            classes=[
-                "z-50",
-                "bg-gray-800",
-                "border",
-                "border-gray-100",
-                "rounded-md",
-                "flex",
-                "flex-col",
-                "space-y-4",
-                "items-start",
-                "w-max",
-                "p-4",
-            ],
+            classes=BASIC_FORM_CLASSES,
         )
         .hx_post(
             upload_url,
@@ -415,16 +312,7 @@ def upload_form(
             div(classes=["w-full", "flex", "flex-col", "items-end"]).insert(
                 button(
                     type="submit",
-                    classes=[
-                        "py-2",
-                        "px-2",
-                        "font-medium",
-                        "text-white",
-                        "bg-green-600",
-                        "rounded",
-                        "hover:bg-green-400",
-                        "duration-300",
-                    ],
+                    classes=special_button_classes("green"),
                 ).text("Upload"),
             ),
         ),
@@ -433,40 +321,12 @@ def upload_form(
 
 def signin_form(signin_url: URL) -> div:
     return div(
-        classes=[
-            "fixed",
-            "inset-48",
-            "z-40",
-            "flex",
-            "flex-col",
-            "items-center",
-        ],
+        classes=[*FLEX_COL_WRAPPER_CLASSES, "fixed", "inset-48", "z-40"],
         hyperscript="on closeModal remove me",
     ).insert(
-        div(
-            id="underlay",
-            classes=[
-                "fixed",
-                "inset-0",
-                "w-screen",
-                "-z-10",
-                "bg-black",
-                "bg-opacity-50",
-            ],
-            hyperscript="on click trigger closeModal",
-        ),
+        MODAL_UNDERLAY,
         form(
-            classes=[
-                "z-50",
-                "bg-gray-800",
-                "p-2",
-                "rounded-sm",
-                "flex",
-                "flex-col",
-                "space-y-2",
-                "items-center",
-                "w-96",
-            ],
+            classes=BASIC_FORM_CLASSES,
         )
         .hx_post(
             signin_url,
@@ -474,21 +334,11 @@ def signin_form(signin_url: URL) -> div:
             hx_target="#signin-error",
         )
         .insert(
-            button(
-                classes=["px-2", "bg-red-800", "ml-auto", "mr-2", "rounded-sm"],
-                hyperscript="on click trigger closeModal",
-                type="button",
-            ).text("X"),
             p(classes=["text-2xl"]).text("Sign in"),
             div(
                 classes=[
-                    "flex",
-                    "flex-col",
-                    "items-center",
-                    "justify-between",
-                    "h-screen",
+                    *FLEX_COL_WRAPPER_CLASSES,
                     "max-h-24",
-                    "p-2",
                     "w-full",
                 ],
             ).insert(
@@ -506,7 +356,7 @@ def signin_form(signin_url: URL) -> div:
                 ),
             ),
             button(
-                classes=["p-2", "bg-blue-800", "rounded-sm"],
+                classes=special_button_classes("green"),
                 type="submit",
             ).text("Sign in"),
         ),
@@ -516,40 +366,12 @@ def signin_form(signin_url: URL) -> div:
 
 def signup_form(signup_url: URL) -> div:
     return div(
-        classes=[
-            "fixed",
-            "inset-48",
-            "z-40",
-            "flex",
-            "flex-col",
-            "items-center",
-        ],
+        classes=[*FLEX_COL_WRAPPER_CLASSES, "fixed", "inset-48", "z-40"],
         hyperscript="on closeModal remove me",
     ).insert(
-        div(
-            id="underlay",
-            classes=[
-                "fixed",
-                "inset-0",
-                "w-screen",
-                "-z-10",
-                "bg-black",
-                "bg-opacity-50",
-            ],
-            hyperscript="on click trigger closeModal",
-        ),
+        MODAL_UNDERLAY,
         form(
-            classes=[
-                "z-50",
-                "bg-gray-800",
-                "p-2",
-                "rounded-sm",
-                "flex",
-                "flex-col",
-                "space-y-2",
-                "items-center",
-                "w-96",
-            ],
+            classes=BASIC_FORM_CLASSES,
         )
         .hx_post(
             signup_url,
@@ -557,21 +379,12 @@ def signup_form(signup_url: URL) -> div:
             hx_target="#signup-error",
         )
         .insert(
-            button(
-                classes=["px-2", "bg-red-800", "ml-auto", "mr-2", "rounded-sm"],
-                hyperscript="on click trigger closeModal",
-                type="button",
-            ).text("X"),
             p(classes=["text-xl"]).text("Sign up"),
             div(
                 classes=[
-                    "flex",
-                    "flex-col",
-                    "items-center",
-                    "justify-between",
+                    *FLEX_COL_WRAPPER_CLASSES,
                     "h-screen",
                     "max-h-24",
-                    "p-2",
                     "w-full",
                 ],
             ).insert(
@@ -589,7 +402,7 @@ def signup_form(signup_url: URL) -> div:
                 ),
             ),
             button(
-                classes=["p-2", "bg-blue-800", "rounded-sm"],
+                classes=special_button_classes("green"),
                 type="submit",
             ).text("Sign up"),
         ),
