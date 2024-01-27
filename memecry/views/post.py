@@ -151,10 +151,10 @@ def post_component(
     else:
         content = div().text(f"Unsupported format: {Path(post.source).suffix}")
     info_pane = div(classes=FLEX_ROW_WRAPPER_CLASSES).insert(
-        div(classes=["font-semibold"]).text(f"{post.score} good boi points"),
+        div(classes=["md:font-semibold"]).text(f"{post.score} good boi points"),
         div(classes=["space-x-1"]).insert(
-            span(classes=["font-semibold"]).text(f"{post.created_since} by"),
-            a(href="#", classes=["font-semibold", "text-green-300"]).text(
+            span(classes=["md:font-semibold"]).text(f"{post.created_since} by"),
+            a(href="#", classes=["md:font-semibold", "text-green-300"]).text(
                 post.author_name
             ),
         ),
@@ -171,7 +171,7 @@ def post_component(
         hyperscript=f"on click toggle .hidden on #{search_content_id}",
     ).insert(i(classes=["fa", "fa-gear", "fa-lg"]))
     interaction_pane = div(classes=FLEX_ROW_WRAPPER_CLASSES).insert(
-        div(classes=["space-x-2"]).insert(
+        div(classes=FLEX_ROW_WRAPPER_CLASSES).insert(
             button(
                 type="button",
                 classes=[
@@ -192,7 +192,7 @@ def post_component(
         tags,
         div(classes=["flex-grow"]),
         info_button,
-        button(classes=["border", "rounded-md", "py-1", "px-2"]).text("0 comments"),
+        button(classes=[*SIMPLE_BUTTON_CLASSES, "font-semibold"]).text("0 comments"),
     )
     settings_pane = div(
         classes=[*FLEX_COL_WRAPPER_CLASSES, "hidden"],
@@ -262,12 +262,13 @@ def post_component(
     return div(
         id=element_id,
         classes=[
-            "rounded-lg",
-            "w-full",
-            "border-2",
-            "border-gray-500",
-            "p-4",
+            "md:border-2",
+            "md:border-gray-500",
+            "md:p-4",
+            "md:rounded-lg",
             "post-component",
+            "space-y-1",
+            "w-full",
         ],
     ).insert(
         div(

@@ -14,7 +14,6 @@ from relax.html import (
     html,
     i,
     input,
-    li,
     link,
     main,
     meta,
@@ -23,7 +22,6 @@ from relax.html import (
     script,
     span,
     title,
-    ul,
 )
 from relax.injection import Injected, injectable_sync
 from starlette.datastructures import URL
@@ -67,6 +65,10 @@ def page_head() -> head:
     return head().insert(
         title("Memecry"),
         meta(charset="UTF-8"),
+        meta(
+            name="viewport",
+            content="width=device-width; initial-scale=1.0; maximum-scale=1.0;",
+        ),
         tailwind_css(),
         link(href="/static/css/global.css", rel="stylesheet"),
         link(
@@ -105,7 +107,7 @@ def page_nav(
 ) -> nav:
     search_form = (
         form(
-            classes=FLEX_ROW_WRAPPER_CLASSES,
+            classes=[*FLEX_ROW_WRAPPER_CLASSES],
         )
         .insert(
             div(id="search-error"),
@@ -113,9 +115,17 @@ def page_nav(
                 id="search",
                 name="query",
                 type="text",
-                classes=["rounded", "px-1", "mr-4", "text-black"],
+                classes=[
+                    "rounded",
+                    "px-1",
+                    "md:mr-4",
+                    "text-black",
+                ],
             ),
-            button(classes=[], hyperscript="on click toggle .hidden on #search").insert(
+            button(
+                classes=["hidden", "md:block"],
+                hyperscript="on click toggle .hidden on #search",
+            ).insert(
                 i(classes=["fa", "fa-search", "fa-lg"]),
             ),
             # TODO: get url as param
@@ -141,7 +151,7 @@ def page_nav(
 
     upload_button = (
         button(
-            classes=[*special_button_classes("green")],
+            classes=[*special_button_classes("green"), "mr-1"],
         )
         .hx_get(target=upload_form_url, hx_target="body", hx_swap="beforeend")
         .text("Upload")
@@ -155,89 +165,33 @@ def page_nav(
         .text("Sign out")
     )
 
-    nav_links: list[Tag] = [
-        a(
-            href="#",
-            classes=["px-2", "font-semibold", "hover:text-green-500"],
-        ).text("Account"),
-        a(
-            href="#",
-            classes=["px-2", "font-semibold", "hover:text-green-500"],
-        ).text("Library"),
-    ]
     return nav(
         classes=["bg-gray-900", "fixed", "top-0", "left-0", "w-full"],
-        attrs={"style": "min-height: 2.5rem;"},
     ).insert(
-        div(classes=["px-4"]).insert(
-            div(classes=["flex", "justify-evenly"]).insert(
-                div(classes=["flex", "w-full", "justify-between"]).insert(
-                    # Logo
-                    # Primary Navbar items
-                    div(
-                        classes=["hidden", "md:flex", "items-center", "space-x-1"],
-                    ).insert(
-                        div().insert(
-                            a(
-                                href="/",
-                                classes=["flex", "items-center", "px-2"],
-                            ).insert(
-                                span(
-                                    classes=[
-                                        "font-semibold",
-                                        "text-xl",
-                                        "md:hover:text-green-500",
-                                    ],
-                                ).text("Memecry"),
-                            ),
-                        ),
-                        nav_links if user else None,
-                    ),
-                    # Secondary Navbar items
-                    div(
-                        classes=["hidden", "md:flex", "items-center", "space-x-3"],
-                    ).insert(
-                        search_form,
-                        signin_button if not user else None,
-                        signup_button if not user else None,
-                        upload_button if user else None,
-                        signout_button if user else None,
-                    ),
-                    div(
-                        classes=["md:hidden", "flex", "items-center", "ml-auto"],
-                    ).insert(
-                        button(
-                            type="button",
-                            classes=["outline-none", "mt-2"],
-                            hyperscript="on click toggle .hidden on #menu",
-                        ).insert(
-                            i(classes=["fa", "fa-lg", "fa-bars"]),
-                        ),
-                    ),
-                ),
+        div(classes=["flex", "w-full", "justify-end", "md:justify-between"]).insert(
+            # Logo
+            # Primary Navbar items
+            a(
+                href="/",
+                classes=["hidden", "md:block", "items-center", "md:px-2", "md:py-2"],
+            ).insert(
+                span(
+                    classes=[
+                        "font-bold",
+                        "text-2xl",
+                        "md:hover:text-green-500",
+                    ],
+                ).text("Memecry"),
             ),
-        ),
-        # Mobile menu
-        div(id="menu", classes=["hidden"]).insert(
-            ul().insert(
-                li(classes=["text-right"]).insert(
-                    a(
-                        href="#",
-                        classes=["block", "text-sm", "px-2", "py-4", "font-semibold"],
-                    ).text("Memes"),
-                ),
-                li(classes=["text-right"]).insert(
-                    a(
-                        href="#",
-                        classes=["block", "text-sm", "px-2", "py-4"],
-                    ).text("Account"),
-                ),
-                li(classes=["text-right"]).insert(
-                    a(
-                        href="#",
-                        classes=["block", "text-sm", "px-2", "py-4"],
-                    ).text("Library"),
-                ),
+            # Secondary Navbar items
+            div(
+                classes=[*FLEX_ROW_WRAPPER_CLASSES],
+            ).insert(
+                search_form,
+                signin_button if not user else None,
+                signup_button if not user else None,
+                signout_button if user else None,
+                upload_button if user else None,
             ),
         ),
     )
@@ -274,7 +228,7 @@ def home_view(  # noqa: PLR0913
     if partial:
         return Fragment(post_views)
     return main(
-        classes=[*FLEX_COL_WRAPPER_CLASSES, "lg:max-w-xl", "mx-auto", "space-y-8"],
+        classes=[*FLEX_COL_WRAPPER_CLASSES, "md:max-w-xl", "mx-auto"],
     ).insert(
         post_views,
     )

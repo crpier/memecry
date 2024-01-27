@@ -26,26 +26,28 @@ def hamburger_svg() -> svg:
 
 
 SIMPLE_BUTTON_CLASSES = [
-    "border",
+    "md:border",
+    "md:rounded-lg",
     "duration-300",
-    "px-3",
-    "py-1",
-    "rounded-lg",
-    "hover:border-gray-400",
-    "hover:text-gray-400",
+    "px-1",
+    "md:px-3",
+    "md:py-1",
+    "md:hover:border-gray-400",
+    "md:hover:text-gray-400",
 ]
 
 
 def special_button_classes(color: str) -> list[str]:
     return [
         f"bg-{color}-600",
-        "font-semibold",
+        "md:font-semibold",
         "px-3",
         "py-1",
-        "rounded-lg",
+        "rounded-md",
+        "md:rounded-lg",
         "text-white",
-        f"hover:bg-{color}-700",
-        f"hover:text-{color}-700",
+        f"md:hover:bg-{color}-700",
+        f"md:hover:text-{color}-700",
     ]
 
 
@@ -55,24 +57,26 @@ FLEX_ROW_WRAPPER_CLASSES = [
     "flex-nowrap",
     "justify-between",
     "items-center",
-    "px-4",
-    "py-2",
-    "md:px-0",
-    "space-x-4",
+    "px-1",
+    "md:px-2",
+    "md:py-2",
+    "md:space-x-2",
 ]
 FLEX_COL_WRAPPER_CLASSES = [
     "flex",
     "flex-col",
+    "flex-nowrap",
     "items-center",
     "justify-center",
     "justify-items-center",
-    "space-y-4",
+    "space-y-1",
+    "md:space-y-4",
 ]
 
 
 DROPDOWN_CLASSES = [
     "absolute",
-    "rounded",
+    "rounded-md",
     "shadow",
     "flex-col",
     "w-max",
