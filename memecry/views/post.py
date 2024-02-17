@@ -120,6 +120,44 @@ def post_component(
         )
     else:
         content = div().text(f"Unsupported format: {Path(post.source).suffix}")
+    title_section = div(
+        classes=FLEX_ROW_WRAPPER_CLASSES,
+    ).insert(
+        input(
+            id=f"title-{post.id}",
+            classes=[
+                "text-white",
+                "text-2xl",
+                "font-bold",
+                "mb-4",
+                "px-2",
+                "bg-black",
+                "text-center",
+                "flex-1",
+            ],
+            type="text",
+            name=f"title-{post.id}",
+            value=post.title,
+            disabled=not post.editable,
+        ),
+        div(
+            classes=[
+                "flex-0",
+                "text-right",
+                "invisible" if not post.editable else "",
+            ],
+        ).insert(
+            # TODO: edit title when the input element changes, instead
+            button(classes=["w-max", "pb-4", "px-2"])
+            .insert(i(classes=["fa", "fa-lg", "fa-gear"]))
+            .hx_put(
+                f"/posts/{post.id}/title",
+                hx_swap="none",
+                hx_encoding="multipart/form-data",
+                hx_include=f"#title-{post.id}",
+            ),
+        ),
+    )
     info_pane = div(classes=FLEX_ROW_WRAPPER_CLASSES).insert(
         div(classes=["md:font-semibold"]).text(f"{post.score} good boi points"),
         div(classes=["space-x-1"]).insert(
@@ -179,6 +217,7 @@ def post_component(
                 "bg-black",
                 "outline-none",
             ],
+            disabled=not post.editable,
         ).text(post.searchable_content),
         div(classes=FLEX_ROW_WRAPPER_CLASSES).insert(
             button(
@@ -235,44 +274,7 @@ def post_component(
             "w-full",
         ],
     ).insert(
-        div(
-            classes=FLEX_ROW_WRAPPER_CLASSES,
-        ).insert(
-            input(
-                id=f"title-{post.id}",
-                classes=[
-                    "text-white",
-                    "text-2xl",
-                    "font-bold",
-                    "mb-4",
-                    "px-2",
-                    "bg-black",
-                    "text-center",
-                    "flex-1",
-                ],
-                type="text",
-                name=f"title-{post.id}",
-                value=post.title,
-                disabled=not post.editable,
-            ),
-            div(
-                classes=[
-                    "flex-0",
-                    "text-right",
-                    "invisible" if not post.editable else "",
-                ],
-            ).insert(
-                # TODO: edit title when the input element changes, instead
-                button(classes=["w-max", "pb-4", "px-2"])
-                .insert(i(classes=["fa", "fa-lg", "fa-gear"]))
-                .hx_put(
-                    f"/posts/{post.id}/title",
-                    hx_swap="none",
-                    hx_encoding="multipart/form-data",
-                    hx_include=f"#title-{post.id}",
-                ),
-            ),
-        ),
+        title_section,
         content,
         info_pane,
         interaction_pane,

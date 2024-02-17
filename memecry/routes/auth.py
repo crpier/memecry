@@ -1,6 +1,6 @@
 from typing import cast
 
-from relax.app import AuthScope, HTMLResponse, Router
+from relax.app import AuthScope, HTMLResponse, RelaxRoute
 from relax.html import div
 from starlette.responses import Response
 
@@ -12,11 +12,8 @@ import memecry.views.common
 import memecry.views.misc
 import memecry.views.post
 
-auth_router = Router()
-
 
 # Signin
-@auth_router.path_function("POST", "/signin")
 async def signin(request: memecry.types.Request) -> HTMLResponse | Response:
     async with request.form() as form:
         # lolwtf
@@ -36,7 +33,6 @@ async def signin(request: memecry.types.Request) -> HTMLResponse | Response:
         return resp
 
 
-@auth_router.path_function("GET", "/signin-form")
 async def signin_form(request: memecry.types.Request) -> HTMLResponse:
     if request.scope["from_htmx"]:
         return HTMLResponse(memecry.views.misc.signin_form(request.url_of(signin)))
@@ -48,7 +44,6 @@ async def signin_form(request: memecry.types.Request) -> HTMLResponse:
 
 
 # Signup
-@auth_router.path_function("GET", "/signup-form")
 async def signup_form(request: memecry.types.Request) -> HTMLResponse:
     if request.scope["from_htmx"]:
         return HTMLResponse(memecry.views.misc.signup_form(request.url_of(signup)))
@@ -59,7 +54,6 @@ async def signup_form(request: memecry.types.Request) -> HTMLResponse:
     )
 
 
-@auth_router.path_function("POST", "/signup")
 async def signup(request: memecry.types.Request) -> HTMLResponse:
     async with request.form() as form:
         # lolwtf
@@ -84,10 +78,18 @@ async def signup(request: memecry.types.Request) -> HTMLResponse:
 
 
 # Signout
-@auth_router.path_function("GET", "/signout", auth_scopes=[AuthScope.Authenticated])
 async def signout(_: memecry.types.Request) -> Response:
     response = Response()
     response.delete_cookie(key="authorization")
     response.headers["HX-Refresh"] = "true"
     response.status_code = 303
     return response
+
+
+routes = [
+    RelaxRoute("/signing", "POST", signin),
+    RelaxRoute("/signup", "POST", signup),
+    RelaxRoute("/signing-form", "GET", signin_form),
+    RelaxRoute("/signup-form", "GET", signup_form),
+    RelaxRoute("/signout", "GET", signout, auth_scopes=[AuthScope.Authenticated]),
+]

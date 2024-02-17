@@ -1,8 +1,11 @@
-from typing import cast
+from typing import (
+    Protocol,
+    cast,
+)
 
-from relax.app import AuthScope, HTMLResponse, PathInt, Router
+from relax.app import AuthScope, HTMLResponse, PathInt, RelaxRoute
 from relax.html import div
-from starlette.datastructures import UploadFile
+from starlette.datastructures import URL, UploadFile
 from starlette.responses import Response
 
 import memecry.posts_service
@@ -13,21 +16,18 @@ import memecry.views.common
 import memecry.views.misc
 import memecry.views.post
 
-post_router = Router()
 
-
-@post_router.path_function("GET", "/posts/{post_id}")
 async def get_post(request: memecry.types.Request, post_id: PathInt) -> HTMLResponse:
     _ = request, post_id
     # TODO: lol
     return HTMLResponse(div().text("lol"))
 
 
-@post_router.path_function(
-    "PUT",
-    "/posts/{post_id}/tags",
-    auth_scopes=[AuthScope.Authenticated],
-)
+class UpdateTagsSig(Protocol):
+    def __call__(self, post_id: int) -> URL:
+        ...
+
+
 async def update_tags(request: memecry.types.Request, post_id: PathInt) -> HTMLResponse:
     async with request.form() as form:
         new_tag = cast(str, form["tag"])
@@ -64,11 +64,6 @@ async def update_tags(request: memecry.types.Request, post_id: PathInt) -> HTMLR
         )
 
 
-@post_router.path_function(
-    "PUT",
-    "/posts/{post_id}/searchable-content",
-    auth_scopes=[AuthScope.Authenticated],
-)
 async def update_searchable_content(
     request: memecry.types.Request, post_id: PathInt
 ) -> Response:
@@ -82,11 +77,6 @@ async def update_searchable_content(
     return Response("success")
 
 
-@post_router.path_function(
-    "PUT",
-    "/posts/{post_id}/title",
-    auth_scopes=[AuthScope.Authenticated],
-)
 async def update_title(request: memecry.types.Request, post_id: PathInt) -> Response:
     async with request.form() as form:
         new_title = cast(str, form[f"title-{post_id}"])
@@ -96,15 +86,11 @@ async def update_title(request: memecry.types.Request, post_id: PathInt) -> Resp
     return Response("success")
 
 
-@post_router.path_function(
-    "DELETE", "/posts/{post_id}", auth_scopes=[AuthScope.Authenticated]
-)
 async def post_delete(_: memecry.types.Request, post_id: PathInt) -> Response:
     await memecry.posts_service.delete_post(post_id)
     return Response("success")
 
 
-@post_router.path_function("GET", "/upload-form", auth_scopes=[AuthScope.Authenticated])
 async def upload_form(request: memecry.types.Request) -> HTMLResponse:
     if request.scope["from_htmx"]:
         return HTMLResponse(
@@ -126,7 +112,12 @@ async def upload_form(request: memecry.types.Request) -> HTMLResponse:
     )
 
 
-@post_router.path_function("POST", "/upload", auth_scopes=[AuthScope.Authenticated])
+class UploadSig(Protocol):
+    def __call__(self) -> URL:
+        ...
+
+
+# TODO: the form should be unwrapped in the relax lib
 async def upload(request: memecry.types.Request) -> Response:
     async with request.form() as form:
         title = cast(str, form["title"])
@@ -150,3 +141,36 @@ async def upload(request: memecry.types.Request) -> Response:
     resp.headers["HX-Redirect"] = f"/posts/{new_post_id}"
     resp.status_code = 201
     return resp
+
+
+routes = [
+    RelaxRoute(
+        "/upload", "POST", upload, sig=UploadSig, auth_scopes=[AuthScope.Authenticated]
+    ),
+    RelaxRoute(
+        "/posts/{post_id}/tags",
+        "POST",
+        update_tags,
+        auth_scopes=[AuthScope.Authenticated],
+        sig=UpdateTagsSig,
+    ),
+    RelaxRoute(
+        "/posts/{post_id}", "DELETE", post_delete, auth_scopes=[AuthScope.Authenticated]
+    ),
+    RelaxRoute("/posts/{post_id}", "GET", get_post),
+    RelaxRoute(
+        "/posts/{post_id}/searchable-content",
+        "PUT",
+        update_searchable_content,
+        auth_scopes=[AuthScope.Authenticated],
+    ),
+    RelaxRoute(
+        "/posts/{post_id}/title",
+        "PUT",
+        update_title,
+        auth_scopes=[AuthScope.Authenticated],
+    ),
+    RelaxRoute(
+        "/upload-form", "GET", upload_form, auth_scopes=[AuthScope.Authenticated]
+    ),
+]

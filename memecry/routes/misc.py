@@ -1,4 +1,4 @@
-from relax.app import HTMLResponse, QueryInt, QueryStr, Router
+from relax.app import HTMLResponse, QueryInt, QueryStr, RelaxRoute
 from starlette.responses import Response
 
 import memecry.posts_service
@@ -10,10 +10,7 @@ import memecry.views.common
 import memecry.views.misc
 import memecry.views.post
 
-misc_router = Router()
 
-
-@misc_router.path_function("GET", "/")
 async def get_homepage(
     request: memecry.types.Request,
     limit: QueryInt = 5,
@@ -54,7 +51,6 @@ async def get_homepage(
     )
 
 
-@misc_router.path_function("GET", "/search")
 async def search_posts(
     request: memecry.types.Request, query: QueryStr
 ) -> HTMLResponse | Response:
@@ -105,3 +101,9 @@ async def search_posts(
             ],
         ),
     )
+
+
+routes = [
+    RelaxRoute("/", "GET", get_homepage),
+    RelaxRoute("/search", "GET", search_posts),
+]
