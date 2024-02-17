@@ -87,6 +87,7 @@ def page_root(child: Element | list[Element]) -> html:
     )
 
 
+# TODO: use urls from context lol
 def page_nav(
     signup_url: URL,
     signin_url: URL,

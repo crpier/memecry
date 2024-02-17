@@ -122,11 +122,6 @@ async def upload_form(request: memecry.types.Request) -> HTMLResponse:
     )
 
 
-class UploadSig(Protocol):
-    def __call__(self) -> URL:
-        ...
-
-
 # TODO: the form should be unwrapped in the relax lib
 async def upload(request: memecry.types.Request) -> Response:
     async with request.form() as form:
@@ -158,7 +153,6 @@ routes = [
         "/upload",
         "POST",
         upload,
-        sig=UploadSig,
         auth_scopes=[AuthScope.Authenticated],
     ),
     RelaxRoute(

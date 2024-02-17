@@ -46,8 +46,6 @@ def tags_component(  # noqa: PLR0913
     element_id = f"tags-{post_id}"
     tags_selector_id = f"tags-selector-{post_id}"
 
-    post_update_tags_url = context.endpoint(memecry.routes.post.UpdateTags)
-
     def li_tag(tag: str) -> li:
         return li().insert(
             button(
@@ -60,7 +58,7 @@ def tags_component(  # noqa: PLR0913
             )
             .text(tag)
             .hx_put(
-                post_update_tags_url(post_id=post_id),
+                context.endpoint(memecry.routes.post.UpdateTags)(post_id=post_id),
                 hx_target=f"#{element_id}",
                 hx_swap="outerHTML",
             ),
