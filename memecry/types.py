@@ -2,6 +2,6 @@ from typing import TypeAlias
 
 from relax.app import Request as BaseRequest
 
-from memecry.schema import UserRead
+import memecry.schema
 
-Request: TypeAlias = BaseRequest[UserRead]
+Request: TypeAlias = BaseRequest[memecry.schema.UserRead]

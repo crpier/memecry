@@ -10,31 +10,34 @@ from starlette.requests import HTTPConnection
 from starlette.routing import Mount
 from starlette.staticfiles import StaticFiles
 
+import memecry.bootstrap
 import memecry.routes.auth
 import memecry.routes.misc
 import memecry.routes.post
-from memecry import security, user_service
-from memecry.bootstrap import bootstrap
-from memecry.schema import UserRead
+import memecry.schema
+import memecry.security
+import memecry.user_service
 
 
 class BasicAuthBackend(AuthenticationBackend):
     async def authenticate(
         self,
         conn: HTTPConnection,
-    ) -> tuple[AuthCredentials, UserRead] | None:
+    ) -> tuple[AuthCredentials, memecry.schema.UserRead] | None:
         if "authorization" not in conn.cookies:
             return None
         token = conn.cookies["authorization"]
         try:
-            payload = await security.decode_payload(token)
+            payload = await memecry.security.decode_payload(token)
         except ExpiredSignatureError:
             return None
         if (username := cast(str, payload.get("sub"))) is None:
             return None
 
-        if user := await user_service.get_user_by_username(username):
-            return AuthCredentials([AuthScope.Authenticated]), UserRead.model_validate(
+        if user := await memecry.user_service.get_user_by_username(username):
+            return AuthCredentials(
+                [AuthScope.Authenticated]
+            ), memecry.schema.UserRead.model_validate(
                 user,
             )
         return None
@@ -42,7 +45,7 @@ class BasicAuthBackend(AuthenticationBackend):
 
 @contextlib.asynccontextmanager
 async def lifespan(app: App) -> AsyncIterator[None]:
-    config = await bootstrap()
+    config = await memecry.bootstrap.bootstrap()
     app.routes.append(
         Mount(
             "/media",

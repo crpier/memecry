@@ -6,7 +6,7 @@ import zoneinfo
 from pydantic import BaseModel
 from starlette.authentication import SimpleUser
 
-from memecry import model
+import memecry.model
 
 
 class UserCreate(BaseModel):
@@ -51,7 +51,7 @@ class PostRead(BaseModel):
 
     @staticmethod
     def from_model(
-        post_in_db: model.Post,
+        post_in_db: memecry.model.Post,
         *,
         editable: bool = False,
     ) -> "PostRead":

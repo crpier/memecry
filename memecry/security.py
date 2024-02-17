@@ -8,7 +8,7 @@ import passlib.context
 import zoneinfo
 from relax.injection import Injected, injectable
 
-from memecry.config import Config
+import memecry.config
 
 
 @functools.lru_cache
@@ -17,7 +17,9 @@ def pwd_context() -> passlib.context.CryptContext:
 
 
 @injectable
-async def create_access_token(data: dict, *, config: Config = Injected) -> str:
+async def create_access_token(
+    data: dict, *, config: memecry.config.Config = Injected
+) -> str:
     to_encode = data.copy()
     expire = datetime.datetime.now(tz=zoneinfo.ZoneInfo("UTC")) + datetime.timedelta(
         minutes=100,
@@ -36,5 +38,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 @injectable
 # TODO: don't use any: use pydantic to parse the payload
-async def decode_payload(token: str, *, config: Config = Injected) -> dict[str, Any]:
+async def decode_payload(
+    token: str, *, config: memecry.config.Config = Injected
+) -> dict[str, Any]:
     return jose.jwt.decode(token, config.SECRET_KEY, algorithms=["HS256"])

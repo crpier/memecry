@@ -8,9 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import load_only
 from starlette.datastructures import UploadFile
 
+import memecry.config
+import memecry.model
 import memecry.schema
-from memecry.config import Config
-from memecry.model import Post
 
 
 @injectable
@@ -19,10 +19,10 @@ async def upload_post(
     uploaded_file: UploadFile,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
-    config: Config = Injected,
+    config: memecry.config.Config = Injected,
 ) -> int:
     async with asession() as session:
-        new_post = Post(**post_data.__dict__)
+        new_post = memecry.model.Post(**post_data.__dict__)
         # TODO: surely there's a smarter way to do this
         new_post.source = "sentinel"
         session.add(new_post)
@@ -55,15 +55,18 @@ async def get_posts(
     viewer: memecry.schema.UserRead | None = None,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
-    config: Config = Injected,
+    config: memecry.config.Config = Injected,
 ) -> list[memecry.schema.PostRead]:
     async with asession() as session:
         query = (
-            select(Post).order_by(Post.created_at.desc()).limit(limit).offset(offset)
+            select(memecry.model.Post)
+            .order_by(memecry.model.Post.created_at.desc())
+            .limit(limit)
+            .offset(offset)
         )
         if not viewer:
             for tag in config.RESTRICTED_TAGS:
-                query = query.where(Post.tags.not_like(f"%{tag}%"))
+                query = query.where(memecry.model.Post.tags.not_like(f"%{tag}%"))
         result = await session.execute(query)
         post_reads = [
             memecry.schema.PostRead.from_model(post) for post in result.scalars().all()
@@ -85,23 +88,25 @@ async def get_posts_by_search_query(  # noqa: PLR0913, C901
     viewer: memecry.schema.UserRead | None = None,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
-    config: Config = Injected,
+    config: memecry.config.Config = Injected,
 ) -> list[memecry.schema.PostRead]:
     async with asession() as session:
-        db_query = select(Post).order_by(Post.created_at.desc())
+        db_query = select(memecry.model.Post).order_by(
+            memecry.model.Post.created_at.desc()
+        )
         if limit:
             db_query = db_query.limit(limit).offset(offset)
 
         # TODO: more consistent way to work with tags
         for tag in query.tags["included"]:
-            db_query = db_query.where(Post.tags.contains(tag))
+            db_query = db_query.where(memecry.model.Post.tags.contains(tag))
 
         for tag in query.tags["excluded"]:
-            db_query = db_query.where(not_(Post.tags.contains(tag)))
+            db_query = db_query.where(not_(memecry.model.Post.tags.contains(tag)))
 
         if not viewer:
             for tag in config.RESTRICTED_TAGS:
-                db_query = db_query.where(Post.tags.not_like(f"%{tag}%"))
+                db_query = db_query.where(memecry.model.Post.tags.not_like(f"%{tag}%"))
 
         if query.content:
             conn = await session.connection()
@@ -117,7 +122,7 @@ async def get_posts_by_search_query(  # noqa: PLR0913, C901
                     (query.content,),
                 )
             post_ids: list[int] = [res[0] for res in result.fetchall()]
-            db_query = db_query.where(Post.id.in_(post_ids))
+            db_query = db_query.where(memecry.model.Post.id.in_(post_ids))
 
         res = await session.execute(db_query)
         post_reads = [
@@ -138,7 +143,7 @@ async def get_post_by_id(
     asession: async_sessionmaker[AsyncSession] = Injected,
 ) -> memecry.schema.PostRead | None:
     async with asession() as session:
-        query = select(Post).where(Post.id == post_id)
+        query = select(memecry.model.Post).where(memecry.model.Post.id == post_id)
         result = await session.execute(query)
         post = result.scalars().one_or_none()
         if not post:
@@ -159,9 +164,9 @@ async def toggle_post_tag(
 ) -> str:
     async with asession() as session:
         get_old_tags_query = (
-            select(Post)
-            .where(Post.id == post_id)
-            .options(load_only(Post.tags, Post.user_id))
+            select(memecry.model.Post)
+            .where(memecry.model.Post.id == post_id)
+            .options(load_only(memecry.model.Post.tags, memecry.model.Post.user_id))
         )
         result = await session.execute(get_old_tags_query)
         post_in_db = result.scalars().one()
@@ -180,7 +185,11 @@ async def toggle_post_tag(
 
         new_tags = ", ".join(old_tags)
 
-        query = update(Post).where(Post.id == post_id).values(tags=new_tags)
+        query = (
+            update(memecry.model.Post)
+            .where(memecry.model.Post.id == post_id)
+            .values(tags=new_tags)
+        )
         await session.execute(query)
         await session.commit()
         return new_tags
@@ -196,9 +205,13 @@ async def update_post_searchable_content(
 ) -> str:
     async with asession() as session:
         result = await session.execute(
-            select(Post)
-            .where(Post.id == post_id)
-            .options(load_only(Post.searchable_content, Post.user_id)),
+            select(memecry.model.Post)
+            .where(memecry.model.Post.id == post_id)
+            .options(
+                load_only(
+                    memecry.model.Post.searchable_content, memecry.model.Post.user_id
+                )
+            ),
         )
         post_in_db = result.scalars().one()
         if post_in_db.user_id != user_id:
@@ -225,9 +238,9 @@ async def update_post_title(
 ) -> str:
     async with asession() as session:
         result = await session.execute(
-            select(Post)
-            .where(Post.id == post_id)
-            .options(load_only(Post.title, Post.user_id)),
+            select(memecry.model.Post)
+            .where(memecry.model.Post.id == post_id)
+            .options(load_only(memecry.model.Post.title, memecry.model.Post.user_id)),
         )
         post_in_db = result.scalars().one()
         if post_in_db.user_id != user_id:
@@ -253,7 +266,7 @@ async def delete_post(
     async with asession() as session:
         # TODO: also remove the media file
         # TODO: a soft delete
-        query = delete(Post).where(Post.id == post_id)
+        query = delete(memecry.model.Post).where(memecry.model.Post.id == post_id)
         await session.execute(query)
 
         conn = await session.connection()

@@ -7,8 +7,8 @@ from relax.injection import add_injectable
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlite_fts4 import register_functions
 
-from memecry.config import Config, ViewContext
-from memecry.model import Base
+import memecry.config
+import memecry.model
 
 
 @logger.catch
@@ -25,12 +25,14 @@ def run_migrations(script_location: str, dsn: str) -> None:
 
 
 @logger.catch
-async def bootstrap() -> Config:
-    config = Config()
-    add_injectable(Config, config)
+async def bootstrap() -> memecry.config.Config:
+    config = memecry.config.Config()
+    add_injectable(memecry.config.Config, config)
 
-    context = ViewContext(prod=config.ENV == "prod", tags=config.DEFAULT_TAGS)
-    add_injectable(ViewContext, context)
+    context = memecry.config.ViewContext(
+        prod=config.ENV == "prod", tags=config.DEFAULT_TAGS
+    )
+    add_injectable(memecry.config.ViewContext, context)
     # ensure media folder exists
     config.MEDIA_UPLOAD_STORAGE.mkdir(parents=True, exist_ok=True)
     # we need a bit of an sync piece on startup lel
@@ -52,6 +54,6 @@ async def bootstrap() -> Config:
         run_migrations("./memecry/alembic", dsn)
         async with engine.begin() as conn:
             # TODO: have a migration to create tables and stuff instead?
-            await conn.run_sync(Base.metadata.create_all)
+            await conn.run_sync(memecry.model.Base.metadata.create_all)
 
     return config

@@ -26,9 +26,9 @@ from relax.html import (
 from relax.injection import Injected, injectable_sync
 from starlette.datastructures import URL
 
+import memecry.config
+import memecry.schema
 import memecry.views.post
-from memecry.config import ViewContext
-from memecry.schema import PostRead, UserRead
 from memecry.views.common import (
     BASIC_FORM_CLASSES,
     FLEX_COL_WRAPPER_CLASSES,
@@ -53,7 +53,7 @@ class PostUrlCallable(Protocol):
 
 
 @injectable_sync
-def tailwind_css(*, context: ViewContext = Injected) -> Element:
+def tailwind_css(*, context: memecry.config.ViewContext = Injected) -> Element:
     return (
         link(href="/static/css/tailwind.css", rel="stylesheet")
         if context.prod
@@ -103,7 +103,7 @@ def page_nav(
     signin_url: URL,
     signout_url: URL,
     upload_form_url: URL,
-    user: UserRead | None = None,
+    user: memecry.schema.UserRead | None = None,
 ) -> nav:
     search_form = (
         form(
@@ -201,7 +201,7 @@ def home_view(  # noqa: PLR0913
     post_update_tags_url: PostUpdateTagsUrl,
     post_url: PostUrlCallable,
     update_searchable_content_url: PostUrlCallable,
-    posts: list[PostRead],
+    posts: list[memecry.schema.PostRead],
     offset: int = 0,
     limit: int = 5,
     *,

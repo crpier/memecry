@@ -20,8 +20,8 @@ from relax.html import (
 from relax.injection import Injected, injectable_sync
 from starlette.datastructures import URL
 
-from memecry.config import ViewContext
-from memecry.schema import PostRead
+import memecry.config
+import memecry.schema
 from memecry.views.common import (
     DROPDOWN_CLASSES,
     FLEX_COL_WRAPPER_CLASSES,
@@ -52,7 +52,7 @@ def tags_component(  # noqa: PLR0913
     *,
     editable: bool = False,
     hidden_dropdown: bool = True,
-    context: ViewContext = Injected,
+    context: memecry.config.ViewContext = Injected,
 ) -> div:
     element_id = f"tags-{post_id}"
     tags_selector_id = f"tags-selector-{post_id}"
@@ -97,7 +97,7 @@ def tags_component(  # noqa: PLR0913
     )
 
 
-def edit_hidden_title_script(post: PostRead) -> str:
+def edit_hidden_title_script(post: memecry.schema.PostRead) -> str:
     return textwrap.dedent(
         f"""
         setTimeout(() => {{
@@ -111,7 +111,7 @@ def edit_hidden_title_script(post: PostRead) -> str:
     )
 
 
-def edit_hidden_content_script(post: PostRead) -> str:
+def edit_hidden_content_script(post: memecry.schema.PostRead) -> str:
     return textwrap.dedent(
         f"""
         setTimeout(() => {{
@@ -130,7 +130,7 @@ def post_component(
     post_update_tags_url: PostUpdateTagsUrl,
     post_url: PostUrlCallable,
     update_searchable_content_url: PostUrlCallable,
-    post: PostRead,
+    post: memecry.schema.PostRead,
 ) -> div:
     search_content_id = f"search-{post.id}"
     element_id = f"post-{post.id}"

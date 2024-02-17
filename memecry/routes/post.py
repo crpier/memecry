@@ -8,16 +8,16 @@ from starlette.responses import Response
 import memecry.posts_service
 import memecry.routes.auth
 import memecry.schema
+import memecry.types
 import memecry.views.common
 import memecry.views.misc
 import memecry.views.post
-from memecry.types import Request
 
 post_router = Router()
 
 
 @post_router.path_function("GET", "/posts/{post_id}")
-async def get_post(request: Request, post_id: PathInt) -> HTMLResponse:
+async def get_post(request: memecry.types.Request, post_id: PathInt) -> HTMLResponse:
     _ = request, post_id
     # TODO: lol
     return HTMLResponse(div().text("lol"))
@@ -28,7 +28,7 @@ async def get_post(request: Request, post_id: PathInt) -> HTMLResponse:
     "/posts/{post_id}/tags",
     auth_scopes=[AuthScope.Authenticated],
 )
-async def update_tags(request: Request, post_id: PathInt) -> HTMLResponse:
+async def update_tags(request: memecry.types.Request, post_id: PathInt) -> HTMLResponse:
     async with request.form() as form:
         new_tag = cast(str, form["tag"])
         old_tags_in_form = cast(str, form.get("tags", "no-tags"))
@@ -69,7 +69,9 @@ async def update_tags(request: Request, post_id: PathInt) -> HTMLResponse:
     "/posts/{post_id}/searchable-content",
     auth_scopes=[AuthScope.Authenticated],
 )
-async def update_searchable_content(request: Request, post_id: PathInt) -> Response:
+async def update_searchable_content(
+    request: memecry.types.Request, post_id: PathInt
+) -> Response:
     async with request.form() as form:
         new_content = cast(str, form[f"content-input-{post_id}"])
         await memecry.posts_service.update_post_searchable_content(
@@ -85,7 +87,7 @@ async def update_searchable_content(request: Request, post_id: PathInt) -> Respo
     "/posts/{post_id}/title",
     auth_scopes=[AuthScope.Authenticated],
 )
-async def update_title(request: Request, post_id: PathInt) -> Response:
+async def update_title(request: memecry.types.Request, post_id: PathInt) -> Response:
     async with request.form() as form:
         new_title = cast(str, form[f"title-{post_id}"])
         await memecry.posts_service.update_post_title(
@@ -97,13 +99,13 @@ async def update_title(request: Request, post_id: PathInt) -> Response:
 @post_router.path_function(
     "DELETE", "/posts/{post_id}", auth_scopes=[AuthScope.Authenticated]
 )
-async def post_delete(_: Request, post_id: PathInt) -> Response:
+async def post_delete(_: memecry.types.Request, post_id: PathInt) -> Response:
     await memecry.posts_service.delete_post(post_id)
     return Response("success")
 
 
 @post_router.path_function("GET", "/upload-form", auth_scopes=[AuthScope.Authenticated])
-async def upload_form(request: Request) -> HTMLResponse:
+async def upload_form(request: memecry.types.Request) -> HTMLResponse:
     if request.scope["from_htmx"]:
         return HTMLResponse(
             memecry.views.misc.upload_form(
@@ -125,7 +127,7 @@ async def upload_form(request: Request) -> HTMLResponse:
 
 
 @post_router.path_function("POST", "/upload", auth_scopes=[AuthScope.Authenticated])
-async def upload(request: Request) -> Response:
+async def upload(request: memecry.types.Request) -> Response:
     async with request.form() as form:
         title = cast(str, form["title"])
         tags = cast(str, form["tags"])

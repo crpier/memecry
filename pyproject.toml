@@ -51,6 +51,7 @@ ignore = [
 "A003", # Allow me to use the "id" field
 "COM812",
 "ISC001",
+"PGH003",
 ]
 [tool.ruff.extend-per-file-ignores]
 "memecry/model.py" = ["TCH003"] # don't make me move imports into a type checking block as they are used by sqlalchemy
