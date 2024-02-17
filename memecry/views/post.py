@@ -1,4 +1,3 @@
-import textwrap
 from pathlib import Path
 from typing import Protocol
 
@@ -12,8 +11,8 @@ from relax.html import (
     img,
     input,
     li,
-    script,
     span,
+    textarea,
     ul,
     video,
 )
@@ -97,35 +96,6 @@ def tags_component(  # noqa: PLR0913
     )
 
 
-def edit_hidden_title_script(post: memecry.schema.PostRead) -> str:
-    return textwrap.dedent(
-        f"""
-        setTimeout(() => {{
-            let editableElement = document.getElementById("title-display-{post.id}")
-            editableElement.addEventListener("input", function(event) {{
-                console.log(event.target.innerText)
-                let targetInput = document.getElementById("title-{post.id}")
-                targetInput.value = event.target.innerText
-            }})
-        }})""",
-    )
-
-
-def edit_hidden_content_script(post: memecry.schema.PostRead) -> str:
-    return textwrap.dedent(
-        f"""
-        setTimeout(() => {{
-            let editableElement = document.getElementsByName("content-{post.id}")[0]
-            editableElement.addEventListener("input", function(event) {{
-                let targetInput = document.getElementsByName(
-                        "content-input-{post.id}"
-                    )[0]
-                targetInput.value = event.target.innerText
-            }})
-        }})""",
-    )
-
-
 def post_component(
     post_update_tags_url: PostUpdateTagsUrl,
     post_url: PostUrlCallable,
@@ -198,11 +168,9 @@ def post_component(
         classes=[*FLEX_COL_WRAPPER_CLASSES, "hidden"],
         id=search_content_id,
     ).insert(
-        input(name=f"content-input-{post.id}", type="text", classes=["hidden"]),
-        script(
-            js=edit_hidden_content_script(post),
-        ),
-        div(
+        textarea(
+            name=f"content-input-{post.id}",
+            type="text",
             classes=[
                 "block",
                 "p-2",
@@ -211,10 +179,6 @@ def post_component(
                 "bg-black",
                 "outline-none",
             ],
-            attrs={
-                "contenteditable": "true" if post.editable else "false",
-                "name": f"content-{post.id}",
-            },
         ).text(post.searchable_content),
         div(classes=FLEX_ROW_WRAPPER_CLASSES).insert(
             button(
@@ -276,31 +240,29 @@ def post_component(
         ).insert(
             input(
                 id=f"title-{post.id}",
-                classes=["hidden"],
+                classes=[
+                    "text-white",
+                    "text-2xl",
+                    "font-bold",
+                    "mb-4",
+                    "px-2",
+                    "bg-black",
+                    "text-center",
+                    "flex-1",
+                ],
                 type="text",
                 name=f"title-{post.id}",
                 value=post.title,
-            ),
-            div(classes=["flex-1"]).text(""),
-            span(
-                id=f"title-display-{post.id}",
-                classes=["text-white", "text-2xl", "font-bold", "mb-4", "px-2"],
-                attrs={
-                    "contenteditable": "true" if post.editable else "false",
-                    "spellcheck": "false",
-                },
-            ).text(post.title),
-            script(
-                js=edit_hidden_title_script(post),
+                disabled=not post.editable,
             ),
             div(
                 classes=[
-                    "flex-1",
-                    "mx-auto",
+                    "flex-0",
                     "text-right",
                     "invisible" if not post.editable else "",
                 ],
             ).insert(
+                # TODO: edit title when the input element changes, instead
                 button(classes=["w-max", "pb-4", "px-2"])
                 .insert(i(classes=["fa", "fa-lg", "fa-gear"]))
                 .hx_put(
