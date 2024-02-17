@@ -59,10 +59,12 @@ ignore = [
 [tool.isort]
 profile = "black"
 
+[tool.mypy]
+disable_error_code = ["type-abstract"]
+
 [[tool.mypy.overrides]]
 module = ["icecream", "sqlite_fts4"]
 ignore_missing_imports = "true"
-
 
 # TODO: add scripts for some common ops:
 # poetry cache clear PyPI --all

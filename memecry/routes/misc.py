@@ -22,11 +22,6 @@ async def get_homepage(
         offset=offset,
     )
     home_view = memecry.views.misc.home_view(
-        request.url_wrapper(memecry.routes.post.update_tags),
-        request.url_wrapper(memecry.routes.post.get_post),
-        request.url_wrapper(
-            memecry.routes.post.update_searchable_content,
-        ),
         posts,
         offset=offset,
         limit=limit,
@@ -76,11 +71,6 @@ async def search_posts(
         limit=0,
     )
     home_view = memecry.views.misc.home_view(
-        request.url_wrapper(memecry.routes.post.update_tags),
-        request.url_wrapper(memecry.routes.post.get_post),
-        request.url_wrapper(
-            memecry.routes.post.update_searchable_content,
-        ),
         posts,
         offset=0,
         limit=-1,

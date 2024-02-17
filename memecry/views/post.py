@@ -1,6 +1,6 @@
 from pathlib import Path
-from typing import Protocol
 
+from relax.app import ViewContext
 from relax.html import (
     SelfClosingTag,
     Tag,
@@ -17,9 +17,9 @@ from relax.html import (
     video,
 )
 from relax.injection import Injected, injectable_sync
-from starlette.datastructures import URL
 
 import memecry.config
+import memecry.routes.post
 import memecry.schema
 from memecry.views.common import (
     DROPDOWN_CLASSES,
@@ -33,28 +33,20 @@ IMAGE_FORMATS = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
 VIDEO_FORMATS = [".mp4", ".webm"]
 
 
-class PostUpdateTagsUrl(Protocol):
-    def __call__(self, *, post_id: int) -> URL:
-        ...
-
-
-class PostUrlCallable(Protocol):
-    def __call__(self, *, post_id: int) -> URL:
-        ...
-
-
 @injectable_sync
 def tags_component(  # noqa: PLR0913
-    post_update_tags_url: PostUpdateTagsUrl,
     post_id: int = 0,
     post_tags: str = "no-tags",
     *,
     editable: bool = False,
     hidden_dropdown: bool = True,
-    context: memecry.config.ViewContext = Injected,
+    config: memecry.config.Config = Injected,
+    context: ViewContext = Injected,
 ) -> div:
     element_id = f"tags-{post_id}"
     tags_selector_id = f"tags-selector-{post_id}"
+
+    post_update_tags_url = context.endpoint(memecry.routes.post.UpdateTags)
 
     def li_tag(tag: str) -> li:
         return li().insert(
@@ -90,21 +82,26 @@ def tags_component(  # noqa: PLR0913
             classes=[*DROPDOWN_CLASSES, "hidden" if hidden_dropdown else ""],
         ).insert(
             ul().insert(
-                [li_tag(tag) for tag in context.tags],
+                [li_tag(tag) for tag in config.DEFAULT_TAGS],
             ),
         ),
     )
 
 
+# TODO: maybe better to have a single update endpoint?
+@injectable_sync
 def post_component(
-    post_update_tags_url: PostUpdateTagsUrl,
-    post_url: PostUrlCallable,
-    update_searchable_content_url: PostUrlCallable,
     post: memecry.schema.PostRead,
+    *,
+    context: ViewContext = Injected,
 ) -> div:
     search_content_id = f"search-{post.id}"
     element_id = f"post-{post.id}"
 
+    delete_post_url = context.endpoint(memecry.routes.post.DeletePost)
+    update_searchable_content_url = context.endpoint(
+        memecry.routes.post.UpdateSearchableContent
+    )
     content: Tag | SelfClosingTag
     if Path(post.source).suffix in IMAGE_FORMATS:
         content = img(
@@ -168,7 +165,6 @@ def post_component(
         ),
     )
     tags = tags_component(
-        post_update_tags_url,
         post.id,
         post.tags,
         editable=post.editable,
@@ -239,7 +235,7 @@ def post_component(
              if result.isConfirmed issueRequest()""",
             )
             .hx_delete(
-                post_url(post_id=post.id),
+                delete_post_url(post_id=post.id),
                 hx_trigger="click",
                 hx_swap="delete",
                 hx_target=f"#{element_id}",

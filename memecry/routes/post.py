@@ -23,7 +23,7 @@ async def get_post(request: memecry.types.Request, post_id: PathInt) -> HTMLResp
     return HTMLResponse(div().text("lol"))
 
 
-class UpdateTagsSig(Protocol):
+class UpdateTags(Protocol):
     def __call__(self, post_id: int) -> URL:
         ...
 
@@ -38,7 +38,10 @@ async def update_tags(request: memecry.types.Request, post_id: PathInt) -> HTMLR
                     post_id, new_tag, request.user.id
                 )
             except PermissionError:
-                return HTMLResponse(div().text("Permission denied"), status_code=403)
+                return HTMLResponse(
+                    memecry.views.common.error_element("Permission denied"),
+                    status_code=403,
+                )
         else:
             old_tags = old_tags_in_form.split(", ")
 
@@ -55,13 +58,17 @@ async def update_tags(request: memecry.types.Request, post_id: PathInt) -> HTMLR
 
         return HTMLResponse(
             memecry.views.post.tags_component(
-                post_update_tags_url=request.url_wrapper(update_tags),
                 post_id=post_id,
                 post_tags=updated_tags,
                 editable=True,
                 hidden_dropdown=False,
             ),
         )
+
+
+class UpdateSearchableContent(Protocol):
+    def __call__(self, post_id: int) -> URL:
+        ...
 
 
 async def update_searchable_content(
@@ -86,7 +93,12 @@ async def update_title(request: memecry.types.Request, post_id: PathInt) -> Resp
     return Response("success")
 
 
-async def post_delete(_: memecry.types.Request, post_id: PathInt) -> Response:
+class DeletePost(Protocol):
+    def __call__(self, post_id: int) -> URL:
+        ...
+
+
+async def delete_post(_: memecry.types.Request, post_id: PathInt) -> Response:
     await memecry.posts_service.delete_post(post_id)
     return Response("success")
 
@@ -97,7 +109,6 @@ async def upload_form(request: memecry.types.Request) -> HTMLResponse:
             memecry.views.misc.upload_form(
                 request.url_of(upload),
                 # TODO: encode somewhere the post_id=0 magic spell
-                request.url_wrapper(update_tags),
             ),
         )
     return HTMLResponse(
@@ -105,7 +116,6 @@ async def upload_form(request: memecry.types.Request) -> HTMLResponse:
             [
                 memecry.views.misc.upload_form(
                     request.url_of(upload),
-                    request.url_wrapper(update_tags),
                 ),
             ],
         ),
@@ -145,23 +155,32 @@ async def upload(request: memecry.types.Request) -> Response:
 
 routes = [
     RelaxRoute(
-        "/upload", "POST", upload, sig=UploadSig, auth_scopes=[AuthScope.Authenticated]
+        "/upload",
+        "POST",
+        upload,
+        sig=UploadSig,
+        auth_scopes=[AuthScope.Authenticated],
     ),
     RelaxRoute(
         "/posts/{post_id}/tags",
         "POST",
         update_tags,
         auth_scopes=[AuthScope.Authenticated],
-        sig=UpdateTagsSig,
+        sig=UpdateTags,
     ),
     RelaxRoute(
-        "/posts/{post_id}", "DELETE", post_delete, auth_scopes=[AuthScope.Authenticated]
+        "/posts/{post_id}",
+        "DELETE",
+        delete_post,
+        sig=DeletePost,
+        auth_scopes=[AuthScope.Authenticated],
     ),
     RelaxRoute("/posts/{post_id}", "GET", get_post),
     RelaxRoute(
         "/posts/{post_id}/searchable-content",
         "PUT",
         update_searchable_content,
+        sig=UpdateSearchableContent,
         auth_scopes=[AuthScope.Authenticated],
     ),
     RelaxRoute(

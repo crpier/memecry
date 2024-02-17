@@ -1,5 +1,4 @@
 import contextlib
-from typing import Protocol
 
 from relax.html import (
     Element,
@@ -42,21 +41,11 @@ IMAGE_FORMATS = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
 VIDEO_FORMATS = [".mp4", ".webm"]
 
 
-class PostUpdateTagsUrl(Protocol):
-    def __call__(self, *, post_id: int) -> URL:
-        ...
-
-
-class PostUrlCallable(Protocol):
-    def __call__(self, *, post_id: int) -> URL:
-        ...
-
-
 @injectable_sync
-def tailwind_css(*, context: memecry.config.ViewContext = Injected) -> Element:
+def tailwind_css(*, config: memecry.config.Config = Injected) -> Element:
     return (
         link(href="/static/css/tailwind.css", rel="stylesheet")
-        if context.prod
+        if config.ENV == "prod"
         else script(src="https://cdn.tailwindcss.com")
     )
 
@@ -197,10 +186,7 @@ def page_nav(
     )
 
 
-def home_view(  # noqa: PLR0913
-    post_update_tags_url: PostUpdateTagsUrl,
-    post_url: PostUrlCallable,
-    update_searchable_content_url: PostUrlCallable,
+def home_view(
     posts: list[memecry.schema.PostRead],
     offset: int = 0,
     limit: int = 5,
@@ -210,9 +196,6 @@ def home_view(  # noqa: PLR0913
 ) -> Tag:
     post_views = [
         memecry.views.post.post_component(
-            post_update_tags_url,
-            post_url,
-            update_searchable_content_url,
             post,
         )
         for post in posts
@@ -234,11 +217,9 @@ def home_view(  # noqa: PLR0913
     )
 
 
-def upload_form(
-    upload_url: URL,
-    post_update_tags_url: PostUpdateTagsUrl,
-) -> div:
-    tags = memecry.views.post.tags_component(post_update_tags_url, editable=True)
+# TODO: get url from context
+def upload_form(upload_url: URL) -> div:
+    tags = memecry.views.post.tags_component(editable=True)
     return div(
         id="upload-form",
         classes=[*FLEX_COL_WRAPPER_CLASSES, "fixed", "inset-48", "z-40"],

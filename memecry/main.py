@@ -45,7 +45,7 @@ class BasicAuthBackend(AuthenticationBackend):
 
 @contextlib.asynccontextmanager
 async def lifespan(app: App) -> AsyncIterator[None]:
-    config = await memecry.bootstrap.bootstrap()
+    config = await memecry.bootstrap.bootstrap(app)
     app.routes.append(
         Mount(
             "/media",
@@ -76,6 +76,7 @@ app = App(
 )
 
 
+# TODO: try making routes a simple list again
 app.add_routes(memecry.routes.auth.routes)
 app.add_routes(memecry.routes.misc.routes)
 app.add_routes(memecry.routes.post.routes)

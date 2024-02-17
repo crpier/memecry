@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
@@ -37,8 +37,3 @@ class Config(BaseSettings):
         ],
         validate_default=False,
     )
-
-
-class ViewContext(BaseModel):
-    prod: bool
-    tags: list[str]

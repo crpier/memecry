@@ -3,6 +3,7 @@ import sqlite3
 import alembic.command
 import alembic.config
 from loguru import logger
+from relax.app import App, ViewContext
 from relax.injection import add_injectable
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlite_fts4 import register_functions
@@ -25,14 +26,12 @@ def run_migrations(script_location: str, dsn: str) -> None:
 
 
 @logger.catch
-async def bootstrap() -> memecry.config.Config:
+async def bootstrap(app: App) -> memecry.config.Config:
     config = memecry.config.Config()
     add_injectable(memecry.config.Config, config)
 
-    context = memecry.config.ViewContext(
-        prod=config.ENV == "prod", tags=config.DEFAULT_TAGS
-    )
-    add_injectable(memecry.config.ViewContext, context)
+    add_injectable(ViewContext, app.view_context)
+
     # ensure media folder exists
     config.MEDIA_UPLOAD_STORAGE.mkdir(parents=True, exist_ok=True)
     # we need a bit of an sync piece on startup lel
