@@ -61,6 +61,6 @@ async def bootstrap(app: App) -> memecry.config.Config:
     with js_constants_fn.open("w") as f:
         f.write("export const CONSTANTS = {\n")
         for name in _COMPONENT_NAMES:
-            f.write(f'   {name.upper()}_CLASS: "{name}",\n')
+            f.write(f'   {name.upper().replace("-", "_")}_CLASS: "{name}",\n')
         f.write("}")
     return config

@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+/* TODO: should have a variable handy for class names, I think */
+.post-component {
+  scroll-margin-top: 3.5em;
+}

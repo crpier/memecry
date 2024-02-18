@@ -240,7 +240,7 @@ def post_settings_pane(
     )
 
 
-def post_content(post: memecry.schema.PostRead) -> Element:
+def post_content_component(post: memecry.schema.PostRead) -> Element:
     if Path(post.source).suffix in IMAGE_FORMATS:
         return img(
             src=post.source,
@@ -265,7 +265,7 @@ def post_component(*, post: memecry.schema.PostRead, id: str = Prop) -> div:
         classes=FLEX_ELEMENT_WRAPPER_CLASSES,
     ).insert(
         post_title_section(post),
-        post_content(post),
+        post_content_component(post),
         post_info_pane(post),
         post_interaction_pane(
             tags_component(

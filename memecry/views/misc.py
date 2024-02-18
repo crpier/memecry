@@ -64,6 +64,11 @@ def page_head() -> head:
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css",
             rel="stylesheet",
         ),
+        # TODO: support the type arg too
+        link(
+            rel="stylesheet",
+            href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css",
+        ),
         # TODO: add these attrs to args
         script(
             src="/static/js/key_handler.js", attrs={"defer": "true", "type": "module"}
@@ -78,13 +83,14 @@ def page_head() -> head:
         ),
         script(src="https://unpkg.com/hyperscript.org@0.9.11"),
         script(src="https://cdn.jsdelivr.net/npm/sweetalert2@11"),
+        script(src="https://cdn.jsdelivr.net/npm/toastify-js"),
     )
 
 
 def page_root(child: Element | list[Element]) -> html:
     return html(lang="en").insert(
         page_head(),
-        body(classes=["bg-black", "text-white", "pt-20"]).insert(
+        body(classes=["bg-black", "text-white", "pt-14"]).insert(
             child,
         ),
     )
