@@ -2,8 +2,7 @@ from pathlib import Path
 
 from relax.app import ViewContext
 from relax.html import (
-    SelfClosingTag,
-    Tag,
+    Element,
     a,
     button,
     div,
@@ -16,17 +15,20 @@ from relax.html import (
     ul,
     video,
 )
-from relax.injection import Injected, injectable_sync
+from relax.injection import Injected, Prop, component, injectable_sync
 
 import memecry.config
 import memecry.routes.post
 import memecry.schema
 from memecry.views.common import (
+    ATTENTION_SPECIAL_BUTTON_CLASSES,
+    DANGER_SPECIAL_BUTTON_CLASSES,
     DROPDOWN_CLASSES,
     FLEX_COL_WRAPPER_CLASSES,
+    FLEX_ELEMENT_WRAPPER_CLASSES,
     FLEX_ROW_WRAPPER_CLASSES,
+    INPUT_CLASSES,
     SIMPLE_BUTTON_CLASSES,
-    special_button_classes,
 )
 
 IMAGE_FORMATS = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
@@ -86,47 +88,14 @@ def tags_component(  # noqa: PLR0913
     )
 
 
-# TODO: maybe better to have a single update endpoint?
-@injectable_sync
-def post_component(
-    post: memecry.schema.PostRead,
-    *,
-    context: ViewContext = Injected,
-) -> div:
-    search_content_id = f"search-{post.id}"
-    element_id = f"post-{post.id}"
-
-    delete_post_url = context.endpoint(memecry.routes.post.DeletePost)
-    update_searchable_content_url = context.endpoint(
-        memecry.routes.post.UpdateSearchableContent
-    )
-    content: Tag | SelfClosingTag
-    if Path(post.source).suffix in IMAGE_FORMATS:
-        content = img(
-            src=post.source,
-            alt=post.title,
-            classes=["w-full"],
-        )
-    elif Path(post.source).suffix in VIDEO_FORMATS:
-        content = video(
-            src=post.source,
-            classes=["w-full"],
-            controls=True,
-        )
-    else:
-        content = div().text(f"Unsupported format: {Path(post.source).suffix}")
-    title_section = div(
+def post_title_section(post: memecry.schema.PostRead) -> Element:
+    return div(
         classes=FLEX_ROW_WRAPPER_CLASSES,
     ).insert(
         input(
             id=f"title-{post.id}",
             classes=[
-                "text-white",
-                "text-2xl",
-                "font-bold",
-                "mb-4",
-                "px-2",
-                "bg-black",
+                *INPUT_CLASSES,
                 "text-center",
                 "flex-1",
             ],
@@ -142,7 +111,6 @@ def post_component(
                 "invisible" if not post.editable else "",
             ],
         ).insert(
-            # TODO: edit title when the input element changes, instead
             button(classes=["w-max", "pb-4", "px-2"])
             .insert(i(classes=["fa", "fa-lg", "fa-gear"]))
             .hx_put(
@@ -153,7 +121,10 @@ def post_component(
             ),
         ),
     )
-    info_pane = div(classes=FLEX_ROW_WRAPPER_CLASSES).insert(
+
+
+def post_info_pane(post: memecry.schema.PostRead) -> Element:
+    return div(classes=FLEX_ROW_WRAPPER_CLASSES).insert(
         div(classes=["md:font-semibold"]).text(f"{post.score} good boi points"),
         div(classes=["space-x-1"]).insert(
             span(classes=["md:font-semibold"]).text(f"{post.created_since} by"),
@@ -162,17 +133,10 @@ def post_component(
             ),
         ),
     )
-    tags = tags_component(
-        post.id,
-        post.tags,
-        editable=post.editable,
-    )
-    info_button = button(
-        type="button",
-        classes=SIMPLE_BUTTON_CLASSES,
-        hyperscript=f"on click toggle .hidden on #{search_content_id}",
-    ).insert(i(classes=["fa", "fa-gear", "fa-lg"]))
-    interaction_pane = div(classes=FLEX_ROW_WRAPPER_CLASSES).insert(
+
+
+def post_interaction_pane(tags: Element, search_content_id: str) -> Element:
+    return div(classes=FLEX_ROW_WRAPPER_CLASSES).insert(
         div(classes=FLEX_ROW_WRAPPER_CLASSES).insert(
             button(
                 type="button",
@@ -193,10 +157,28 @@ def post_component(
         ),
         tags,
         div(classes=["flex-grow"]),
-        info_button,
+        button(
+            type="button",
+            classes=SIMPLE_BUTTON_CLASSES,
+            hyperscript=f"on click toggle .hidden on #{search_content_id}",
+        ).insert(i(classes=["fa", "fa-gear", "fa-lg"])),
         button(classes=[*SIMPLE_BUTTON_CLASSES, "font-semibold"]).text("0 comments"),
     )
-    settings_pane = div(
+
+
+@injectable_sync
+def post_settings_pane(
+    post: memecry.schema.PostRead,
+    search_content_id: str,
+    parent_id: str,
+    *,
+    context: ViewContext = Injected,
+) -> Element:
+    delete_post_url = context.endpoint(memecry.routes.post.DeletePost)
+    update_searchable_content_url = context.endpoint(
+        memecry.routes.post.UpdateSearchableContent
+    )
+    return div(
         classes=[*FLEX_COL_WRAPPER_CLASSES, "hidden"],
         id=search_content_id,
     ).insert(
@@ -216,7 +198,7 @@ def post_component(
         div(classes=FLEX_ROW_WRAPPER_CLASSES).insert(
             button(
                 type="button",
-                classes=special_button_classes("red"),
+                classes=DANGER_SPECIAL_BUTTON_CLASSES,
                 hyperscript="""on htmx:confirm(issueRequest)
              halt the event
              call Swal.fire({
@@ -236,12 +218,12 @@ def post_component(
                 delete_post_url(post_id=post.id),
                 hx_trigger="click",
                 hx_swap="delete",
-                hx_target=f"#{element_id}",
+                hx_target=f"#{parent_id}",
             )
             .text("Delete post"),
             button(
                 type="button",
-                classes=special_button_classes("green"),
+                classes=ATTENTION_SPECIAL_BUTTON_CLASSES,
                 hyperscript=f"on click toggle .hidden on #{search_content_id}",
             )
             .text("Save")
@@ -256,21 +238,42 @@ def post_component(
         if post.editable
         else div(),
     )
+
+
+def post_content(post: memecry.schema.PostRead) -> Element:
+    if Path(post.source).suffix in IMAGE_FORMATS:
+        return img(
+            src=post.source,
+            alt=post.title,
+            classes=["w-full"],
+        )
+    if Path(post.source).suffix in VIDEO_FORMATS:
+        return video(
+            src=post.source,
+            classes=["w-full"],
+            controls=True,
+        )
+    return div().text(f"Unsupported format: {Path(post.source).suffix}")
+
+
+# TODO: either allow positional args, or encode their absence in a type sig somehow
+@component(key=lambda post: post.id)
+def post_component(*, post: memecry.schema.PostRead, id: str = Prop) -> div:
+    search_content_id = f"search-{post.id}"
+
     return div(
-        id=element_id,
-        classes=[
-            "md:border-2",
-            "md:border-gray-500",
-            "md:p-4",
-            "md:rounded-lg",
-            "post-component",
-            "space-y-1",
-            "w-full",
-        ],
+        classes=FLEX_ELEMENT_WRAPPER_CLASSES,
     ).insert(
-        title_section,
-        content,
-        info_pane,
-        interaction_pane,
-        settings_pane,
+        post_title_section(post),
+        post_content(post),
+        post_info_pane(post),
+        post_interaction_pane(
+            tags_component(
+                post.id,
+                post.tags,
+                editable=post.editable,
+            ),
+            search_content_id,
+        ),
+        post_settings_pane(post, search_content_id, id),
     )

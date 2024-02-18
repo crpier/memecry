@@ -1,3 +1,5 @@
+import { CONSTANTS } from "./constants.js";
+
 let currentPostIdx = -1;
 /** @type  Element[] */
 let availablePosts = [];
@@ -69,7 +71,9 @@ function updateCurrentPostIdx() {
 
 function reloadAvailablePosts() {
   availablePosts = [];
-  const elements = document.getElementsByClassName("post-component");
+  const elements = document.getElementsByClassName(
+    CONSTANTS.POST_COMPONENT_CLASS,
+  );
   for (let i = 0; i < elements.length; i++) {
     availablePosts.push(elements[i]);
   }
@@ -145,6 +149,7 @@ function startedCompositeKey(key) {
   return false;
 }
 
+// TODO: buttons for signin/signout
 document.onkeydown = function (e) {
   const { key } = e;
   // Escape is a special case: we always want the script to handle it

@@ -37,6 +37,7 @@ SIMPLE_BUTTON_CLASSES = [
 ]
 
 
+# TODO: could I have a type for tailwind color?
 def special_button_classes(color: str) -> list[str]:
     return [
         f"bg-{color}-600",
@@ -50,6 +51,9 @@ def special_button_classes(color: str) -> list[str]:
         f"md:hover:text-{color}-700",
     ]
 
+
+DANGER_SPECIAL_BUTTON_CLASSES = special_button_classes("red")
+ATTENTION_SPECIAL_BUTTON_CLASSES = special_button_classes("green")
 
 FLEX_ROW_WRAPPER_CLASSES = [
     "flex",
@@ -97,6 +101,24 @@ BASIC_FORM_CLASSES = [
     "items-start",
     "w-max",
     "p-4",
+]
+
+FLEX_ELEMENT_WRAPPER_CLASSES = [
+    "md:border-2",
+    "md:border-gray-500",
+    "md:p-4",
+    "md:rounded-lg",
+    "space-y-1",
+    "w-full",
+]
+
+INPUT_CLASSES = [
+    "text-white",
+    "text-2xl",
+    "font-bold",
+    "mb-4",
+    "px-2",
+    "bg-black",
 ]
 
 MODAL_UNDERLAY = div(

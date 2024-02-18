@@ -64,7 +64,10 @@ def page_head() -> head:
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css",
             rel="stylesheet",
         ),
-        script(src="/static/js/key_handler.js", attrs={"defer": "true"}),
+        # TODO: add these attrs to args
+        script(
+            src="/static/js/key_handler.js", attrs={"defer": "true", "type": "module"}
+        ),
         script(
             src="https://unpkg.com/htmx.org@1.9.5",
             attrs={
@@ -197,7 +200,7 @@ def home_view(
 ) -> Tag:
     post_views = [
         memecry.views.post.post_component(
-            post,
+            post=post,
         )
         for post in posts
     ]

@@ -1,10 +1,11 @@
 import sqlite3
+from pathlib import Path
 
 import alembic.command
 import alembic.config
 from loguru import logger
 from relax.app import App, ViewContext
-from relax.injection import add_injectable
+from relax.injection import _COMPONENT_NAMES, add_injectable
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlite_fts4 import register_functions
 
@@ -55,4 +56,11 @@ async def bootstrap(app: App) -> memecry.config.Config:
             # TODO: have a migration to create tables and stuff instead?
             await conn.run_sync(memecry.model.Base.metadata.create_all)
 
+    # TODO: get this from app
+    js_constants_fn = Path("static/js/constants.js")
+    with js_constants_fn.open("w") as f:
+        f.write("export const CONSTANTS = {\n")
+        for name in _COMPONENT_NAMES:
+            f.write(f'   {name.upper()}_CLASS: "{name}",\n')
+        f.write("}")
     return config
