@@ -824,8 +824,12 @@ video {
   padding-bottom: 1rem;
 }
 
-.pt-20 {
-  padding-top: 5rem;
+.pt-14 {
+  padding-top: 3.5rem;
+}
+
+.text-center {
+  text-align: center;
 }
 
 .text-right {
@@ -949,10 +953,6 @@ video {
 
   .md\:border {
     border-width: 1px;
-  }
-
-  .md\:border-2 {
-    border-width: 2px;
   }
 
   .md\:border-gray-500 {
