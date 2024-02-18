@@ -1184,13 +1184,13 @@ files = [
 
 [[package]]
 name = "relax-py"
-version = "0.0.6"
+version = "0.0.7"
 description = ""
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "relax_py-0.0.6-py3-none-any.whl", hash = "sha256:65ecf24fc116f5f37350f835b304795aa66a3de13c823c5919804e575129f1fb"},
-    {file = "relax_py-0.0.6.tar.gz", hash = "sha256:8965a6fb971c098df840367c3381d6d5ed538ac3269e582a3c145cfec1730458"},
+    {file = "relax_py-0.0.7-py3-none-any.whl", hash = "sha256:b8c9bd88cbb19b3b3d84fd5b746108f8448f84d5403cf7372917c68389bd7529"},
+    {file = "relax_py-0.0.7.tar.gz", hash = "sha256:6859790a9bf014d5a1c6b45f5cff5bab96a398a537c17a8a9acc878aa4c1f317"},
 ]
 
 [package.dependencies]
@@ -1637,4 +1637,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "7b85ae58cad7b513b243318b0d2ec859a6253aa79e67c9fad8352b634a96efbb"
+content-hash = "b3d18061b599994ca8b6fa07fe5f6a06300a6805d44b5ccda3ef355e053e9802"
