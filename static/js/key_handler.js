@@ -6,7 +6,11 @@ let availablePosts = [];
 const searchBox = document.getElementById("search");
 
 function inputIsFocused() {
-  if (document.activeElement && document.activeElement.tagName == "INPUT") {
+  if (
+    document.activeElement &&
+    (document.activeElement.tagName == "INPUT" ||
+      document.activeElement.tagName == "TEXTAREA")
+  ) {
     return true;
   }
   return false;
@@ -120,7 +124,6 @@ function scrollDown(count) {
     }
     currentPostIdx += count;
     availablePosts[newPostIdx].scrollIntoView({ behavior: "instant" });
-    availablePosts[newPostIdx].focus();
   } catch (e) {
     if (e instanceof TypeError) {
       currentPostIdx--;
@@ -170,6 +173,13 @@ function updateCurrentPostIdx() {
 
   if (availablePosts[currentPostIdx] !== undefined) {
     availablePosts[currentPostIdx].focus();
+    // TODO: allow config option for user to autoplay video
+    // const video = availablePosts[currentPostIdx].querySelector("video");
+    // if (video !== null) {
+    //   if (video.paused) {
+    //     video.play();
+    //   }
+    // }
   }
 }
 
@@ -180,6 +190,16 @@ function reloadAvailablePosts() {
   );
   for (let i = 0; i < elements.length; i++) {
     availablePosts.push(elements[i]);
+    if (elements[i].onblur === null) {
+      elements[i].onblur = function(event) {
+        const video = event.target.querySelector("video");
+        if (video !== null) {
+          if (!video.paused) {
+            video.pause();
+          }
+        }
+      };
+    }
   }
 }
 
@@ -203,7 +223,7 @@ function resetCompositeKeys() {
 }
 
 // TODO: G key should take us to the last post
-// TODO buttons to log in/log out
+// TODO buttons to log out, control video volume
 function handleSimpleKey(key, event) {
   switch (key) {
     case "i":
@@ -277,6 +297,7 @@ document.onkeydown = function(e) {
   if (key === "Escape") {
     if (inputIsFocused()) {
       document.activeElement.blur();
+      return;
     }
     resetCompositeKeys();
     return;
