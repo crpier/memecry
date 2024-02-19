@@ -40,7 +40,9 @@ async def get_homepage(
                     upload_form_url=request.url_of(memecry.routes.post.upload_form),
                     user=request.user if request.user.is_authenticated else None,
                 ),
+                memecry.views.misc.commands_helper(),
                 home_view,
+                memecry.views.misc.commands_helper(display_hack=True),
             ],
         ),
     )

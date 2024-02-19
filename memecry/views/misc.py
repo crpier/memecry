@@ -4,7 +4,6 @@ from relax.app import ViewContext
 from relax.html import (
     Element,
     Fragment,
-    Tag,
     a,
     body,
     button,
@@ -92,7 +91,7 @@ def page_head() -> head:
 def page_root(child: Element | list[Element]) -> html:
     return html(lang="en").insert(
         page_head(),
-        body(classes=["bg-black", "text-white", "pt-14"]).insert(
+        body(classes=["bg-black", "text-white", "pt-14", "flex", "flex-row"]).insert(
             child,
         ),
     )
@@ -200,6 +199,84 @@ def page_nav(
     )
 
 
+def keybind_helper(keybind: str, explanation: str) -> Element:
+    return div(classes=["space-x-2", "px-4", "text-left", "text-sm", "ml-4"]).insert(
+        span(classes=["font-bold"], text=keybind),
+        span(text="-"),
+        span(text=explanation),
+    )
+
+
+def section_separator(name: str) -> Element:
+    return div(
+        classes=["space-x-2", "px-4", "text-left", "text-sm", "font-semibold", "mt-4"],
+        text=name,
+    )
+
+
+# TODO: I might want this to move with the scroll element
+def commands_helper(*, display_hack: bool = False) -> Element:
+    # TODO: would be nice to use aside instead of div
+    return div(
+        classes=[
+            "hidden",
+            "md:block",
+            "px-8",
+            "max-h-full",
+            "text-white",
+            "invisible" if display_hack is True else "",
+        ]
+    ).insert(
+        div(
+            classes=[
+                "block",
+                "rounded-lg",
+                "text-center",
+                "bg-black",
+                "border",
+                "border-gray-600",
+                "text-white",
+            ]
+        ).insert(
+            div(
+                classes=[
+                    "border-b",
+                    "border-gray-600",
+                    "px-6",
+                    "py-3",
+                ]
+            ).text("Keybindings"),
+            div(classes=["pb-4"]).insert(
+                section_separator("Movement"),
+                keybind_helper("j", "focus on next post"),
+                keybind_helper("k", "focus on previous post"),
+                keybind_helper("u", "focus on the next 5th post"),
+                keybind_helper("d", "focus on the previous 5th post"),
+                keybind_helper("gg", "focus on first post"),
+                keybind_helper("G", "focus last loaded post"),
+                #
+                section_separator("Copying"),
+                keybind_helper("y", "yank image file in focused post"),
+                keybind_helper("gy", "yank url to post media"),
+                #
+                section_separator("Video posts"),
+                keybind_helper("space", "play/pause video in focused post"),
+                keybind_helper("←", "skip 1 second of video in focused post"),
+                keybind_helper("→", "rewind 1 second of video in focused post"),
+                keybind_helper(">", "increase volume of video in focused post"),
+                keybind_helper("<", "decrease volume of video in focused post"),
+                #
+                section_separator("Site navigation"),
+                keybind_helper("/", "focus search bar"),
+                keybind_helper("a", "open upload"),
+                keybind_helper("i", "open signing form"),
+                keybind_helper("gu", "go to root of site"),
+                keybind_helper("gi", "focus most proeminent input"),
+            ),
+        ),
+    )
+
+
 def home_view(
     posts: list[memecry.schema.PostRead],
     offset: int = 0,
@@ -207,7 +284,7 @@ def home_view(
     *,
     keep_scrolling: bool = False,
     partial: bool = False,
-) -> Tag:
+) -> Element:
     post_views = [
         memecry.views.post.post_component(
             post=post,
