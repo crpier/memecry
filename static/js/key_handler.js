@@ -12,6 +12,18 @@ function inputIsFocused() {
   return false;
 }
 
+function login() {
+  // TODO: get id from constant
+  const el = document.getElementById("signin")
+  el.click()
+}
+
+function focusInputInForm() {
+  const form = document.querySelectorAll("form")[1]
+  const someInput = form.querySelector("input")
+  someInput.focus()
+}
+
 function copyLinkToImage() {
   const currentPost = availablePosts[currentPostIdx];
   const result = currentPost.querySelector("img");
@@ -22,8 +34,9 @@ function copyLinkToImage() {
     canvas.height = result.height;
     ctx.drawImage(result, 0, 0);
     canvas.toBlob(function (blob) {
+      let item;
       try {
-        const item = new ClipboardItem({ "image/png": blob });
+        item = new ClipboardItem({ "image/png": blob });
       } catch (e) {
         if (e instanceof ReferenceError) {
           Toastify({
@@ -93,7 +106,8 @@ function scrollDown(count) {
       return;
     }
     currentPostIdx += count;
-    availablePosts[newPostIdx].scrollIntoView();
+    availablePosts[newPostIdx].scrollIntoView({ behavior: "instant" });
+    availablePosts[newPostIdx].focus();
   } catch (e) {
     if (e instanceof TypeError) {
       currentPostIdx--;
@@ -111,7 +125,7 @@ function scrollUp(count) {
     if (currentPostIdx === newPostIdx) {
       return;
     }
-    availablePosts[newPostIdx].scrollIntoView();
+    availablePosts[newPostIdx].scrollIntoView({ behavior: "instant" });
   } catch (e) {
     console.log(e);
     if (e instanceof TypeError) {
@@ -124,7 +138,7 @@ function scrollUp(count) {
 
 function scrollToTop() {
   currentPostIdx = 0;
-  availablePosts[currentPostIdx].scrollIntoView();
+  availablePosts[currentPostIdx].scrollIntoView({ behavior: "instant" });
 }
 
 function updateCurrentPostIdx() {
@@ -140,6 +154,8 @@ function updateCurrentPostIdx() {
   if (newIdx !== undefined && newIdx !== currentPostIdx) {
     currentPostIdx = newIdx;
   }
+
+  availablePosts[currentPostIdx].focus();
 }
 
 function reloadAvailablePosts() {
@@ -172,8 +188,12 @@ function resetCompositeKeys() {
 }
 
 // TODO: G key should take us to the last post
+// TODO buttons to log in/log out
 function handleSimpleKey(key, event) {
   switch (key) {
+    case "i":
+      login();
+      break;
     case "j":
       scrollDown(1);
       break;
@@ -203,7 +223,7 @@ function handleSimpleKey(key, event) {
   }
 }
 
-function handleCompositeKey(key) {
+function handleCompositeKey(key, event) {
   if (compositeKey !== "g") {
     console.error("Composite keys other than g are not supported");
     return;
@@ -217,6 +237,10 @@ function handleCompositeKey(key) {
       break;
     case "y":
       copyUrlOfContent();
+      break;
+    case "i":
+      event.preventDefault();
+      focusInputInForm();
       break;
     default:
       break;
@@ -243,7 +267,7 @@ document.onkeydown = function (e) {
     if (!startedCompositeKey()) {
       handleSimpleKey(key, e);
     } else {
-      handleCompositeKey(key);
+      handleCompositeKey(key, e);
       resetCompositeKeys();
     }
   }

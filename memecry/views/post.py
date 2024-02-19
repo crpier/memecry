@@ -262,7 +262,12 @@ def post_component(*, post: memecry.schema.PostRead, id: str = Prop) -> div:
     search_content_id = f"search-{post.id}"
 
     return div(
-        classes=FLEX_ELEMENT_WRAPPER_CLASSES,
+        classes=[
+            *FLEX_ELEMENT_WRAPPER_CLASSES,
+            "focus:!border-gray-400",
+            "outline-none",
+        ],
+        attrs={"tabindex": -1},
     ).insert(
         post_title_section(post),
         post_content_component(post),

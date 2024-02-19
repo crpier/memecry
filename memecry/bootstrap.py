@@ -1,4 +1,5 @@
 import sqlite3
+import subprocess
 from pathlib import Path
 
 import alembic.command
@@ -63,4 +64,9 @@ async def bootstrap(app: App) -> memecry.config.Config:
         for name in _COMPONENT_NAMES:
             f.write(f'   {name.upper().replace("-", "_")}_CLASS: "{name}",\n')
         f.write("}")
+
+    # TODO: fix the ruff issue
+    # TODO: run this in background, it's not needed for dev work
+    # always run this, just so we don't forget
+    subprocess.run(["tailwindcss", "-o", "static/css/tailwind.css"], check=False)  # noqa: S603, S607
     return config

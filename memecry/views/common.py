@@ -105,7 +105,7 @@ BASIC_FORM_CLASSES = [
 
 FLEX_ELEMENT_WRAPPER_CLASSES = [
     "md:border",
-    "md:border-gray-500",
+    "md:border-gray-600",
     "md:p-4",
     "md:rounded-lg",
     "space-y-1",

@@ -140,8 +140,10 @@ def page_nav(
         .text("Sign up")
     )
 
+    # TODO: implement component that lets you set an id
     signin_button = (
         button(
+            id="signin",
             classes=[*SIMPLE_BUTTON_CLASSES, "border-0"],
         )
         .hx_get(target=signin_url, hx_target="body", hx_swap="beforeend")
