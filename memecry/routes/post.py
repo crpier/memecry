@@ -158,7 +158,7 @@ routes = [
     ),
     RelaxRoute(
         "/posts/{post_id}/tags",
-        "POST",
+        "PUT",
         update_tags,
         auth_scopes=[AuthScope.Authenticated],
         sig=UpdateTags,

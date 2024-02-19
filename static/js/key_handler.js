@@ -12,16 +12,29 @@ function inputIsFocused() {
   return false;
 }
 
+function playVideo(event) {
+  const currentPost = availablePosts[currentPostIdx];
+  const video = currentPost.querySelector("video");
+  if (video !== null) {
+    event.preventDefault();
+    if (video.paused) {
+      video.play();
+    } else {
+      video.pause();
+    }
+  }
+}
+
 function login() {
   // TODO: get id from constant
-  const el = document.getElementById("signin")
-  el.click()
+  const el = document.getElementById("signin");
+  el.click();
 }
 
 function focusInputInForm() {
-  const form = document.querySelectorAll("form")[1]
-  const someInput = form.querySelector("input")
-  someInput.focus()
+  const form = document.querySelectorAll("form")[1];
+  const someInput = form.querySelector("input");
+  someInput.focus();
 }
 
 function copyLinkToImage() {
@@ -33,7 +46,7 @@ function copyLinkToImage() {
     canvas.width = result.width;
     canvas.height = result.height;
     ctx.drawImage(result, 0, 0);
-    canvas.toBlob(function (blob) {
+    canvas.toBlob(function(blob) {
       let item;
       try {
         item = new ClipboardItem({ "image/png": blob });
@@ -53,7 +66,7 @@ function copyLinkToImage() {
         }
       }
       navigator.clipboard.write([item]).then(
-        function () {
+        function() {
           Toastify({
             text: "Yanked image",
             position: "center",
@@ -65,7 +78,7 @@ function copyLinkToImage() {
             },
           }).showToast();
         },
-        function (error) {
+        function(error) {
           console.error("Unable to copy image to clipboard :", error);
         },
       );
@@ -78,7 +91,7 @@ function copyUrlOfContent() {
   const result = currentPost.querySelector("[src]");
   const src = result.src;
   navigator.clipboard.writeText(src).then(
-    function () {
+    function() {
       Toastify({
         text: `Yanked link ${src}`,
         position: "center",
@@ -90,7 +103,7 @@ function copyUrlOfContent() {
         },
       }).showToast();
     },
-    function (error) {
+    function(error) {
       console.error("Unable to copy link to clipboard :", error);
     },
   );
@@ -155,7 +168,9 @@ function updateCurrentPostIdx() {
     currentPostIdx = newIdx;
   }
 
-  availablePosts[currentPostIdx].focus();
+  if (availablePosts[currentPostIdx] !== undefined) {
+    availablePosts[currentPostIdx].focus();
+  }
 }
 
 function reloadAvailablePosts() {
@@ -168,7 +183,7 @@ function reloadAvailablePosts() {
   }
 }
 
-htmx.on("htmx:afterSettle", function (e) {
+htmx.on("htmx:afterSettle", function(_) {
   reloadAvailablePosts();
 });
 
@@ -177,7 +192,7 @@ setTimeout(() => {
   updateCurrentPostIdx();
 });
 
-document.onscroll = function () {
+document.onscroll = function() {
   updateCurrentPostIdx();
 };
 
@@ -208,6 +223,9 @@ function handleSimpleKey(key, event) {
       break;
     case "y":
       copyLinkToImage();
+      break;
+    case " ":
+      playVideo(event);
       break;
     case "/":
       event.preventDefault();
@@ -247,13 +265,13 @@ function handleCompositeKey(key, event) {
   }
 }
 
-function startedCompositeKey(key) {
+function startedCompositeKey(_) {
   if (compositeKey !== undefined) return true;
   return false;
 }
 
 // TODO: buttons for signin/signout
-document.onkeydown = function (e) {
+document.onkeydown = function(e) {
   const { key } = e;
   // Escape is a special case: we always want the script to handle it
   if (key === "Escape") {

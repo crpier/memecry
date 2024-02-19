@@ -741,6 +741,10 @@ video {
   border-radius: 0.125rem;
 }
 
+.\!border-0 {
+  border-width: 0px !important;
+}
+
 .border {
   border-width: 1px;
 }

@@ -54,7 +54,7 @@ def tags_component(  # noqa: PLR0913
                 attrs={"name": "tag", "value": tag},
                 classes=[
                     *SIMPLE_BUTTON_CLASSES,
-                    "border-0",
+                    "!border-0",
                     "bg-gray-800" if tag in post_tags else "",
                 ],
             )
