@@ -49,13 +49,25 @@ def tags_component(  # noqa: PLR0913
     tags_selector_id = f"tags-selector-{post_id}"
 
     def li_tag(tag: str) -> li:
-        return li().insert(
+        return li(
+            classes=[
+                *SIMPLE_BUTTON_CLASSES,
+                "!p-0",
+                "!border-0",
+                "[&:not(:first-child)]:!rounded-t-none",
+                "[&:not(:last-child)]:!rounded-b-none",
+                "bg-gray-800" if tag in post_tags else "",
+                "w-full",
+            ]
+        ).insert(
             button(
                 attrs={"name": "tag", "value": tag},
                 classes=[
                     *SIMPLE_BUTTON_CLASSES,
                     "!border-0",
-                    "bg-gray-800" if tag in post_tags else "",
+                    "!rounded-none",
+                    "w-full",
+                    "m-auto",
                 ],
             )
             .text(tag)
@@ -66,12 +78,22 @@ def tags_component(  # noqa: PLR0913
             ),
         )
 
-    return div(id=element_id).insert(
+    return div(
+        id=element_id,
+        classes=[
+            "max-w-full",
+            "whitespace-nowrap",
+            "overflow-hidden",
+        ],
+    ).insert(
         input(name="tags", type="text", value=post_tags, classes=["hidden"]),
         button(
             classes=[
                 *SIMPLE_BUTTON_CLASSES,
                 "cursor-default" if not editable else "cursor-pointer",
+                "max-w-full",
+                "overflow-hidden",
+                "overflow-ellipsis",
             ],
             hyperscript=f"on click toggle .hidden on #{tags_selector_id}"
             if editable
@@ -125,12 +147,30 @@ def post_title_section(post: memecry.schema.PostRead) -> Element:
 
 def post_info_pane(post: memecry.schema.PostRead) -> Element:
     return div(classes=FLEX_ROW_WRAPPER_CLASSES).insert(
-        div(classes=["md:font-semibold"]).text(f"{post.score} good boi points"),
+        div(
+            classes=[
+                "md:font-semibold",
+                "text-sm",
+                "md:text-base",
+            ]
+        ).text(f"{post.score} good boi points"),
         div(classes=["space-x-1"]).insert(
-            span(classes=["md:font-semibold"]).text(f"{post.created_since} by"),
-            a(href="#", classes=["md:font-semibold", "text-green-300"]).text(
-                post.author_name
-            ),
+            span(
+                classes=[
+                    "md:font-semibold",
+                    "text-sm",
+                    "md:text-base",
+                ]
+            ).text(f"{post.created_since} by"),
+            a(
+                href="#",
+                classes=[
+                    "md:font-semibold",
+                    "text-sm",
+                    "md:text-base",
+                    "text-green-300",
+                ],
+            ).text(post.author_name),
         ),
     )
 
@@ -162,7 +202,13 @@ def post_interaction_pane(tags: Element, search_content_id: str) -> Element:
             classes=SIMPLE_BUTTON_CLASSES,
             hyperscript=f"on click toggle .hidden on #{search_content_id}",
         ).insert(i(classes=["fa", "fa-gear", "fa-lg"])),
-        button(classes=[*SIMPLE_BUTTON_CLASSES, "font-semibold"]).text("0 comments"),
+        button(
+            classes=[
+                *SIMPLE_BUTTON_CLASSES,
+                "font-semibold",
+                "whitespace-nowrap",
+            ]
+        ).text("0 comments"),
     )
 
 

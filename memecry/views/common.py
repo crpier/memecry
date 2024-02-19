@@ -30,6 +30,8 @@ SIMPLE_BUTTON_CLASSES = [
     "md:rounded-lg",
     "duration-300",
     "px-1",
+    "text-sm",
+    "md:text-base",
     "md:px-3",
     "md:py-1",
     "md:hover:border-gray-400",
@@ -41,9 +43,11 @@ SIMPLE_BUTTON_CLASSES = [
 def special_button_classes(color: str) -> list[str]:
     return [
         f"bg-{color}-600",
-        "md:font-semibold",
         "px-3",
         "py-1",
+        "text-sm",
+        "md:text-base",
+        "md:font-semibold",
         "rounded-md",
         "md:rounded-lg",
         "text-white",
@@ -73,7 +77,7 @@ FLEX_COL_WRAPPER_CLASSES = [
     "items-center",
     "justify-center",
     "justify-items-center",
-    "space-y-1",
+    "space-y-8",
     "md:space-y-4",
 ]
 
@@ -114,7 +118,8 @@ FLEX_ELEMENT_WRAPPER_CLASSES = [
 
 INPUT_CLASSES = [
     "text-white",
-    "text-2xl",
+    "text-lg",
+    "md:text-2xl",
     "font-bold",
     "mb-4",
     "px-2",
