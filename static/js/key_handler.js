@@ -1,5 +1,9 @@
 import { CONSTANTS } from "./constants.js";
 
+function openForm(formUrl) {
+  htmx.ajax("GET", formUrl, { target: "body", swap: "beforeend" });
+}
+
 let currentPostIdx = -1;
 /** @type  Element[] */
 let availablePosts = [];
@@ -20,7 +24,6 @@ function playVideo(event) {
   const currentPost = availablePosts[currentPostIdx];
   const video = currentPost.querySelector("video");
   if (video !== null) {
-    event.preventDefault();
     if (video.paused) {
       video.play();
     } else {
@@ -29,14 +32,43 @@ function playVideo(event) {
   }
 }
 
-function login() {
-  // TODO: get id from constant
-  const el = document.getElementById("signin");
-  el.click();
+function increaseVolumeOfVideo(amount) {
+  const currentPost = availablePosts[currentPostIdx];
+  const video = currentPost.querySelector("video");
+  if (video !== null && video.volume < 1) {
+    video.volume = Math.floor(video.volume * 10 + amount * 10) / 10;
+  }
 }
 
+function seekVideoLeft() {
+  const currentPost = availablePosts[currentPostIdx];
+  const video = currentPost.querySelector("video");
+  if (video !== null) {
+    video.currentTime -= 1;
+  }
+}
+
+function seekVideoRight() {
+  const currentPost = availablePosts[currentPostIdx];
+  const video = currentPost.querySelector("video");
+  if (video !== null) {
+    video.currentTime += 1;
+  }
+}
+function lowerVolumeOfVideo(amount) {
+  const currentPost = availablePosts[currentPostIdx];
+  const video = currentPost.querySelector("video");
+  if (video !== null && video.volume > 0) {
+    // Crazy hack I have to do because if I just do
+    // video.volume -= amount
+    video.volume = Math.floor(video.volume * 10 - amount * 10) / 10;
+  }
+}
+
+// Focus the last found input, so that newer elements have priority
 function focusInputInForm() {
-  const form = document.querySelectorAll("form")[1];
+  const queryResult = document.querySelectorAll("form");
+  const form = queryResult[queryResult.length - 1];
   const someInput = form.querySelector("input");
   someInput.focus();
 }
@@ -50,7 +82,7 @@ function copyLinkToImage() {
     canvas.width = result.width;
     canvas.height = result.height;
     ctx.drawImage(result, 0, 0);
-    canvas.toBlob(function(blob) {
+    canvas.toBlob(function (blob) {
       let item;
       try {
         item = new ClipboardItem({ "image/png": blob });
@@ -70,7 +102,7 @@ function copyLinkToImage() {
         }
       }
       navigator.clipboard.write([item]).then(
-        function() {
+        function () {
           Toastify({
             text: "Yanked image",
             position: "center",
@@ -82,7 +114,7 @@ function copyLinkToImage() {
             },
           }).showToast();
         },
-        function(error) {
+        function (error) {
           console.error("Unable to copy image to clipboard :", error);
         },
       );
@@ -95,7 +127,7 @@ function copyUrlOfContent() {
   const result = currentPost.querySelector("[src]");
   const src = result.src;
   navigator.clipboard.writeText(src).then(
-    function() {
+    function () {
       Toastify({
         text: `Yanked link ${src}`,
         position: "center",
@@ -107,7 +139,7 @@ function copyUrlOfContent() {
         },
       }).showToast();
     },
-    function(error) {
+    function (error) {
       console.error("Unable to copy link to clipboard :", error);
     },
   );
@@ -134,8 +166,6 @@ function scrollDown(count) {
 }
 
 function scrollUp(count) {
-  // TODO: if we need to scroll 5 posts, but there are 3 left, we should scroll 3
-  // right now, we don't scroll at all
   try {
     const newPostIdx = Math.max(currentPostIdx - count, 0);
     if (currentPostIdx === newPostIdx) {
@@ -154,6 +184,11 @@ function scrollUp(count) {
 
 function scrollToTop() {
   currentPostIdx = 0;
+  availablePosts[currentPostIdx].scrollIntoView({ behavior: "instant" });
+}
+
+function scrollToBottom() {
+  currentPostIdx = availablePosts.length - 1;
   availablePosts[currentPostIdx].scrollIntoView({ behavior: "instant" });
 }
 
@@ -191,7 +226,7 @@ function reloadAvailablePosts() {
   for (let i = 0; i < elements.length; i++) {
     availablePosts.push(elements[i]);
     if (elements[i].onblur === null) {
-      elements[i].onblur = function(event) {
+      elements[i].onblur = function (event) {
         const video = event.target.querySelector("video");
         if (video !== null) {
           if (!video.paused) {
@@ -203,7 +238,7 @@ function reloadAvailablePosts() {
   }
 }
 
-htmx.on("htmx:afterSettle", function(_) {
+htmx.on("htmx:afterSettle", function (_) {
   reloadAvailablePosts();
 });
 
@@ -212,7 +247,7 @@ setTimeout(() => {
   updateCurrentPostIdx();
 });
 
-document.onscroll = function() {
+document.onscroll = function () {
   updateCurrentPostIdx();
 };
 
@@ -222,12 +257,14 @@ function resetCompositeKeys() {
   compositeKey = undefined;
 }
 
-// TODO: G key should take us to the last post
-// TODO buttons to log out, control video volume
+// TODO buttons to log out, control video volume, close the window
 function handleSimpleKey(key, event) {
   switch (key) {
     case "i":
-      login();
+      openForm("/signin-form");
+      break;
+    case "a":
+      openForm("/upload-form");
       break;
     case "j":
       scrollDown(1);
@@ -244,7 +281,22 @@ function handleSimpleKey(key, event) {
     case "y":
       copyLinkToImage();
       break;
+    case "G":
+      scrollToBottom();
+      break;
+    case "Q":
+      openForm("/signout");
+      break;
+    case "ArrowLeft":
+      event.preventDefault();
+      seekVideoLeft();
+      break;
+    case "ArrowRight":
+      event.preventDefault();
+      seekVideoRight();
+      break;
     case " ":
+      event.preventDefault();
       playVideo(event);
       break;
     case "/":
@@ -255,6 +307,13 @@ function handleSimpleKey(key, event) {
       break;
     case "g":
       compositeKey = "g";
+      break;
+    case "<":
+      lowerVolumeOfVideo(0.2);
+      break;
+    case ">":
+      // TODO: allow changing the default volume of videos
+      increaseVolumeOfVideo(0.2);
       break;
     default:
       break;
@@ -291,7 +350,7 @@ function startedCompositeKey(_) {
 }
 
 // TODO: buttons for signin/signout
-document.onkeydown = function(e) {
+document.onkeydown = function (e) {
   const { key } = e;
   // Escape is a special case: we always want the script to handle it
   if (key === "Escape") {

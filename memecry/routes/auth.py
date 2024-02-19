@@ -1,7 +1,8 @@
-from typing import cast
+from typing import Protocol, cast
 
 from relax.app import AuthScope, HTMLResponse, RelaxRoute
 from relax.html import div
+from starlette.datastructures import URL
 from starlette.responses import Response
 
 import memecry.schema
@@ -11,6 +12,11 @@ import memecry.user_service
 import memecry.views.common
 import memecry.views.misc
 import memecry.views.post
+
+
+class SigninSig(Protocol):
+    def __call__(self) -> URL:
+        ...
 
 
 # Signin
@@ -35,11 +41,9 @@ async def signin(request: memecry.types.Request) -> HTMLResponse | Response:
 
 async def signin_form(request: memecry.types.Request) -> HTMLResponse:
     if request.scope["from_htmx"]:
-        return HTMLResponse(memecry.views.misc.signin_form(request.url_of(signin)))
+        return HTMLResponse(memecry.views.misc.signin_form())
     return HTMLResponse(
-        memecry.views.misc.page_root(
-            memecry.views.misc.signin_form(request.url_of(signin))
-        ),
+        memecry.views.misc.page_root(memecry.views.misc.signin_form()),
     )
 
 
@@ -87,9 +91,9 @@ async def signout(_: memecry.types.Request) -> Response:
 
 
 routes = [
-    RelaxRoute("/signing", "POST", signin),
+    RelaxRoute("/signin", "POST", signin, sig=SigninSig),
     RelaxRoute("/signup", "POST", signup),
-    RelaxRoute("/signing-form", "GET", signin_form),
+    RelaxRoute("/signin-form", "GET", signin_form),
     RelaxRoute("/signup-form", "GET", signup_form),
     RelaxRoute("/signout", "GET", signout, auth_scopes=[AuthScope.Authenticated]),
 ]

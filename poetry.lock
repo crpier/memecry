@@ -58,13 +58,13 @@ files = [
 
 [[package]]
 name = "anyio"
-version = "4.2.0"
+version = "4.3.0"
 description = "High level compatibility layer for multiple asynchronous event loop implementations"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "anyio-4.2.0-py3-none-any.whl", hash = "sha256:745843b39e829e108e518c489b31dc757de7d2131d53fac32bd8df268227bfee"},
-    {file = "anyio-4.2.0.tar.gz", hash = "sha256:e1875bb4b4e2de1669f4bc7869b6d3f54231cdced71605e6e64c9be77e3be50f"},
+    {file = "anyio-4.3.0-py3-none-any.whl", hash = "sha256:048e05d0f6caeed70d731f3db756d35dcc1f35747c8c403364a8332c630441b8"},
+    {file = "anyio-4.3.0.tar.gz", hash = "sha256:f75253795a87df48568485fd18cdd2a3fa5c4f7c5be8e5e36637733fce06fed6"},
 ]
 
 [package.dependencies]
@@ -1184,13 +1184,13 @@ files = [
 
 [[package]]
 name = "relax-py"
-version = "0.0.7"
+version = "0.0.8"
 description = ""
 optional = false
 python-versions = ">=3.11,<4.0"
 files = [
-    {file = "relax_py-0.0.7-py3-none-any.whl", hash = "sha256:b8c9bd88cbb19b3b3d84fd5b746108f8448f84d5403cf7372917c68389bd7529"},
-    {file = "relax_py-0.0.7.tar.gz", hash = "sha256:6859790a9bf014d5a1c6b45f5cff5bab96a398a537c17a8a9acc878aa4c1f317"},
+    {file = "relax_py-0.0.8-py3-none-any.whl", hash = "sha256:ced3d52831a195ccf1189b2f658b6cb2e9e701f347b6c966569d540b8ba78a8f"},
+    {file = "relax_py-0.0.8.tar.gz", hash = "sha256:12907790c4f1b793a533654335af4a842fadddd92d4d4f58533553d5d796dd5d"},
 ]
 
 [package.dependencies]
@@ -1637,4 +1637,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "b3d18061b599994ca8b6fa07fe5f6a06300a6805d44b5ccda3ef355e053e9802"
+content-hash = "7053caec099bada1e34e57214e4645f499e27b00e40f6ce0d5884a2b8590d0a1"

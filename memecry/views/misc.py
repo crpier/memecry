@@ -1,5 +1,6 @@
 import contextlib
 
+from relax.app import ViewContext
 from relax.html import (
     Element,
     Fragment,
@@ -22,10 +23,11 @@ from relax.html import (
     span,
     title,
 )
-from relax.injection import Injected, injectable_sync
+from relax.injection import Injected, component, injectable_sync
 from starlette.datastructures import URL
 
 import memecry.config
+import memecry.routes.auth
 import memecry.schema
 import memecry.views.post
 from memecry.views.common import (
@@ -268,7 +270,8 @@ def upload_form(upload_url: URL) -> div:
     )
 
 
-def signin_form(signin_url: URL) -> div:
+@component()
+def signin_form(*, context: ViewContext = Injected) -> div:
     return div(
         classes=[*FLEX_COL_WRAPPER_CLASSES, "fixed", "inset-48", "z-40"],
         hyperscript="on closeModal remove me",
@@ -278,7 +281,7 @@ def signin_form(signin_url: URL) -> div:
             classes=BASIC_FORM_CLASSES,
         )
         .hx_post(
-            signin_url,
+            context.endpoint(memecry.routes.auth.SigninSig)(),
             hx_encoding="multipart/form-data",
             hx_target="#signin-error",
         )
