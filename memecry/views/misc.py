@@ -255,8 +255,14 @@ def commands_helper(*, display_hack: bool = False) -> Element:
                 keybind_helper("gg", "focus on first post"),
                 keybind_helper("G", "focus last loaded post"),
                 #
-                section_separator("Copying"),
-                keybind_helper("y", "yank image file in focused post"),
+                section_separator("Post actions"),
+                keybind_helper("za", "open settings pane in post"),
+                keybind_helper("zc", "close settings pane in post"),
+                keybind_helper(
+                    "y",
+                    "yank image file in focused post "
+                    "(but your browser might not support it)",
+                ),
                 keybind_helper("gy", "yank url to post media"),
                 #
                 section_separator("Video posts"),
@@ -272,6 +278,7 @@ def commands_helper(*, display_hack: bool = False) -> Element:
                 keybind_helper("i", "open signing form"),
                 keybind_helper("gu", "go to root of site"),
                 keybind_helper("gi", "focus most proeminent input"),
+                keybind_helper("esc", "unfocus from input"),
             ),
         ),
     )

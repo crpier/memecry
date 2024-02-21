@@ -1,5 +1,17 @@
 import { CONSTANTS } from "./constants.js";
 
+function openSettingsPane() {
+  const currentPost = availablePosts[currentPostIdx];
+  const settingsPane = currentPost.querySelector(`.${CONSTANTS.POST_SETTINGS_PANE_CLASS}`)
+  settingsPane.classList.remove("hidden");
+}
+
+function closeSettingsPane() {
+  const currentPost = availablePosts[currentPostIdx];
+  const settingsPane = currentPost.querySelector(`.${CONSTANTS.POST_SETTINGS_PANE_CLASS}`)
+  settingsPane.classList.add("hidden");
+}
+
 function openForm(formUrl) {
   htmx.ajax("GET", formUrl, { target: "body", swap: "beforeend" });
 }
@@ -308,6 +320,9 @@ function handleSimpleKey(key, event) {
     case "g":
       compositeKey = "g";
       break;
+    case "z":
+      compositeKey = "z";
+      break;
     case "<":
       lowerVolumeOfVideo(0.2);
       break;
@@ -321,30 +336,41 @@ function handleSimpleKey(key, event) {
 }
 
 function handleCompositeKey(key, event) {
-  if (compositeKey !== "g") {
-    console.error("Composite keys other than g are not supported");
-    return;
-  }
-  switch (key) {
-    case "g":
-      scrollToTop();
-      break;
-    case "u":
-      window.location.href = "/";
-      break;
-    case "y":
-      copyUrlOfContent();
-      break;
-    case "i":
-      event.preventDefault();
-      focusInputInForm();
-      break;
-    default:
-      break;
+  if (compositeKey === "g") {
+    switch (key) {
+      case "g":
+        scrollToTop();
+        break;
+      case "u":
+        window.location.href = "/";
+        break;
+      case "y":
+        copyUrlOfContent();
+        break;
+      case "i":
+        event.preventDefault();
+        focusInputInForm();
+        break;
+      default:
+        break;
+    }
+  } else if (compositeKey === "z") {
+    switch (key) {
+      case "a":
+        openSettingsPane();
+        break;
+      case "c":
+        closeSettingsPane();
+        break;
+      default:
+        break;
+    }
+  } else {
+    console.error('Composite keys other than "g" and "z" are not supported');
   }
 }
 
-function startedCompositeKey(_) {
+function startedCompositeKey() {
   if (compositeKey !== undefined) return true;
   return false;
 }

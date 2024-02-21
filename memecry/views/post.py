@@ -145,7 +145,7 @@ def post_title_section(post: memecry.schema.PostRead) -> Element:
     )
 
 
-def post_info_pane(post: memecry.schema.PostRead) -> Element:
+def post_info_pane(*, post: memecry.schema.PostRead) -> Element:
     return div(classes=FLEX_ROW_WRAPPER_CLASSES).insert(
         div(
             classes=[
@@ -212,12 +212,13 @@ def post_interaction_pane(tags: Element, search_content_id: str) -> Element:
     )
 
 
-@injectable_sync
+@component(key=lambda post: post.id)
 def post_settings_pane(
-    post: memecry.schema.PostRead,
-    search_content_id: str,
-    parent_id: str,
+    # TODO: we should allos non-framework args to be positional
     *,
+    post: memecry.schema.PostRead,
+    parent_id: str,
+    id: str = Prop,
     context: ViewContext = Injected,
 ) -> Element:
     delete_post_url = context.endpoint(memecry.routes.post.DeletePost)
@@ -226,7 +227,6 @@ def post_settings_pane(
     )
     return div(
         classes=[*FLEX_COL_WRAPPER_CLASSES, "hidden"],
-        id=search_content_id,
     ).insert(
         textarea(
             name=f"content-input-{post.id}",
@@ -270,7 +270,7 @@ def post_settings_pane(
             button(
                 type="button",
                 classes=ATTENTION_SPECIAL_BUTTON_CLASSES,
-                hyperscript=f"on click toggle .hidden on #{search_content_id}",
+                hyperscript=f"on click toggle .hidden on #{id}",
             )
             .text("Save")
             .hx_put(
@@ -305,7 +305,8 @@ def post_content_component(post: memecry.schema.PostRead) -> Element:
 # TODO: either allow positional args, or encode their absence in a type sig somehow
 @component(key=lambda post: post.id)
 def post_component(*, post: memecry.schema.PostRead, id: str = Prop) -> div:
-    search_content_id = f"search-{post.id}"
+    # TODO: get this from the framework?
+    search_content_id = f"post-settings-pane-{post.id}"
 
     return div(
         classes=[
@@ -317,7 +318,7 @@ def post_component(*, post: memecry.schema.PostRead, id: str = Prop) -> div:
     ).insert(
         post_title_section(post),
         post_content_component(post),
-        post_info_pane(post),
+        post_info_pane(post=post),
         post_interaction_pane(
             tags_component(
                 post.id,
@@ -326,5 +327,5 @@ def post_component(*, post: memecry.schema.PostRead, id: str = Prop) -> div:
             ),
             search_content_id,
         ),
-        post_settings_pane(post, search_content_id, id),
+        post_settings_pane(post=post, parent_id=id),
     )
