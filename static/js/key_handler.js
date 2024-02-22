@@ -1,5 +1,9 @@
 import { CONSTANTS } from "./constants.js";
 
+function goToRandomPost() {
+  location.href = "/random";
+}
+
 function openSettingsPane() {
   const currentPost = availablePosts[currentPostIdx];
   const settingsPane = currentPost.querySelector(`.${CONSTANTS.POST_SETTINGS_PANE_CLASS}`)
@@ -290,6 +294,9 @@ function handleSimpleKey(key, event) {
     case "d":
       scrollDown(5);
       break;
+    case "r":
+      goToRandomPost();
+      break;
     case "y":
       copyLinkToImage();
       break;
@@ -299,11 +306,11 @@ function handleSimpleKey(key, event) {
     case "Q":
       openForm("/signout");
       break;
-    case "ArrowLeft":
+    case ",":
       event.preventDefault();
       seekVideoLeft();
       break;
-    case "ArrowRight":
+    case ".":
       event.preventDefault();
       seekVideoRight();
       break;
@@ -378,6 +385,7 @@ function startedCompositeKey() {
 // TODO: buttons for signin/signout
 document.onkeydown = function (e) {
   const { key } = e;
+  // console.log(key);
   // Escape is a special case: we always want the script to handle it
   if (key === "Escape") {
     if (inputIsFocused()) {

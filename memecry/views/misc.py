@@ -91,7 +91,16 @@ def page_head() -> head:
 def page_root(child: Element | list[Element]) -> html:
     return html(lang="en").insert(
         page_head(),
-        body(classes=["bg-black", "text-white", "pt-14", "flex", "flex-row"]).insert(
+        body(
+            classes=[
+                "bg-black",
+                "text-white",
+                "pt-14",
+                "flex",
+                "flex-row",
+                "justify-between",
+            ]
+        ).insert(
             child,
         ),
     )
@@ -171,19 +180,32 @@ def page_nav(
         classes=["bg-gray-900", "fixed", "top-0", "left-0", "w-full"],
     ).insert(
         div(classes=["flex", "w-full", "justify-end", "md:justify-between"]).insert(
-            # Logo
-            # Primary Navbar items
-            a(
-                href="/",
-                classes=["hidden", "md:block", "items-center", "md:px-2", "md:py-2"],
+            div(
+                classes=[
+                    "flex",
+                    "flex-row",
+                ]
             ).insert(
-                span(
+                a(
+                    href="/",
                     classes=[
-                        "font-bold",
-                        "text-2xl",
-                        "md:hover:text-green-500",
+                        "hidden",
+                        "md:block",
+                        "items-center",
+                        "md:px-2",
+                        "md:py-2",
                     ],
-                ).text("Memecry"),
+                ).insert(
+                    span(
+                        classes=[
+                            "font-bold",
+                            "text-2xl",
+                            "md:hover:text-green-500",
+                        ],
+                    ).text("Memecry"),
+                ),
+                # TODO: get url from context
+                a(href="/random", classes=["my-auto", "mx-4"]).text("Random"),
             ),
             # Secondary Navbar items
             div(
@@ -224,6 +246,7 @@ def commands_helper(*, display_hack: bool = False) -> Element:
             "px-8",
             "max-h-full",
             "text-white",
+            "md:max-w-lg",
             "invisible" if display_hack is True else "",
         ]
     ).insert(
@@ -267,13 +290,14 @@ def commands_helper(*, display_hack: bool = False) -> Element:
                 #
                 section_separator("Video posts"),
                 keybind_helper("space", "play/pause video in focused post"),
-                keybind_helper("←", "skip 1 second of video in focused post"),
-                keybind_helper("→", "rewind 1 second of video in focused post"),
+                keybind_helper(",", "skip 1 second of video in focused post"),
+                keybind_helper(".", "rewind 1 second of video in focused post"),
                 keybind_helper(">", "increase volume of video in focused post"),
                 keybind_helper("<", "decrease volume of video in focused post"),
                 #
                 section_separator("Site navigation"),
                 keybind_helper("/", "focus search bar"),
+                keybind_helper("r", "Go to random post"),
                 keybind_helper("a", "open upload"),
                 keybind_helper("i", "open signing form"),
                 keybind_helper("gu", "go to root of site"),
@@ -284,6 +308,7 @@ def commands_helper(*, display_hack: bool = False) -> Element:
     )
 
 
+# TODO: move this to posts route
 def home_view(
     posts: list[memecry.schema.PostRead],
     offset: int = 0,
@@ -309,7 +334,7 @@ def home_view(
     if partial:
         return Fragment(post_views)
     return main(
-        classes=[*FLEX_COL_WRAPPER_CLASSES, "md:max-w-xl", "mx-auto"],
+        classes=[*FLEX_COL_WRAPPER_CLASSES, "md:w-[32rem]", "mx-auto"],
     ).insert(
         post_views,
     )

@@ -6,7 +6,7 @@ from typing import (
 from relax.app import AuthScope, HTMLResponse, PathInt, RelaxRoute
 from relax.html import div
 from starlette.datastructures import URL, UploadFile
-from starlette.responses import Response
+from starlette.responses import RedirectResponse, Response
 
 import memecry.posts_service
 import memecry.routes.auth
@@ -18,9 +18,50 @@ import memecry.views.post
 
 
 async def get_post(request: memecry.types.Request, post_id: PathInt) -> HTMLResponse:
+    # TODO: why did I do this???
     _ = request, post_id
-    # TODO: lol
-    return HTMLResponse(div().text("lol"))
+    post = await memecry.posts_service.get_post_by_id(
+        post_id, viewer=request.user if request.user.is_authenticated else None
+    )
+    if post is None:
+        return HTMLResponse(memecry.views.common.error_element("Post not found"))
+    # TODO: honestly, I think I'd prefer request.from_htmx
+    if request.scope["from_htmx"]:
+        return HTMLResponse(memecry.views.post.post_component(post=post))
+    return HTMLResponse(
+        memecry.views.misc.page_root(
+            [
+                memecry.views.misc.page_nav(
+                    signup_url=request.url_of(memecry.routes.auth.signup_form),
+                    signin_url=request.url_of(memecry.routes.auth.signin_form),
+                    signout_url=request.url_of(memecry.routes.auth.signout),
+                    upload_form_url=request.url_of(upload_form),
+                    user=request.user if request.user.is_authenticated else None,
+                ),
+                memecry.views.misc.commands_helper(),
+                div(classes=["md:w-[32rem]"]).insert(
+                    memecry.views.post.post_component(post=post)
+                ),
+                memecry.views.misc.commands_helper(display_hack=True),
+            ],
+        ),
+    )
+
+
+# TODO: should have a type for redirect response maybe?
+async def random_post(
+    request: memecry.types.Request,
+) -> RedirectResponse | HTMLResponse:
+    random_post_id = await memecry.posts_service.get_random_post_id(
+        # TODO: find a nicer way to give the user
+        viewer=request.user if request.user.is_authenticated else None
+    )
+    if random_post_id is None:
+        return HTMLResponse(
+            memecry.views.common.error_element("Could not find random post")
+        )
+    redirect_url = f"{request.url_of(get_post, post_id=random_post_id)}"
+    return RedirectResponse(url=redirect_url)
 
 
 class UpdateTags(Protocol):
@@ -187,4 +228,5 @@ routes = [
     RelaxRoute(
         "/upload-form", "GET", upload_form, auth_scopes=[AuthScope.Authenticated]
     ),
+    RelaxRoute("/random", "GET", random_post, auth_scopes=[AuthScope.Authenticated]),
 ]

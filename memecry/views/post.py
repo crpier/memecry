@@ -313,6 +313,7 @@ def post_component(*, post: memecry.schema.PostRead, id: str = Prop) -> div:
             *FLEX_ELEMENT_WRAPPER_CLASSES,
             "focus:!border-gray-400",
             "outline-none",
+            "md:max-w-2xl",
         ],
         attrs={"tabindex": -1},
     ).insert(

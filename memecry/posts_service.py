@@ -3,7 +3,7 @@ from pathlib import Path
 import aiofiles
 from loguru import logger
 from relax.injection import Injected, injectable
-from sqlalchemy import delete, not_, select, update
+from sqlalchemy import delete, func, not_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import load_only
 from starlette.datastructures import UploadFile
@@ -76,6 +76,22 @@ async def get_posts(
                 if viewer.id == post.user_id:
                     post.editable = True
         return post_reads
+
+
+@injectable
+async def get_random_post_id(
+    viewer: memecry.schema.UserRead | None = None,
+    *,
+    asession: async_sessionmaker[AsyncSession] = Injected,
+    config: memecry.config.Config = Injected,
+) -> int | None:
+    async with asession() as session:
+        query = select(memecry.model.Post.id).order_by(func.random())
+        if not viewer:
+            for tag in config.RESTRICTED_TAGS:
+                query = query.where(memecry.model.Post.tags.not_like(f"%{tag}%"))
+        result = await session.execute(query)
+        return result.scalars().first()
 
 
 @injectable

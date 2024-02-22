@@ -57,6 +57,7 @@ async def search_posts(
     except ValueError as e:
         return HTMLResponse(memecry.views.common.error_element(str(e)))
 
+    # TODO: maybe I can just send a RedirectResponse directly?
     if request.scope["from_htmx"]:
         resp = Response()
         resp.headers[
