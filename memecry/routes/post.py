@@ -228,5 +228,5 @@ routes = [
     RelaxRoute(
         "/upload-form", "GET", upload_form, auth_scopes=[AuthScope.Authenticated]
     ),
-    RelaxRoute("/random", "GET", random_post, auth_scopes=[AuthScope.Authenticated]),
+    RelaxRoute("/random", "GET", random_post),
 ]

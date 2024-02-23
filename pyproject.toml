@@ -37,7 +37,6 @@ alembic = "^1.13.0"
 mypy = "^1.2.0"
 ruff = "^0.1.1"
 pydeps = "^1.12.8"
-python-dotenv = {extras = ["cli"], version = "^1.0.0"}
 pre-commit = "^3.5.0"
 
 [build-system]
@@ -67,6 +66,7 @@ disable_error_code = ["type-abstract"]
 module = ["icecream", "sqlite_fts4"]
 ignore_missing_imports = "true"
 
-# TODO: add scripts for some common ops:
-# poetry cache clear PyPI --all
-# dotenv run uvicorn memecry.main:app --reload
+[tool.poe.tasks]
+cclear = "poetry cache clear PyPI --all --no-interaction"
+serve.shell = "uvicorn memecry.main:app --reload"
+serve.envfile = ".env"
