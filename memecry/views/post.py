@@ -1,8 +1,10 @@
+import contextlib
 from pathlib import Path
 
 from relax.app import ViewContext
 from relax.html import (
     Element,
+    Fragment,
     a,
     button,
     div,
@@ -10,6 +12,7 @@ from relax.html import (
     img,
     input,
     li,
+    main,
     span,
     textarea,
     ul,
@@ -214,7 +217,7 @@ def post_interaction_pane(tags: Element, search_content_id: str) -> Element:
 
 @component(key=lambda post: post.id)
 def post_settings_pane(
-    # TODO: we should allos non-framework args to be positional
+    # TODO: we should allow non-framework args to be positional
     *,
     post: memecry.schema.PostRead,
     parent_id: str,
@@ -329,4 +332,35 @@ def post_component(*, post: memecry.schema.PostRead, id: str = Prop) -> div:
             search_content_id,
         ),
         post_settings_pane(post=post, parent_id=id),
+    )
+
+
+def home_view(
+    posts: list[memecry.schema.PostRead],
+    offset: int = 0,
+    limit: int = 5,
+    *,
+    keep_scrolling: bool = False,
+    partial: bool = False,
+) -> Element:
+    post_views = [
+        post_component(
+            post=post,
+        )
+        for post in posts
+    ]
+    if keep_scrolling:
+        with contextlib.suppress(IndexError):
+            post_views[-1].hx_get(
+                f"/?offset={offset+limit}",
+                hx_trigger="revealed",
+                hx_swap="afterend",
+            )
+
+    if partial:
+        return Fragment(post_views)
+    return main(
+        classes=[*FLEX_COL_WRAPPER_CLASSES, "md:w-[32rem]", "mx-auto"],
+    ).insert(
+        post_views,
     )

@@ -1,10 +1,8 @@
-import contextlib
-
 from relax.app import ViewContext
 from relax.html import (
     Element,
-    Fragment,
     a,
+    aside,
     body,
     button,
     div,
@@ -14,7 +12,6 @@ from relax.html import (
     i,
     input,
     link,
-    main,
     meta,
     nav,
     p,
@@ -27,6 +24,7 @@ from starlette.datastructures import URL
 
 import memecry.config
 import memecry.routes.auth
+import memecry.routes.post
 import memecry.schema
 import memecry.views.post
 from memecry.views.common import (
@@ -65,15 +63,11 @@ def page_head() -> head:
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css",
             rel="stylesheet",
         ),
-        # TODO: support the type arg too
         link(
             rel="stylesheet",
             href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css",
         ),
-        # TODO: add these attrs to args
-        script(
-            src="/static/js/key_handler.js", attrs={"defer": "true", "type": "module"}
-        ),
+        script(src="/static/js/key_handler.js", type="module", defer=True),
         script(
             src="https://unpkg.com/htmx.org@1.9.5",
             attrs={
@@ -106,65 +100,75 @@ def page_root(child: Element | list[Element]) -> html:
     )
 
 
-# TODO: use urls from context lol
+# Why did I make this a component?
+@component()
+def signin_button(*, context: ViewContext = Injected) -> button:
+    return (
+        button(
+            id="signin",
+            classes=[*SIMPLE_BUTTON_CLASSES, "border-0"],
+        )
+        .hx_get(
+            target=context.endpoint(memecry.routes.auth.SigninFormSig)(),
+            hx_target="body",
+            hx_swap="beforeend",
+        )
+        .text("Sign in")
+    )
+
+
+@injectable_sync
 def page_nav(
-    signup_url: URL,
-    signin_url: URL,
-    signout_url: URL,
-    upload_form_url: URL,
     user: memecry.schema.UserRead | None = None,
+    *,
+    context: ViewContext = Injected,
 ) -> nav:
-    search_form = (
-        form(
-            classes=[*FLEX_ROW_WRAPPER_CLASSES],
-        )
-        .insert(
-            div(id="search-error"),
-            input(
-                id="search",
-                name="query",
-                type="text",
-                classes=[
-                    "rounded",
-                    "px-1",
-                    "md:mr-4",
-                    "text-black",
-                ],
-            ),
-            button(
-                classes=["hidden", "md:block"],
-                hyperscript="on click toggle .hidden on #search",
-            ).insert(
-                i(classes=["fa", "fa-search", "fa-lg"]),
-            ),
-            # TODO: get url as param
-        )
-        .hx_get("/search", hx_target="#search-error")
+    search_form = form(
+        classes=[*FLEX_ROW_WRAPPER_CLASSES],
+        # TODO: find a way to provide this url and its args from context
+        action="/search",
+    ).insert(
+        div(id="search-error"),
+        input(
+            id="search",
+            name="query",
+            type="text",
+            classes=[
+                "rounded",
+                "px-1",
+                "md:mr-4",
+                "text-black",
+            ],
+        ),
+        button(
+            classes=["hidden", "md:block"],
+            hyperscript="on click toggle .hidden on #search",
+        ).insert(
+            i(classes=["fa", "fa-search", "fa-lg"]),
+        ),
     )
 
     signup_button = (
         button(
             classes=[*special_button_classes("green")],
         )
-        .hx_get(target=signup_url, hx_target="body", hx_swap="beforeend")
-        .text("Sign up")
-    )
-
-    # TODO: implement component that lets you set an id
-    signin_button = (
-        button(
-            id="signin",
-            classes=[*SIMPLE_BUTTON_CLASSES, "border-0"],
+        .hx_get(
+            target=context.endpoint(memecry.routes.auth.SignupFormSig)(),
+            hx_target="body",
+            hx_swap="beforeend",
         )
-        .hx_get(target=signin_url, hx_target="body", hx_swap="beforeend")
-        .text("Sign in")
+        .text("Sign up")
     )
 
     upload_button = (
         button(
             classes=[*special_button_classes("green"), "mr-1"],
         )
-        .hx_get(target=upload_form_url, hx_target="body", hx_swap="beforeend")
+        .hx_get(
+            target=context.endpoint(memecry.routes.post.UploadFormSig)(),
+            hx_target="body",
+            hx_swap="beforeend",
+        )
         .text("Upload")
     )
 
@@ -172,7 +176,11 @@ def page_nav(
         button(
             classes=[*SIMPLE_BUTTON_CLASSES, "border-0"],
         )
-        .hx_get(target=signout_url, hx_target="body", hx_swap="beforeend")
+        .hx_get(
+            target=context.endpoint(memecry.routes.auth.SignoutSig)(),
+            hx_target="body",
+            hx_swap="beforeend",
+        )
         .text("Sign out")
     )
 
@@ -204,15 +212,17 @@ def page_nav(
                         ],
                     ).text("Memecry"),
                 ),
-                # TODO: get url from context
-                a(href="/random", classes=["my-auto", "mx-4"]).text("Random"),
+                a(
+                    href=context.endpoint(memecry.routes.post.RandomPostSig)(),
+                    classes=["my-auto", "mx-4"],
+                ).text("Random"),
             ),
             # Secondary Navbar items
             div(
                 classes=[*FLEX_ROW_WRAPPER_CLASSES],
             ).insert(
                 search_form,
-                signin_button if not user else None,
+                signin_button() if not user else None,
                 signup_button if not user else None,
                 signout_button if user else None,
                 upload_button if user else None,
@@ -238,8 +248,7 @@ def section_separator(name: str) -> Element:
 
 # TODO: I might want this to move with the scroll element
 def commands_helper(*, display_hack: bool = False) -> Element:
-    # TODO: would be nice to use aside instead of div
-    return div(
+    return aside(
         classes=[
             "hidden",
             "md:block",
@@ -309,40 +318,8 @@ def commands_helper(*, display_hack: bool = False) -> Element:
     )
 
 
-# TODO: move this to posts route
-def home_view(
-    posts: list[memecry.schema.PostRead],
-    offset: int = 0,
-    limit: int = 5,
-    *,
-    keep_scrolling: bool = False,
-    partial: bool = False,
-) -> Element:
-    post_views = [
-        memecry.views.post.post_component(
-            post=post,
-        )
-        for post in posts
-    ]
-    if keep_scrolling:
-        with contextlib.suppress(IndexError):
-            post_views[-1].hx_get(
-                f"/?offset={offset+limit}",
-                hx_trigger="revealed",
-                hx_swap="afterend",
-            )
-
-    if partial:
-        return Fragment(post_views)
-    return main(
-        classes=[*FLEX_COL_WRAPPER_CLASSES, "md:w-[32rem]", "mx-auto"],
-    ).insert(
-        post_views,
-    )
-
-
-# TODO: get url from context
-def upload_form(upload_url: URL) -> div:
+@injectable_sync
+def upload_form(*, context: ViewContext = Injected) -> div:
     tags = memecry.views.post.tags_component(editable=True)
     return div(
         id="upload-form",
@@ -354,7 +331,7 @@ def upload_form(upload_url: URL) -> div:
             classes=BASIC_FORM_CLASSES,
         )
         .hx_post(
-            upload_url,
+            context.endpoint(memecry.routes.post.UploadSig)(),
             hx_swap="afterend",
             hx_encoding="multipart/form-data",
         )

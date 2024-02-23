@@ -3,7 +3,7 @@ from typing import (
     cast,
 )
 
-from relax.app import AuthScope, HTMLResponse, PathInt, RelaxRoute
+from relax.app import AuthScope, HTMLResponse, PathInt, QueryInt, QueryStr, RelaxRoute
 from relax.html import div
 from starlette.datastructures import URL, UploadFile
 from starlette.responses import RedirectResponse, Response
@@ -18,8 +18,6 @@ import memecry.views.post
 
 
 async def get_post(request: memecry.types.Request, post_id: PathInt) -> HTMLResponse:
-    # TODO: why did I do this???
-    _ = request, post_id
     post = await memecry.posts_service.get_post_by_id(
         post_id, viewer=request.user if request.user.is_authenticated else None
     )
@@ -32,10 +30,6 @@ async def get_post(request: memecry.types.Request, post_id: PathInt) -> HTMLResp
         memecry.views.misc.page_root(
             [
                 memecry.views.misc.page_nav(
-                    signup_url=request.url_of(memecry.routes.auth.signup_form),
-                    signin_url=request.url_of(memecry.routes.auth.signin_form),
-                    signout_url=request.url_of(memecry.routes.auth.signout),
-                    upload_form_url=request.url_of(upload_form),
                     user=request.user if request.user.is_authenticated else None,
                 ),
                 memecry.views.misc.commands_helper(),
@@ -48,7 +42,11 @@ async def get_post(request: memecry.types.Request, post_id: PathInt) -> HTMLResp
     )
 
 
-# TODO: should have a type for redirect response maybe?
+class RandomPostSig(Protocol):
+    def __call__(self) -> URL:
+        ...
+
+
 async def random_post(
     request: memecry.types.Request,
 ) -> RedirectResponse | HTMLResponse:
@@ -145,23 +143,28 @@ async def delete_post(_: memecry.types.Request, post_id: PathInt) -> Response:
     return Response("success")
 
 
+class UploadFormSig(Protocol):
+    def __call__(self) -> URL:
+        ...
+
+
 async def upload_form(request: memecry.types.Request) -> HTMLResponse:
     if request.scope["from_htmx"]:
         return HTMLResponse(
-            memecry.views.misc.upload_form(
-                request.url_of(upload),
-                # TODO: encode somewhere the post_id=0 magic spell
-            ),
+            memecry.views.misc.upload_form(),
         )
     return HTMLResponse(
         memecry.views.misc.page_root(
             [
-                memecry.views.misc.upload_form(
-                    request.url_of(upload),
-                ),
+                memecry.views.misc.upload_form(),
             ],
         ),
     )
+
+
+class UploadSig(Protocol):
+    def __call__(self) -> URL:
+        ...
 
 
 # TODO: the form should be unwrapped in the relax lib
@@ -190,12 +193,75 @@ async def upload(request: memecry.types.Request) -> Response:
     return resp
 
 
+async def get_homepage(
+    request: memecry.types.Request,
+    limit: QueryInt = 5,
+    offset: QueryInt = 0,
+) -> HTMLResponse:
+    posts = await memecry.posts_service.get_posts(
+        viewer=request.user if request.user.is_authenticated else None,
+        limit=limit,
+        offset=offset,
+    )
+    home_view = memecry.views.post.home_view(
+        posts,
+        offset=offset,
+        limit=limit,
+        keep_scrolling=True,
+        partial=request.scope["from_htmx"],
+    )
+    if request.scope["from_htmx"]:
+        return HTMLResponse(home_view)
+    return HTMLResponse(
+        memecry.views.misc.page_root(
+            [
+                memecry.views.misc.page_nav(
+                    user=request.user if request.user.is_authenticated else None,
+                ),
+                memecry.views.misc.commands_helper(),
+                home_view,
+                memecry.views.misc.commands_helper(display_hack=True),
+            ],
+        ),
+    )
+
+
+async def search_posts(
+    request: memecry.types.Request, query: QueryStr
+) -> HTMLResponse | Response:
+    try:
+        parsed_query = memecry.schema.Query(query)
+    except ValueError as e:
+        return HTMLResponse(memecry.views.common.error_element(str(e)))
+
+    posts = await memecry.posts_service.get_posts_by_search_query(
+        parsed_query,
+        viewer=request.user if request.user.is_authenticated else None,
+        offset=0,
+        limit=0,
+    )
+    home_view = memecry.views.post.home_view(
+        posts,
+        offset=0,
+        limit=-1,
+        keep_scrolling=False,
+        partial=request.scope["from_htmx"],
+    )
+    return HTMLResponse(
+        memecry.views.misc.page_root(
+            [
+                memecry.views.misc.page_nav(
+                    user=request.user if request.user.is_authenticated else None,
+                ),
+                home_view,
+            ],
+        ),
+    )
+
+
 routes = [
     RelaxRoute(
-        "/upload",
-        "POST",
-        upload,
-        auth_scopes=[AuthScope.Authenticated],
+        "/upload", "POST", upload, auth_scopes=[AuthScope.Authenticated], sig=UploadSig
     ),
     RelaxRoute(
         "/posts/{post_id}/tags",
@@ -226,7 +292,13 @@ routes = [
         auth_scopes=[AuthScope.Authenticated],
     ),
     RelaxRoute(
-        "/upload-form", "GET", upload_form, auth_scopes=[AuthScope.Authenticated]
+        "/upload-form",
+        "GET",
+        upload_form,
+        auth_scopes=[AuthScope.Authenticated],
+        sig=UploadFormSig,
     ),
-    RelaxRoute("/random", "GET", random_post),
+    RelaxRoute("/random", "GET", random_post, sig=RandomPostSig),
+    RelaxRoute("/", "GET", get_homepage),
+    RelaxRoute("/search", "GET", search_posts),
 ]

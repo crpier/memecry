@@ -644,10 +644,6 @@ video {
   display: none;
 }
 
-.h-6 {
-  height: 1.5rem;
-}
-
 .h-screen {
   height: 100vh;
 }
@@ -658,10 +654,6 @@ video {
 
 .max-h-full {
   max-height: 100%;
-}
-
-.w-6 {
-  width: 1.5rem;
 }
 
 .w-96 {
@@ -965,11 +957,6 @@ video {
 .text-black {
   --tw-text-opacity: 1;
   color: rgb(0 0 0 / var(--tw-text-opacity));
-}
-
-.text-gray-500 {
-  --tw-text-opacity: 1;
-  color: rgb(107 114 128 / var(--tw-text-opacity));
 }
 
 .text-green-300 {

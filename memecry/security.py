@@ -37,7 +37,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 @injectable
-# TODO: don't use any: use pydantic to parse the payload
+# TODO: don't use any: parse the payload into a dataclass instead
 async def decode_payload(
     token: str, *, config: memecry.config.Config = Injected
 ) -> dict[str, Any]:

@@ -273,7 +273,6 @@ function resetCompositeKeys() {
   compositeKey = undefined;
 }
 
-// TODO buttons to log out, control video volume, close the window
 function handleSimpleKey(key, event) {
   switch (key) {
     case "i":
@@ -320,7 +319,6 @@ function handleSimpleKey(key, event) {
       break;
     case "/":
       event.preventDefault();
-      // TODO: if there is text in the box already, we should put the cursor at the end
       searchBox.focus();
       resetCompositeKeys();
       break;
@@ -382,7 +380,6 @@ function startedCompositeKey() {
   return false;
 }
 
-// TODO: buttons for signin/signout
 document.onkeydown = function (e) {
   const { key } = e;
   // console.log(key);
@@ -404,6 +401,3 @@ document.onkeydown = function (e) {
     }
   }
 };
-// TODO: there is a bug where after using d/u we sometimes stop scrolling behavior
-// TODO: aargh, when posts are too tall, scrolling doesn't show the title; guess we'll have to
-// scroll to the top of the post, in the end

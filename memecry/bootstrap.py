@@ -54,10 +54,9 @@ async def bootstrap(app: App) -> memecry.config.Config:
     if config.ENV == "prod":
         run_migrations("./memecry/alembic", dsn)
         async with engine.begin() as conn:
-            # TODO: have a migration to create tables and stuff instead?
             await conn.run_sync(memecry.model.Base.metadata.create_all)
 
-    # TODO: get this from app
+    # TODO: maybe relax should do this?
     js_constants_fn = Path("static/js/constants.js")
     with js_constants_fn.open("w") as f:
         f.write("export const CONSTANTS = {\n")
@@ -65,7 +64,6 @@ async def bootstrap(app: App) -> memecry.config.Config:
             f.write(f'   {name.upper().replace("-", "_")}_CLASS: "{name}",\n')
         f.write("}")
 
-    # TODO: fix the ruff issue
     # TODO: run this in background, it's not needed for dev work
     # always run this, just so we don't forget
     subprocess.run(["tailwindcss", "-o", "static/css/tailwind.css"], check=False)  # noqa: S603, S607

@@ -39,12 +39,22 @@ async def signin(request: memecry.types.Request) -> HTMLResponse | Response:
         return resp
 
 
+class SigninFormSig(Protocol):
+    def __call__(self) -> URL:
+        ...
+
+
 async def signin_form(request: memecry.types.Request) -> HTMLResponse:
     if request.scope["from_htmx"]:
         return HTMLResponse(memecry.views.misc.signin_form())
     return HTMLResponse(
         memecry.views.misc.page_root(memecry.views.misc.signin_form()),
     )
+
+
+class SignupFormSig(Protocol):
+    def __call__(self) -> URL:
+        ...
 
 
 # Signup
@@ -56,6 +66,11 @@ async def signup_form(request: memecry.types.Request) -> HTMLResponse:
             memecry.views.misc.signup_form(request.url_of(signup)),
         ),
     )
+
+
+class SignupSig(Protocol):
+    def __call__(self) -> URL:
+        ...
 
 
 async def signup(request: memecry.types.Request) -> HTMLResponse:
@@ -81,6 +96,11 @@ async def signup(request: memecry.types.Request) -> HTMLResponse:
         return resp
 
 
+class SignoutSig(Protocol):
+    def __call__(self) -> URL:
+        ...
+
+
 # Signout
 async def signout(_: memecry.types.Request) -> Response:
     response = Response()
@@ -92,8 +112,14 @@ async def signout(_: memecry.types.Request) -> Response:
 
 routes = [
     RelaxRoute("/signin", "POST", signin, sig=SigninSig),
-    RelaxRoute("/signup", "POST", signup),
-    RelaxRoute("/signin-form", "GET", signin_form),
-    RelaxRoute("/signup-form", "GET", signup_form),
-    RelaxRoute("/signout", "GET", signout, auth_scopes=[AuthScope.Authenticated]),
+    RelaxRoute("/signup", "POST", signup, sig=SignupSig),
+    RelaxRoute("/signin-form", "GET", signin_form, sig=SigninFormSig),
+    RelaxRoute("/signup-form", "GET", signup_form, sig=SignupFormSig),
+    RelaxRoute(
+        "/signout",
+        "GET",
+        signout,
+        auth_scopes=[AuthScope.Authenticated],
+        sig=SignoutSig,
+    ),
 ]

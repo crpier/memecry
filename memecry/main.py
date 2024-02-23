@@ -12,7 +12,6 @@ from starlette.staticfiles import StaticFiles
 
 import memecry.bootstrap
 import memecry.routes.auth
-import memecry.routes.misc
 import memecry.routes.post
 import memecry.schema
 import memecry.security
@@ -76,7 +75,5 @@ app = App(
 )
 
 
-# TODO: try making routes a simple list again
 app.add_routes(memecry.routes.auth.routes)
-app.add_routes(memecry.routes.misc.routes)
 app.add_routes(memecry.routes.post.routes)
