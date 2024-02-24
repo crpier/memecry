@@ -109,7 +109,7 @@ def signin_button(*, context: ViewContext = Injected) -> button:
             classes=[*SIMPLE_BUTTON_CLASSES, "border-0"],
         )
         .hx_get(
-            target=context.endpoint(memecry.routes.auth.SigninFormSig)(),
+            target=context.url_of(memecry.routes.auth.signin_form)(),
             hx_target="body",
             hx_swap="beforeend",
         )
@@ -153,7 +153,7 @@ def page_nav(
             classes=[*special_button_classes("green")],
         )
         .hx_get(
-            target=context.endpoint(memecry.routes.auth.SignupFormSig)(),
+            target=context.url_of(memecry.routes.auth.signup_form)(),
             hx_target="body",
             hx_swap="beforeend",
         )
@@ -165,7 +165,7 @@ def page_nav(
             classes=[*special_button_classes("green"), "mr-1"],
         )
         .hx_get(
-            target=context.endpoint(memecry.routes.post.UploadFormSig)(),
+            target=context.url_of(memecry.routes.post.upload_form)(),
             hx_target="body",
             hx_swap="beforeend",
         )
@@ -177,7 +177,7 @@ def page_nav(
             classes=[*SIMPLE_BUTTON_CLASSES, "border-0"],
         )
         .hx_get(
-            target=context.endpoint(memecry.routes.auth.SignoutSig)(),
+            target=context.url_of(memecry.routes.auth.signout)(),
             hx_target="body",
             hx_swap="beforeend",
         )
@@ -213,7 +213,7 @@ def page_nav(
                     ).text("Memecry"),
                 ),
                 a(
-                    href=context.endpoint(memecry.routes.post.RandomPostSig)(),
+                    href=context.url_of(memecry.routes.post.random_post)(),
                     classes=["my-auto", "mx-4"],
                 ).text("Random"),
             ),
@@ -331,7 +331,7 @@ def upload_form(*, context: ViewContext = Injected) -> div:
             classes=BASIC_FORM_CLASSES,
         )
         .hx_post(
-            context.endpoint(memecry.routes.post.UploadSig)(),
+            context.url_of(memecry.routes.post.upload)(),
             hx_swap="afterend",
             hx_encoding="multipart/form-data",
         )
@@ -368,7 +368,7 @@ def signin_form(*, context: ViewContext = Injected) -> div:
             classes=BASIC_FORM_CLASSES,
         )
         .hx_post(
-            context.endpoint(memecry.routes.auth.SigninSig)(),
+            context.url_of(memecry.routes.auth.signin)(),
             hx_encoding="multipart/form-data",
             hx_target="#signin-error",
         )

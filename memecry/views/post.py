@@ -18,7 +18,7 @@ from relax.html import (
     ul,
     video,
 )
-from relax.injection import Injected, Prop, component, injectable_sync
+from relax.injection import Injected, component, injectable_sync
 
 import memecry.config
 import memecry.routes.post
@@ -48,6 +48,7 @@ def tags_component(  # noqa: PLR0913
     config: memecry.config.Config = Injected,
     context: ViewContext = Injected,
 ) -> div:
+    # TODO: get put element_id in component
     element_id = f"tags-{post_id}"
     tags_selector_id = f"tags-selector-{post_id}"
 
@@ -75,7 +76,7 @@ def tags_component(  # noqa: PLR0913
             )
             .text(tag)
             .hx_put(
-                context.endpoint(memecry.routes.post.UpdateTags)(post_id=post_id),
+                context.url_of(memecry.routes.post.update_tags)(post_id=post_id),
                 hx_target=f"#{element_id}",
                 hx_swap="outerHTML",
             ),
@@ -221,12 +222,12 @@ def post_settings_pane(
     *,
     post: memecry.schema.PostRead,
     parent_id: str,
-    id: str = Prop,
+    id: str = Injected,
     context: ViewContext = Injected,
 ) -> Element:
-    delete_post_url = context.endpoint(memecry.routes.post.DeletePost)
-    update_searchable_content_url = context.endpoint(
-        memecry.routes.post.UpdateSearchableContent
+    delete_post_url = context.url_of(memecry.routes.post.delete_post)
+    update_searchable_content_url = context.url_of(
+        memecry.routes.post.update_searchable_content
     )
     return div(
         classes=[*FLEX_COL_WRAPPER_CLASSES, "hidden"],
@@ -307,7 +308,7 @@ def post_content_component(post: memecry.schema.PostRead) -> Element:
 
 # TODO: either allow positional args, or encode their absence in a type sig somehow
 @component(key=lambda post: post.id)
-def post_component(*, post: memecry.schema.PostRead, id: str = Prop) -> div:
+def post_component(*, post: memecry.schema.PostRead, id: str = Injected) -> div:
     # TODO: get this from the framework?
     search_content_id = f"post-settings-pane-{post.id}"
 

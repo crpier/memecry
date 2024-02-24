@@ -28,14 +28,15 @@ async def upload_post(
         session.add(new_post)
         await session.commit()
         logger.info("New post has id: {}", new_post.id)
-        if not uploaded_file.filename:
-            msg = f"File {uploaded_file.filename} does not exist"
-            raise AssertionError(msg)
+        # we do this hack to preserve the suffix, but change the stem
+        assert uploaded_file.filename is not None  # noqa: S101
         dest = (config.MEDIA_UPLOAD_STORAGE / uploaded_file.filename).with_stem(
             str(new_post.id),
         )
+        content = uploaded_file.file.read()
+        await uploaded_file.close()
         async with aiofiles.open(dest, "wb") as f:
-            await f.write(await uploaded_file.read())
+            await f.write(content)
 
         new_post.source = str(Path("/media") / str(dest.name))
         session.add(new_post)

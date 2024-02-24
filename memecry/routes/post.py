@@ -1,11 +1,19 @@
+from dataclasses import dataclass
 from typing import (
-    Protocol,
+    Annotated,
     cast,
 )
 
-from relax.app import AuthScope, HTMLResponse, PathInt, QueryInt, QueryStr, RelaxRoute
+from relax.app import (
+    AuthScope,
+    HTMLResponse,
+    PathInt,
+    QueryInt,
+    QueryStr,
+    Router,
+)
 from relax.html import div
-from starlette.datastructures import URL, UploadFile
+from starlette.datastructures import UploadFile
 from starlette.responses import RedirectResponse, Response
 
 import memecry.posts_service
@@ -16,7 +24,10 @@ import memecry.views.common
 import memecry.views.misc
 import memecry.views.post
 
+router = Router()
 
+
+@router.path_function("GET", "/posts/{post_id}")
 async def get_post(request: memecry.types.Request, post_id: PathInt) -> HTMLResponse:
     post = await memecry.posts_service.get_post_by_id(
         post_id, viewer=request.user if request.user.is_authenticated else None
@@ -42,11 +53,7 @@ async def get_post(request: memecry.types.Request, post_id: PathInt) -> HTMLResp
     )
 
 
-class RandomPostSig(Protocol):
-    def __call__(self) -> URL:
-        ...
-
-
+@router.path_function("GET", "/random")
 async def random_post(
     request: memecry.types.Request,
 ) -> RedirectResponse | HTMLResponse:
@@ -62,54 +69,62 @@ async def random_post(
     return RedirectResponse(url=redirect_url)
 
 
-class UpdateTags(Protocol):
-    def __call__(self, post_id: int) -> URL:
-        ...
+@dataclass
+class TagForm:
+    tag: str
+    tags: str = "no-tags"
 
 
-async def update_tags(request: memecry.types.Request, post_id: PathInt) -> HTMLResponse:
-    async with request.form() as form:
-        new_tag = cast(str, form["tag"])
-        old_tags_in_form = cast(str, form.get("tags", "no-tags"))
-        if post_id != 0:
-            try:
-                updated_tags = await memecry.posts_service.toggle_post_tag(
-                    post_id, new_tag, request.user.id
-                )
-            except PermissionError:
-                return HTMLResponse(
-                    memecry.views.common.error_element("Permission denied"),
-                    status_code=403,
-                )
+@router.path_function(
+    "PUT", "/posts/{post_id}/tags", auth_scopes=[AuthScope.Authenticated]
+)
+async def update_tags(
+    request: memecry.types.Request,
+    post_id: PathInt,
+    # TODO: relax should annotate this for you somehow
+    form_data: Annotated[TagForm, "form_data"],
+) -> HTMLResponse:
+    new_tag = form_data.tag
+    old_tags_in_form = form_data.tags
+    if post_id != 0:
+        try:
+            updated_tags = await memecry.posts_service.toggle_post_tag(
+                post_id, new_tag, request.user.id
+            )
+        except PermissionError:
+            return HTMLResponse(
+                memecry.views.common.error_element("Permission denied"),
+                status_code=403,
+            )
+    else:
+        old_tags = old_tags_in_form.split(", ")
+
+        if new_tag in old_tags:
+            old_tags.remove(new_tag)
+            if old_tags == []:
+                old_tags = ["no tags"]
         else:
-            old_tags = old_tags_in_form.split(", ")
+            if old_tags == ["no tags"]:
+                old_tags = []
+            old_tags.append(new_tag)
 
-            if new_tag in old_tags:
-                old_tags.remove(new_tag)
-                if old_tags == []:
-                    old_tags = ["no tags"]
-            else:
-                if old_tags == ["no tags"]:
-                    old_tags = []
-                old_tags.append(new_tag)
+        updated_tags = ", ".join(old_tags)
 
-            updated_tags = ", ".join(old_tags)
-
-        return HTMLResponse(
-            memecry.views.post.tags_component(
-                post_id=post_id,
-                post_tags=updated_tags,
-                editable=True,
-                hidden_dropdown=False,
-            ),
-        )
+    return HTMLResponse(
+        memecry.views.post.tags_component(
+            post_id=post_id,
+            post_tags=updated_tags,
+            editable=True,
+            hidden_dropdown=False,
+        ),
+    )
 
 
-class UpdateSearchableContent(Protocol):
-    def __call__(self, post_id: int) -> URL:
-        ...
-
-
+@router.path_function(
+    "PUT",
+    "/posts/{post_id}/searchable-content",
+    auth_scopes=[AuthScope.Authenticated],
+)
 # TODO: maybe better to have a single update endpoint?
 async def update_searchable_content(
     request: memecry.types.Request, post_id: PathInt
@@ -124,6 +139,11 @@ async def update_searchable_content(
     return Response("success")
 
 
+@router.path_function(
+    "PUT",
+    "/posts/{post_id}/title",
+    auth_scopes=[AuthScope.Authenticated],
+)
 async def update_title(request: memecry.types.Request, post_id: PathInt) -> Response:
     async with request.form() as form:
         new_title = cast(str, form[f"title-{post_id}"])
@@ -133,21 +153,11 @@ async def update_title(request: memecry.types.Request, post_id: PathInt) -> Resp
     return Response("success")
 
 
-class DeletePost(Protocol):
-    def __call__(self, post_id: int) -> URL:
-        ...
-
-
-async def delete_post(_: memecry.types.Request, post_id: PathInt) -> Response:
-    await memecry.posts_service.delete_post(post_id)
-    return Response("success")
-
-
-class UploadFormSig(Protocol):
-    def __call__(self) -> URL:
-        ...
-
-
+@router.path_function(
+    "GET",
+    "/upload-form",
+    auth_scopes=[AuthScope.Authenticated],
+)
 async def upload_form(request: memecry.types.Request) -> HTMLResponse:
     if request.scope["from_htmx"]:
         return HTMLResponse(
@@ -162,37 +172,37 @@ async def upload_form(request: memecry.types.Request) -> HTMLResponse:
     )
 
 
-class UploadSig(Protocol):
-    def __call__(self) -> URL:
-        ...
+@dataclass
+class UploadForm:
+    title: str
+    tags: str
+    file: UploadFile
+    searchable_content: str = ""
 
 
+@router.path_function("POST", "/upload", auth_scopes=[AuthScope.Authenticated])
 # TODO: the form should be unwrapped in the relax lib
-async def upload(request: memecry.types.Request) -> Response:
-    async with request.form() as form:
-        title = cast(str, form["title"])
-        tags = cast(str, form["tags"])
-        file = cast(UploadFile, form["file"])
-        try:
-            searchable_content = cast(str, form["searchable-content"])
-        except KeyError:
-            searchable_content = ""
-
-        post_data = memecry.schema.PostCreate(
-            title=title,
-            user_id=request.user.id,
-            tags=tags,
-            searchable_content=searchable_content,
-        )
-        new_post_id = await memecry.posts_service.upload_post(
-            post_data=post_data, uploaded_file=file
-        )
+async def upload(
+    request: memecry.types.Request, form_data: Annotated[UploadForm, "form_data"]
+) -> Response:
+    post_data = memecry.schema.PostCreate(
+        title=form_data.title,
+        tags=form_data.tags,
+        searchable_content=form_data.searchable_content,
+        user_id=request.user.id,
+    )
+    new_post_id = await memecry.posts_service.upload_post(
+        # TODO: why is the file in file.file???
+        post_data=post_data,
+        uploaded_file=form_data.file.file,  # type: ignore
+    )
     resp = Response()
     resp.headers["HX-Redirect"] = f"/posts/{new_post_id}"
     resp.status_code = 201
     return resp
 
 
+@router.path_function("GET", "/")
 async def get_homepage(
     request: memecry.types.Request,
     limit: QueryInt = 5,
@@ -226,6 +236,7 @@ async def get_homepage(
     )
 
 
+@router.path_function("GET", "/search")
 async def search_posts(
     request: memecry.types.Request, query: QueryStr
 ) -> HTMLResponse | Response:
@@ -259,46 +270,7 @@ async def search_posts(
     )
 
 
-routes = [
-    RelaxRoute(
-        "/upload", "POST", upload, auth_scopes=[AuthScope.Authenticated], sig=UploadSig
-    ),
-    RelaxRoute(
-        "/posts/{post_id}/tags",
-        "PUT",
-        update_tags,
-        auth_scopes=[AuthScope.Authenticated],
-        sig=UpdateTags,
-    ),
-    RelaxRoute(
-        "/posts/{post_id}",
-        "DELETE",
-        delete_post,
-        sig=DeletePost,
-        auth_scopes=[AuthScope.Authenticated],
-    ),
-    RelaxRoute("/posts/{post_id}", "GET", get_post),
-    RelaxRoute(
-        "/posts/{post_id}/searchable-content",
-        "PUT",
-        update_searchable_content,
-        sig=UpdateSearchableContent,
-        auth_scopes=[AuthScope.Authenticated],
-    ),
-    RelaxRoute(
-        "/posts/{post_id}/title",
-        "PUT",
-        update_title,
-        auth_scopes=[AuthScope.Authenticated],
-    ),
-    RelaxRoute(
-        "/upload-form",
-        "GET",
-        upload_form,
-        auth_scopes=[AuthScope.Authenticated],
-        sig=UploadFormSig,
-    ),
-    RelaxRoute("/random", "GET", random_post, sig=RandomPostSig),
-    RelaxRoute("/", "GET", get_homepage),
-    RelaxRoute("/search", "GET", search_posts),
-]
+@router.path_function("DELETE", "/posts/{post_id}")
+async def delete_post(_: memecry.types.Request, post_id: PathInt) -> Response:
+    await memecry.posts_service.delete_post(post_id)
+    return Response("success")

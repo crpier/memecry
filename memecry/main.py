@@ -75,5 +75,6 @@ app = App(
 )
 
 
-app.add_routes(memecry.routes.auth.routes)
-app.add_routes(memecry.routes.post.routes)
+app.add_router(memecry.routes.auth.router)
+
+app.add_router(memecry.routes.post.router)

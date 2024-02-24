@@ -1,8 +1,7 @@
-from typing import Protocol, cast
+from typing import cast
 
-from relax.app import AuthScope, HTMLResponse, RelaxRoute
+from relax.app import AuthScope, HTMLResponse, Router
 from relax.html import div
-from starlette.datastructures import URL
 from starlette.responses import Response
 
 import memecry.schema
@@ -13,13 +12,11 @@ import memecry.views.common
 import memecry.views.misc
 import memecry.views.post
 
-
-class SigninSig(Protocol):
-    def __call__(self) -> URL:
-        ...
+router = Router()
 
 
 # Signin
+@router.path_function("POST", "/signin")
 async def signin(request: memecry.types.Request) -> HTMLResponse | Response:
     async with request.form() as form:
         # lolwtf
@@ -39,11 +36,7 @@ async def signin(request: memecry.types.Request) -> HTMLResponse | Response:
         return resp
 
 
-class SigninFormSig(Protocol):
-    def __call__(self) -> URL:
-        ...
-
-
+@router.path_function("GET", "/signin-form")
 async def signin_form(request: memecry.types.Request) -> HTMLResponse:
     if request.scope["from_htmx"]:
         return HTMLResponse(memecry.views.misc.signin_form())
@@ -52,12 +45,7 @@ async def signin_form(request: memecry.types.Request) -> HTMLResponse:
     )
 
 
-class SignupFormSig(Protocol):
-    def __call__(self) -> URL:
-        ...
-
-
-# Signup
+@router.path_function("GET", "/signup-form")
 async def signup_form(request: memecry.types.Request) -> HTMLResponse:
     if request.scope["from_htmx"]:
         return HTMLResponse(memecry.views.misc.signup_form(request.url_of(signup)))
@@ -68,11 +56,7 @@ async def signup_form(request: memecry.types.Request) -> HTMLResponse:
     )
 
 
-class SignupSig(Protocol):
-    def __call__(self) -> URL:
-        ...
-
-
+@router.path_function("POST", "/signup")
 async def signup(request: memecry.types.Request) -> HTMLResponse:
     async with request.form() as form:
         # lolwtf
@@ -96,30 +80,15 @@ async def signup(request: memecry.types.Request) -> HTMLResponse:
         return resp
 
 
-class SignoutSig(Protocol):
-    def __call__(self) -> URL:
-        ...
-
-
 # Signout
+@router.path_function(
+    "GET",
+    "/signout",
+    auth_scopes=[AuthScope.Authenticated],
+)
 async def signout(_: memecry.types.Request) -> Response:
     response = Response()
     response.delete_cookie(key="authorization")
     response.headers["HX-Refresh"] = "true"
     response.status_code = 303
     return response
-
-
-routes = [
-    RelaxRoute("/signin", "POST", signin, sig=SigninSig),
-    RelaxRoute("/signup", "POST", signup, sig=SignupSig),
-    RelaxRoute("/signin-form", "GET", signin_form, sig=SigninFormSig),
-    RelaxRoute("/signup-form", "GET", signup_form, sig=SignupFormSig),
-    RelaxRoute(
-        "/signout",
-        "GET",
-        signout,
-        auth_scopes=[AuthScope.Authenticated],
-        sig=SignoutSig,
-    ),
-]
