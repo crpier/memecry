@@ -264,6 +264,7 @@ def post_settings_pane(
              })
              if result.isConfirmed issueRequest()""",
             )
+            # TODO: can I do something like hx_request(url_func, kwargs, hx_trigger, ..)
             .hx_delete(
                 delete_post_url(post_id=post.id),
                 hx_trigger="click",
@@ -281,6 +282,7 @@ def post_settings_pane(
                 update_searchable_content_url(post_id=post.id),
                 hx_trigger="click",
                 hx_swap="none",
+                # TODO: weird that I have to duplicate this
                 hx_include=f"[name='content-input-{post.id}']",
                 hx_encoding="multipart/form-data",
             ),

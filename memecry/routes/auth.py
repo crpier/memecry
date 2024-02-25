@@ -2,8 +2,10 @@ from typing import cast
 
 from relax.app import AuthScope, HTMLResponse, Router
 from relax.html import div
+from relax.injection import Injected
 from starlette.responses import Response
 
+import memecry.config
 import memecry.schema
 import memecry.security
 import memecry.types
@@ -57,9 +59,18 @@ async def signup_form(request: memecry.types.Request) -> HTMLResponse:
 
 
 @router.path_function("POST", "/signup")
-async def signup(request: memecry.types.Request) -> HTMLResponse:
+async def signup(
+    request: memecry.types.Request, *, config: memecry.config.Config = Injected
+) -> HTMLResponse:
     async with request.form() as form:
-        # lolwtf
+        # TODO: unwrap form in relax
+        if not config.ALLOW_SIGNUPS:
+            return HTMLResponse(
+                memecry.views.common.error_element(
+                    "Signups not allowed",
+                ),
+            )
+
         username = cast(str, form["username"])
         password = cast(str, form["password"])
         user_create = memecry.schema.UserCreate(username=username, password=password)

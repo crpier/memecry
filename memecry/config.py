@@ -12,6 +12,7 @@ class Config(BaseSettings):
     ENV: Literal["dev", "prod", "unit", "acceptance"] = "prod"
     SECRET_KEY: str = Field(default=...)
     ALGORITHM: str = "HS256"
+    ALLOW_SIGNUPS: bool = False
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 720  # 30 days
     MEDIA_UPLOAD_STORAGE: Path = Path("./media")
     COMMENT_SUBDIR: Path = Path("comments")

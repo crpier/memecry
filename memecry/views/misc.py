@@ -122,6 +122,7 @@ def page_nav(
     user: memecry.schema.UserRead | None = None,
     *,
     context: ViewContext = Injected,
+    config: memecry.config.Config = Injected,
 ) -> nav:
     search_form = form(
         classes=[*FLEX_ROW_WRAPPER_CLASSES],
@@ -223,7 +224,7 @@ def page_nav(
             ).insert(
                 search_form,
                 signin_button() if not user else None,
-                signup_button if not user else None,
+                signup_button if not user and config.ALLOW_SIGNUPS else None,
                 signout_button if user else None,
                 upload_button if user else None,
             ),
@@ -321,6 +322,7 @@ def commands_helper(*, display_hack: bool = False) -> Element:
 @injectable_sync
 def upload_form(*, context: ViewContext = Injected) -> div:
     tags = memecry.views.post.tags_component(editable=True)
+    upload_url = context.url_of(memecry.routes.post.upload)
     return div(
         id="upload-form",
         classes=[*FLEX_COL_WRAPPER_CLASSES, "fixed", "inset-48", "z-40"],
@@ -331,7 +333,7 @@ def upload_form(*, context: ViewContext = Injected) -> div:
             classes=BASIC_FORM_CLASSES,
         )
         .hx_post(
-            context.url_of(memecry.routes.post.upload)(),
+            upload_url(),
             hx_swap="afterend",
             hx_encoding="multipart/form-data",
         )
