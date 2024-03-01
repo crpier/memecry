@@ -52,6 +52,7 @@ def tags_component(  # noqa: PLR0913
     element_id = f"tags-{post_id}"
     tags_selector_id = f"tags-selector-{post_id}"
 
+    # TODO: can I use "truncate" class to hide overflow instead?
     def li_tag(tag: str) -> li:
         return li(
             classes=[
@@ -363,6 +364,7 @@ def home_view(
     if partial:
         return Fragment(post_views)
     return main(
+        # use the "divide-*" class to split posts, instead
         classes=[*FLEX_COL_WRAPPER_CLASSES, "md:w-[32rem]", "mx-auto"],
     ).insert(
         post_views,

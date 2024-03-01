@@ -43,11 +43,11 @@ async def get_post(request: memecry.types.Request, post_id: PathInt) -> HTMLResp
                 memecry.views.misc.page_nav(
                     user=request.user if request.user.is_authenticated else None,
                 ),
-                memecry.views.misc.commands_helper(),
+                memecry.views.misc.commands_helper(key="visible", display_hack=False),
                 div(classes=["md:w-[32rem]"]).insert(
                     memecry.views.post.post_component(post=post)
                 ),
-                memecry.views.misc.commands_helper(display_hack=True),
+                memecry.views.misc.commands_helper(display_hack=True, key="hidden"),
             ],
         ),
     )
@@ -228,9 +228,9 @@ async def get_homepage(
                 memecry.views.misc.page_nav(
                     user=request.user if request.user.is_authenticated else None,
                 ),
-                memecry.views.misc.commands_helper(),
+                memecry.views.misc.commands_helper(key="visibible", display_hack=False),
                 home_view,
-                memecry.views.misc.commands_helper(display_hack=True),
+                memecry.views.misc.commands_helper(key="hidden", display_hack=True),
             ],
         ),
     )

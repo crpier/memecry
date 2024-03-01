@@ -1,13 +1,20 @@
+import asyncio
 import contextlib
 from typing import AsyncIterator, cast
 
 from jose import ExpiredSignatureError
-from relax.app import App, AuthScope
+from relax.app import (
+    App,
+    AuthScope,
+    hot_replace_templates,
+    run_async,
+    websocket_endpoint,
+)
 from starlette.authentication import AuthCredentials, AuthenticationBackend
 from starlette.middleware import Middleware
 from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.requests import HTTPConnection
-from starlette.routing import Mount
+from starlette.routing import Mount, WebSocketRoute
 from starlette.staticfiles import StaticFiles
 
 import memecry.bootstrap
@@ -16,6 +23,7 @@ import memecry.routes.post
 import memecry.schema
 import memecry.security
 import memecry.user_service
+from memecry.config import Config
 
 
 class BasicAuthBackend(AuthenticationBackend):
@@ -44,7 +52,7 @@ class BasicAuthBackend(AuthenticationBackend):
 
 @contextlib.asynccontextmanager
 async def lifespan(app: App) -> AsyncIterator[None]:
-    config = await memecry.bootstrap.bootstrap(app)
+    config = app.config
     app.routes.append(
         Mount(
             "/media",
@@ -66,15 +74,20 @@ async def lifespan(app: App) -> AsyncIterator[None]:
             name="favicon",
         ),
     )
+    if config.ENV == "dev":
+        update_task = asyncio.create_task(hot_replace_templates(config.TEMPLATES_DIR))
     yield
+    if config.ENV == "dev":
+        update_task.cancel()  # type: ignore
 
 
-app = App(
+app = App[Config](
     middleware=[Middleware(AuthenticationMiddleware, backend=BasicAuthBackend())],
     lifespan=lifespan,
 )
 
-
+app.config = run_async(memecry.bootstrap.bootstrap(app))
 app.add_router(memecry.routes.auth.router)
-
 app.add_router(memecry.routes.post.router)
+if app.config.ENV == "dev":
+    app.routes.append(WebSocketRoute("/ws", endpoint=websocket_endpoint))

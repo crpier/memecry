@@ -9,8 +9,9 @@ from pydantic_settings import BaseSettings
 # TODO: make sure that alembic can use this
 # (i.e. we don't need unnecessary vars to be set)
 class Config(BaseSettings):
-    ENV: Literal["dev", "prod", "unit", "acceptance"] = "prod"
+    TEMPLATES_DIR: str = Field(default=...)
     SECRET_KEY: str = Field(default=...)
+    ENV: Literal["dev", "prod", "unit", "acceptance"] = "prod"
     ALGORITHM: str = "HS256"
     ALLOW_SIGNUPS: bool = False
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 720  # 30 days

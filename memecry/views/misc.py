@@ -8,6 +8,7 @@ from relax.html import (
     div,
     form,
     head,
+    hmr_script,
     html,
     i,
     input,
@@ -82,7 +83,12 @@ def page_head() -> head:
     )
 
 
-def page_root(child: Element | list[Element]) -> html:
+@injectable_sync
+def page_root(
+    child: Element | list[Element],
+    *,
+    config: memecry.config.Config = Injected,
+) -> html:
     return html(lang="en").insert(
         page_head(),
         body(
@@ -94,13 +100,10 @@ def page_root(child: Element | list[Element]) -> html:
                 "flex-row",
                 "justify-between",
             ]
-        ).insert(
-            child,
-        ),
+        ).insert(child, hmr_script() if config.ENV == "dev" else None),
     )
 
 
-# Why did I make this a component?
 @component()
 def signin_button(*, context: ViewContext = Injected) -> button:
     return (
@@ -247,8 +250,8 @@ def section_separator(name: str) -> Element:
     )
 
 
-# TODO: I might want this to move with the scroll element
-def commands_helper(*, display_hack: bool = False) -> Element:
+@component(lambda key: key)
+def commands_helper(*, key: str, display_hack: bool = False) -> Element:
     return aside(
         classes=[
             "hidden",
@@ -277,6 +280,7 @@ def commands_helper(*, display_hack: bool = False) -> Element:
                     "border-gray-600",
                     "px-6",
                     "py-3",
+                    key,
                 ]
             ).text("Keybindings"),
             div(classes=["pb-4"]).insert(

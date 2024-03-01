@@ -7,7 +7,7 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.11"
-uvicorn = "^0.23.2"
+uvicorn = {extras = ["standard"], version = "^0.27.1"}
 python-multipart = "^0.0.6"
 aiofiles = "^23.2.1"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
@@ -24,7 +24,7 @@ sqlalchemy = {extras = ["asyncio"], version = "^2.0.20"}
 aiosqlite = "^0.19.0"
 pydantic = "^2.4.2"
 pydantic-settings = "^2.0.3"
-relax-py = "0.0.10"
+relax-py = "0.0.11"
 pendulum = "3.0.0b1"
 loguru = "^0.7.2"
 icecream = "^2.1.3"
@@ -38,6 +38,7 @@ mypy = "^1.2.0"
 ruff = "^0.1.1"
 pydeps = "^1.12.8"
 pre-commit = "^3.5.0"
+watchfiles = "^0.21.0"
 
 [build-system]
 requires = ["poetry-core"]
@@ -52,6 +53,7 @@ ignore = [
 "COM812",
 "ISC001",
 "PGH003",
+"PTH110", # Allow me to use os.path.exists
 ]
 [tool.ruff.extend-per-file-ignores]
 "memecry/model.py" = ["TCH003"] # don't make me move imports into a type checking block as they are used by sqlalchemy
@@ -68,7 +70,7 @@ ignore_missing_imports = "true"
 
 [tool.poe.tasks]
 cclear = "poetry cache clear PyPI --all --no-interaction"
-serve.shell = "uvicorn memecry.main:app --reload"
+serve.shell = "dotenv run -- uvicorn memecry.main:app --reload --reload-exclude $(dotenv get TEMPLATES_DIR)'/*'"
 serve.envfile = ".env"
 lint = "./scripts/lint.sh"
 format = "ruff format memecry"
