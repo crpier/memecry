@@ -8,7 +8,7 @@ from relax.html import (
     div,
     form,
     head,
-    hmr_script,
+    hmr_scripts,
     html,
     i,
     input,
@@ -27,15 +27,8 @@ import memecry.config
 import memecry.routes.auth
 import memecry.routes.post
 import memecry.schema
+import memecry.views.common
 import memecry.views.post
-from memecry.views.common import (
-    BASIC_FORM_CLASSES,
-    FLEX_COL_WRAPPER_CLASSES,
-    FLEX_ROW_WRAPPER_CLASSES,
-    MODAL_UNDERLAY,
-    SIMPLE_BUTTON_CLASSES,
-    special_button_classes,
-)
 
 IMAGE_FORMATS = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
 VIDEO_FORMATS = [".mp4", ".webm"]
@@ -100,27 +93,11 @@ def page_root(
                 "flex-row",
                 "justify-between",
             ]
-        ).insert(child, hmr_script() if config.ENV == "dev" else None),
+        ).insert(child, hmr_scripts() if config.ENV == "dev" else None),
     )
 
 
 @component()
-def signin_button(*, context: ViewContext = Injected) -> button:
-    return (
-        button(
-            id="signin",
-            classes=[*SIMPLE_BUTTON_CLASSES, "border-0"],
-        )
-        .hx_get(
-            target=context.url_of(memecry.routes.auth.signin_form)(),
-            hx_target="body",
-            hx_swap="beforeend",
-        )
-        .text("Sign in")
-    )
-
-
-@injectable_sync
 def page_nav(
     user: memecry.schema.UserRead | None = None,
     *,
@@ -128,7 +105,7 @@ def page_nav(
     config: memecry.config.Config = Injected,
 ) -> nav:
     search_form = form(
-        classes=[*FLEX_ROW_WRAPPER_CLASSES],
+        classes=[*memecry.views.common.FLEX_ROW_WRAPPER_CLASSES],
         # TODO: find a way to provide this url and its args from context
         action="/search",
     ).insert(
@@ -152,9 +129,22 @@ def page_nav(
         ),
     )
 
+    signin_button = (
+        button(
+            id="signin",
+            classes=[*memecry.views.common.SIMPLE_BUTTON_CLASSES, "border-0"],
+        )
+        .hx_get(
+            target=context.url_of(memecry.routes.auth.signin_form)(),
+            hx_target="body",
+            hx_swap="beforeend",
+        )
+        .text("Sign in")
+    )
+
     signup_button = (
         button(
-            classes=[*special_button_classes("green")],
+            classes=[*memecry.views.common.special_button_classes("green")],
         )
         .hx_get(
             target=context.url_of(memecry.routes.auth.signup_form)(),
@@ -166,7 +156,7 @@ def page_nav(
 
     upload_button = (
         button(
-            classes=[*special_button_classes("green"), "mr-1"],
+            classes=[*memecry.views.common.special_button_classes("green"), "mr-1"],
         )
         .hx_get(
             target=context.url_of(memecry.routes.post.upload_form)(),
@@ -178,7 +168,7 @@ def page_nav(
 
     signout_button = (
         button(
-            classes=[*SIMPLE_BUTTON_CLASSES, "border-0"],
+            classes=[*memecry.views.common.SIMPLE_BUTTON_CLASSES, "border-0"],
         )
         .hx_get(
             target=context.url_of(memecry.routes.auth.signout)(),
@@ -223,10 +213,10 @@ def page_nav(
             ),
             # Secondary Navbar items
             div(
-                classes=[*FLEX_ROW_WRAPPER_CLASSES],
+                classes=[*memecry.views.common.FLEX_ROW_WRAPPER_CLASSES],
             ).insert(
                 search_form,
-                signin_button() if not user else None,
+                signin_button if not user else None,
                 signup_button if not user and config.ALLOW_SIGNUPS else None,
                 signout_button if user else None,
                 upload_button if user else None,
@@ -323,21 +313,26 @@ def commands_helper(*, key: str, display_hack: bool = False) -> Element:
     )
 
 
-@injectable_sync
+@component()
 def upload_form(*, context: ViewContext = Injected) -> div:
     tags = memecry.views.post.tags_component(editable=True)
     upload_url = context.url_of(memecry.routes.post.upload)
     return div(
         id="upload-form",
-        classes=[*FLEX_COL_WRAPPER_CLASSES, "fixed", "inset-48", "z-40"],
+        classes=[
+            *memecry.views.common.FLEX_COL_WRAPPER_CLASSES,
+            "fixed",
+            "inset-48",
+            "z-40",
+        ],
         hyperscript="on closeModal remove me",
     ).insert(
-        MODAL_UNDERLAY,
+        memecry.views.common.MODAL_UNDERLAY,
         form(
-            classes=BASIC_FORM_CLASSES,
+            classes=memecry.views.common.BASIC_FORM_CLASSES,
         )
         .hx_post(
-            upload_url(),
+            upload_url(),  # type: ignore
             hx_swap="afterend",
             hx_encoding="multipart/form-data",
         )
@@ -356,7 +351,7 @@ def upload_form(*, context: ViewContext = Injected) -> div:
             div(classes=["w-full", "flex", "flex-col", "items-end"]).insert(
                 button(
                     type="submit",
-                    classes=special_button_classes("green"),
+                    classes=memecry.views.common.special_button_classes("green"),
                 ).text("Upload"),
             ),
         ),
@@ -366,12 +361,17 @@ def upload_form(*, context: ViewContext = Injected) -> div:
 @component()
 def signin_form(*, context: ViewContext = Injected) -> div:
     return div(
-        classes=[*FLEX_COL_WRAPPER_CLASSES, "fixed", "inset-48", "z-40"],
+        classes=[
+            *memecry.views.common.FLEX_COL_WRAPPER_CLASSES,
+            "fixed",
+            "inset-48",
+            "z-40",
+        ],
         hyperscript="on closeModal remove me",
     ).insert(
-        MODAL_UNDERLAY,
+        memecry.views.common.MODAL_UNDERLAY,
         form(
-            classes=BASIC_FORM_CLASSES,
+            classes=memecry.views.common.BASIC_FORM_CLASSES,
         )
         .hx_post(
             context.url_of(memecry.routes.auth.signin)(),
@@ -382,7 +382,7 @@ def signin_form(*, context: ViewContext = Injected) -> div:
             p(classes=["text-2xl"]).text("Sign in"),
             div(
                 classes=[
-                    *FLEX_COL_WRAPPER_CLASSES,
+                    *memecry.views.common.FLEX_COL_WRAPPER_CLASSES,
                     "max-h-24",
                     "w-full",
                 ],
@@ -401,7 +401,7 @@ def signin_form(*, context: ViewContext = Injected) -> div:
                 ),
             ),
             button(
-                classes=special_button_classes("green"),
+                classes=memecry.views.common.special_button_classes("green"),
                 type="submit",
             ).text("Sign in"),
         ),
@@ -411,12 +411,17 @@ def signin_form(*, context: ViewContext = Injected) -> div:
 
 def signup_form(signup_url: URL) -> div:
     return div(
-        classes=[*FLEX_COL_WRAPPER_CLASSES, "fixed", "inset-48", "z-40"],
+        classes=[
+            *memecry.views.common.FLEX_COL_WRAPPER_CLASSES,
+            "fixed",
+            "inset-48",
+            "z-40",
+        ],
         hyperscript="on closeModal remove me",
     ).insert(
-        MODAL_UNDERLAY,
+        memecry.views.common.MODAL_UNDERLAY,
         form(
-            classes=BASIC_FORM_CLASSES,
+            classes=memecry.views.common.BASIC_FORM_CLASSES,
         )
         .hx_post(
             signup_url,
@@ -427,7 +432,7 @@ def signup_form(signup_url: URL) -> div:
             p(classes=["text-xl"]).text("Sign up"),
             div(
                 classes=[
-                    *FLEX_COL_WRAPPER_CLASSES,
+                    *memecry.views.common.FLEX_COL_WRAPPER_CLASSES,
                     "h-screen",
                     "max-h-24",
                     "w-full",
@@ -447,7 +452,7 @@ def signup_form(signup_url: URL) -> div:
                 ),
             ),
             button(
-                classes=special_button_classes("green"),
+                classes=memecry.views.common.special_button_classes("green"),
                 type="submit",
             ).text("Sign up"),
         ),

@@ -23,16 +23,7 @@ from relax.injection import Injected, component, injectable_sync
 import memecry.config
 import memecry.routes.post
 import memecry.schema
-from memecry.views.common import (
-    ATTENTION_SPECIAL_BUTTON_CLASSES,
-    DANGER_SPECIAL_BUTTON_CLASSES,
-    DROPDOWN_CLASSES,
-    FLEX_COL_WRAPPER_CLASSES,
-    FLEX_ELEMENT_WRAPPER_CLASSES,
-    FLEX_ROW_WRAPPER_CLASSES,
-    INPUT_CLASSES,
-    SIMPLE_BUTTON_CLASSES,
-)
+import memecry.views.common
 
 IMAGE_FORMATS = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
 VIDEO_FORMATS = [".mp4", ".webm"]
@@ -56,7 +47,7 @@ def tags_component(  # noqa: PLR0913
     def li_tag(tag: str) -> li:
         return li(
             classes=[
-                *SIMPLE_BUTTON_CLASSES,
+                *memecry.views.common.SIMPLE_BUTTON_CLASSES,
                 "!p-0",
                 "!border-0",
                 "[&:not(:first-child)]:!rounded-t-none",
@@ -68,7 +59,7 @@ def tags_component(  # noqa: PLR0913
             button(
                 attrs={"name": "tag", "value": tag},
                 classes=[
-                    *SIMPLE_BUTTON_CLASSES,
+                    *memecry.views.common.SIMPLE_BUTTON_CLASSES,
                     "!border-0",
                     "!rounded-none",
                     "w-full",
@@ -77,7 +68,8 @@ def tags_component(  # noqa: PLR0913
             )
             .text(tag)
             .hx_put(
-                context.url_of(memecry.routes.post.update_tags)(post_id=post_id),
+                # TODO: fixme
+                context.url_of(memecry.routes.post.update_tags)(post_id=post_id),  # type: ignore
                 hx_target=f"#{element_id}",
                 hx_swap="outerHTML",
             ),
@@ -94,7 +86,7 @@ def tags_component(  # noqa: PLR0913
         input(name="tags", type="text", value=post_tags, classes=["hidden"]),
         button(
             classes=[
-                *SIMPLE_BUTTON_CLASSES,
+                *memecry.views.common.SIMPLE_BUTTON_CLASSES,
                 "cursor-default" if not editable else "cursor-pointer",
                 "max-w-full",
                 "overflow-hidden",
@@ -106,7 +98,10 @@ def tags_component(  # noqa: PLR0913
         ).text(post_tags),
         div(
             id=tags_selector_id,
-            classes=[*DROPDOWN_CLASSES, "hidden" if hidden_dropdown else ""],
+            classes=[
+                *memecry.views.common.DROPDOWN_CLASSES,
+                "hidden" if hidden_dropdown else "",
+            ],
         ).insert(
             ul().insert(
                 [li_tag(tag) for tag in config.DEFAULT_TAGS],
@@ -117,12 +112,12 @@ def tags_component(  # noqa: PLR0913
 
 def post_title_section(post: memecry.schema.PostRead) -> Element:
     return div(
-        classes=FLEX_ROW_WRAPPER_CLASSES,
+        classes=memecry.views.common.FLEX_ROW_WRAPPER_CLASSES,
     ).insert(
         input(
             id=f"title-{post.id}",
             classes=[
-                *INPUT_CLASSES,
+                *memecry.views.common.INPUT_CLASSES,
                 "text-center",
                 "flex-1",
             ],
@@ -151,7 +146,7 @@ def post_title_section(post: memecry.schema.PostRead) -> Element:
 
 
 def post_info_pane(*, post: memecry.schema.PostRead) -> Element:
-    return div(classes=FLEX_ROW_WRAPPER_CLASSES).insert(
+    return div(classes=memecry.views.common.FLEX_ROW_WRAPPER_CLASSES).insert(
         div(
             classes=[
                 "md:font-semibold",
@@ -181,12 +176,12 @@ def post_info_pane(*, post: memecry.schema.PostRead) -> Element:
 
 
 def post_interaction_pane(tags: Element, search_content_id: str) -> Element:
-    return div(classes=FLEX_ROW_WRAPPER_CLASSES).insert(
-        div(classes=FLEX_ROW_WRAPPER_CLASSES).insert(
+    return div(classes=memecry.views.common.FLEX_ROW_WRAPPER_CLASSES).insert(
+        div(classes=memecry.views.common.FLEX_ROW_WRAPPER_CLASSES).insert(
             button(
                 type="button",
                 classes=[
-                    *SIMPLE_BUTTON_CLASSES,
+                    *memecry.views.common.SIMPLE_BUTTON_CLASSES,
                     "hover:text-green-700",
                     "hover:border-green-700",
                 ],
@@ -194,7 +189,7 @@ def post_interaction_pane(tags: Element, search_content_id: str) -> Element:
             button(
                 type="button",
                 classes=[
-                    *SIMPLE_BUTTON_CLASSES,
+                    *memecry.views.common.SIMPLE_BUTTON_CLASSES,
                     "hover:text-red-800",
                     "hover:border-red-800",
                 ],
@@ -204,12 +199,12 @@ def post_interaction_pane(tags: Element, search_content_id: str) -> Element:
         div(classes=["flex-grow"]),
         button(
             type="button",
-            classes=SIMPLE_BUTTON_CLASSES,
+            classes=memecry.views.common.SIMPLE_BUTTON_CLASSES,
             hyperscript=f"on click toggle .hidden on #{search_content_id}",
         ).insert(i(classes=["fa", "fa-gear", "fa-lg"])),
         button(
             classes=[
-                *SIMPLE_BUTTON_CLASSES,
+                *memecry.views.common.SIMPLE_BUTTON_CLASSES,
                 "font-semibold",
                 "whitespace-nowrap",
             ]
@@ -219,10 +214,10 @@ def post_interaction_pane(tags: Element, search_content_id: str) -> Element:
 
 @component(key=lambda post: post.id)
 def post_settings_pane(
-    # TODO: we should allow non-framework args to be positional
-    *,
+    # TODO: we should ensure it's mandatory that framwork params are keyword only
     post: memecry.schema.PostRead,
     parent_id: str,
+    *,
     id: str = Injected,
     context: ViewContext = Injected,
 ) -> Element:
@@ -231,7 +226,7 @@ def post_settings_pane(
         memecry.routes.post.update_searchable_content
     )
     return div(
-        classes=[*FLEX_COL_WRAPPER_CLASSES, "hidden"],
+        classes=[*memecry.views.common.FLEX_COL_WRAPPER_CLASSES, "hidden"],
     ).insert(
         textarea(
             name=f"content-input-{post.id}",
@@ -246,10 +241,10 @@ def post_settings_pane(
             ],
             disabled=not post.editable,
         ).text(post.searchable_content),
-        div(classes=FLEX_ROW_WRAPPER_CLASSES).insert(
+        div(classes=memecry.views.common.FLEX_ROW_WRAPPER_CLASSES).insert(
             button(
                 type="button",
-                classes=DANGER_SPECIAL_BUTTON_CLASSES,
+                classes=memecry.views.common.DANGER_SPECIAL_BUTTON_CLASSES,
                 hyperscript="""on htmx:confirm(issueRequest)
              halt the event
              call Swal.fire({
@@ -275,7 +270,7 @@ def post_settings_pane(
             .text("Delete post"),
             button(
                 type="button",
-                classes=ATTENTION_SPECIAL_BUTTON_CLASSES,
+                classes=memecry.views.common.ATTENTION_SPECIAL_BUTTON_CLASSES,
                 hyperscript=f"on click toggle .hidden on #{id}",
             )
             .text("Save")
@@ -312,12 +307,11 @@ def post_content_component(post: memecry.schema.PostRead) -> Element:
 # TODO: either allow positional args, or encode their absence in a type sig somehow
 @component(key=lambda post: post.id)
 def post_component(*, post: memecry.schema.PostRead, id: str = Injected) -> div:
-    # TODO: get this from the framework?
-    search_content_id = f"post-settings-pane-{post.id}"
+    post_settings = post_settings_pane(post=post, parent_id=id)
 
     return div(
         classes=[
-            *FLEX_ELEMENT_WRAPPER_CLASSES,
+            *memecry.views.common.FLEX_ELEMENT_WRAPPER_CLASSES,
             "focus:!border-gray-400",
             "outline-none",
             "md:max-w-2xl",
@@ -333,9 +327,9 @@ def post_component(*, post: memecry.schema.PostRead, id: str = Injected) -> div:
                 post.tags,
                 editable=post.editable,
             ),
-            search_content_id,
+            post_settings.id,
         ),
-        post_settings_pane(post=post, parent_id=id),
+        post_settings,
     )
 
 
@@ -365,7 +359,11 @@ def home_view(
         return Fragment(post_views)
     return main(
         # use the "divide-*" class to split posts, instead
-        classes=[*FLEX_COL_WRAPPER_CLASSES, "md:w-[32rem]", "mx-auto"],
+        classes=[
+            *memecry.views.common.FLEX_COL_WRAPPER_CLASSES,
+            "md:w-[32rem]",
+            "mx-auto",
+        ],
     ).insert(
         post_views,
     )

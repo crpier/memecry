@@ -6,6 +6,7 @@ from typing import (
 
 from relax.app import (
     AuthScope,
+    FormData,
     HTMLResponse,
     PathInt,
     QueryInt,
@@ -81,8 +82,7 @@ class TagForm:
 async def update_tags(
     request: memecry.types.Request,
     post_id: PathInt,
-    # TODO: relax should annotate this for you somehow
-    form_data: Annotated[TagForm, "form_data"],
+    form_data: FormData[TagForm],
 ) -> HTMLResponse:
     new_tag = form_data.tag
     old_tags_in_form = form_data.tags

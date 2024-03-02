@@ -1,3 +1,5 @@
+from typing import Literal
+
 from relax.html import (
     Tag,
     div,
@@ -22,9 +24,15 @@ SIMPLE_BUTTON_CLASSES = [
 
 
 # TODO: could I have a type for tailwind color?
-def special_button_classes(color: str) -> list[str]:
+def special_button_classes(color: Literal["red", "green"]) -> list[str]:
+    # make sure we write the full class name as a string
+    # so that tailwindcss cli picks it up
+    if color == "red":
+        bg_color = "bg-red-600"
+    elif color == "green":
+        bg_color = "bg-green-600"
     return [
-        f"bg-{color}-600",
+        bg_color,
         "px-3",
         "py-1",
         "text-sm",
@@ -109,7 +117,6 @@ INPUT_CLASSES = [
 ]
 
 MODAL_UNDERLAY = div(
-    attrs={"name": "underlay"},
     classes=[
         "fixed",
         "inset-0",
