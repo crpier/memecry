@@ -1,3 +1,4 @@
+from functools import lru_cache
 import sqlite3
 import subprocess
 from pathlib import Path
@@ -27,9 +28,10 @@ def run_migrations(script_location: str, dsn: str) -> None:
     alembic.command.upgrade(alembic_cfg, "head")
 
 
-@logger.catch
+@lru_cache
 async def bootstrap(app: App) -> memecry.config.Config:
     config = memecry.config.Config()
+    app.config = config
     add_injectable(memecry.config.Config, config)
 
     add_injectable(ViewContext, app.view_context)
@@ -52,7 +54,7 @@ async def bootstrap(app: App) -> memecry.config.Config:
     add_injectable(async_sessionmaker[AsyncSession], async_session)
 
     if config.ENV == "prod":
-        run_migrations("./memecry/alembic", dsn)
+        run_migrations("./memecry/alembic_migrations", dsn)
         async with engine.begin() as conn:
             await conn.run_sync(memecry.model.Base.metadata.create_all)
 

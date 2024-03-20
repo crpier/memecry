@@ -19,11 +19,13 @@ from relax.html import (
     video,
 )
 from relax.injection import Injected, component, injectable_sync
+from uvicorn.supervisors.watchfilesreload import WatchFilesReload
 
 import memecry.config
 import memecry.routes.post
 import memecry.schema
 import memecry.views.common
+import memecry.main
 
 IMAGE_FORMATS = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
 VIDEO_FORMATS = [".mp4", ".webm"]
@@ -306,7 +308,7 @@ def post_content_component(post: memecry.schema.PostRead) -> Element:
 
 # TODO: either allow positional args, or encode their absence in a type sig somehow
 @component(key=lambda post: post.id)
-def post_component(*, post: memecry.schema.PostRead, id: str = Injected) -> div:
+def post_component(post: memecry.schema.PostRead, *, id: str = Injected) -> div:
     post_settings = post_settings_pane(post=post, parent_id=id)
 
     return div(
