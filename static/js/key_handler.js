@@ -335,7 +335,6 @@ function handleSimpleKey(key, event) {
       lowerVolumeOfVideo(0.2);
       break;
     case ">":
-      // TODO: allow changing the default volume of videos
       increaseVolumeOfVideo(0.2);
       break;
     default:

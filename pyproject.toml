@@ -39,6 +39,7 @@ ruff = "^0.1.1"
 pydeps = "^1.12.8"
 pre-commit = "^3.5.0"
 watchfiles = "^0.21.0"
+types-python-jose = "^3.3.4.20240106"
 
 [build-system]
 requires = ["poetry-core"]
@@ -63,6 +64,11 @@ profile = "black"
 
 [tool.mypy]
 disable_error_code = ["type-abstract"]
+
+# ignore missing stub for relax-py
+[[tool.mypy.overrides]]
+module = ["relax.app", "relax.html", "relax.injection", "uvicorn", "starlette.authentication", "starlette.middleware", "starlette.middleware.authentication", "starlette.requests", "starlette.routing", "starlette.staticfiles"]
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = ["icecream", "sqlite_fts4"]

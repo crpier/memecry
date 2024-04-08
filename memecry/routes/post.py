@@ -20,7 +20,6 @@ from starlette.responses import RedirectResponse, Response
 import memecry.posts_service
 import memecry.routes.auth
 import memecry.schema
-import memecry.types
 import memecry.views.common
 import memecry.views.misc
 import memecry.views.post
@@ -29,7 +28,7 @@ router = Router()
 
 
 @router.path_function("GET", "/posts/{post_id}")
-async def get_post(request: memecry.types.Request, post_id: PathInt) -> HTMLResponse:
+async def get_post(request: memecry.schema.Request, post_id: PathInt) -> HTMLResponse:
     post = await memecry.posts_service.get_post_by_id(
         post_id, viewer=request.user if request.user.is_authenticated else None
     )
@@ -56,7 +55,7 @@ async def get_post(request: memecry.types.Request, post_id: PathInt) -> HTMLResp
 
 @router.path_function("GET", "/random")
 async def random_post(
-    request: memecry.types.Request,
+    request: memecry.schema.Request,
 ) -> RedirectResponse | HTMLResponse:
     random_post_id = await memecry.posts_service.get_random_post_id(
         # TODO: find a nicer way to give the user
@@ -80,7 +79,7 @@ class TagForm:
     "PUT", "/posts/{post_id}/tags", auth_scopes=[AuthScope.Authenticated]
 )
 async def update_tags(
-    request: memecry.types.Request,
+    request: memecry.schema.Request,
     post_id: PathInt,
     form_data: FormData[TagForm],
 ) -> HTMLResponse:
@@ -127,7 +126,7 @@ async def update_tags(
 )
 # TODO: maybe better to have a single update endpoint?
 async def update_searchable_content(
-    request: memecry.types.Request, post_id: PathInt
+    request: memecry.schema.Request, post_id: PathInt
 ) -> Response:
     async with request.form() as form:
         new_content = cast(str, form[f"content-input-{post_id}"])
@@ -144,7 +143,7 @@ async def update_searchable_content(
     "/posts/{post_id}/title",
     auth_scopes=[AuthScope.Authenticated],
 )
-async def update_title(request: memecry.types.Request, post_id: PathInt) -> Response:
+async def update_title(request: memecry.schema.Request, post_id: PathInt) -> Response:
     async with request.form() as form:
         new_title = cast(str, form[f"title-{post_id}"])
         await memecry.posts_service.update_post_title(
@@ -158,7 +157,7 @@ async def update_title(request: memecry.types.Request, post_id: PathInt) -> Resp
     "/upload-form",
     auth_scopes=[AuthScope.Authenticated],
 )
-async def upload_form(request: memecry.types.Request) -> HTMLResponse:
+async def upload_form(request: memecry.schema.Request) -> HTMLResponse:
     if request.scope["from_htmx"]:
         return HTMLResponse(
             memecry.views.misc.upload_form(),
@@ -181,9 +180,8 @@ class UploadForm:
 
 
 @router.path_function("POST", "/upload", auth_scopes=[AuthScope.Authenticated])
-# TODO: the form should be unwrapped in the relax lib
 async def upload(
-    request: memecry.types.Request, form_data: Annotated[UploadForm, "form_data"]
+    request: memecry.schema.Request, form_data: Annotated[UploadForm, "form_data"]
 ) -> Response:
     post_data = memecry.schema.PostCreate(
         title=form_data.title,
@@ -204,7 +202,7 @@ async def upload(
 
 @router.path_function("GET", "/")
 async def get_homepage(
-    request: memecry.types.Request,
+    request: memecry.schema.Request,
     limit: QueryInt = 5,
     offset: QueryInt = 0,
 ) -> HTMLResponse:
@@ -238,7 +236,7 @@ async def get_homepage(
 
 @router.path_function("GET", "/search")
 async def search_posts(
-    request: memecry.types.Request, query: QueryStr
+    request: memecry.schema.Request, query: QueryStr
 ) -> HTMLResponse | Response:
     try:
         parsed_query = memecry.schema.Query(query)
@@ -271,6 +269,6 @@ async def search_posts(
 
 
 @router.path_function("DELETE", "/posts/{post_id}")
-async def delete_post(_: memecry.types.Request, post_id: PathInt) -> Response:
+async def delete_post(_: memecry.schema.Request, post_id: PathInt) -> Response:
     await memecry.posts_service.delete_post(post_id)
     return Response("success")

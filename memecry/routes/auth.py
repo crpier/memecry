@@ -8,7 +8,6 @@ from starlette.responses import Response
 import memecry.config
 import memecry.schema
 import memecry.security
-import memecry.types
 import memecry.user_service
 import memecry.views.common
 import memecry.views.misc
@@ -19,7 +18,7 @@ router = Router()
 
 # Signin
 @router.path_function("POST", "/signin")
-async def signin(request: memecry.types.Request) -> HTMLResponse | Response:
+async def signin(request: memecry.schema.Request) -> HTMLResponse | Response:
     async with request.form() as form:
         # lolwtf
         username = cast(str, form["username"])
@@ -39,7 +38,7 @@ async def signin(request: memecry.types.Request) -> HTMLResponse | Response:
 
 
 @router.path_function("GET", "/signin-form")
-async def signin_form(request: memecry.types.Request) -> HTMLResponse:
+async def signin_form(request: memecry.schema.Request) -> HTMLResponse:
     if request.scope["from_htmx"]:
         return HTMLResponse(memecry.views.misc.signin_form())
     return HTMLResponse(
@@ -48,7 +47,7 @@ async def signin_form(request: memecry.types.Request) -> HTMLResponse:
 
 
 @router.path_function("GET", "/signup-form")
-async def signup_form(request: memecry.types.Request) -> HTMLResponse:
+async def signup_form(request: memecry.schema.Request) -> HTMLResponse:
     if request.scope["from_htmx"]:
         return HTMLResponse(memecry.views.misc.signup_form(request.url_of(signup)))
     return HTMLResponse(
@@ -60,7 +59,7 @@ async def signup_form(request: memecry.types.Request) -> HTMLResponse:
 
 @router.path_function("POST", "/signup")
 async def signup(
-    request: memecry.types.Request, *, config: memecry.config.Config = Injected
+    request: memecry.schema.Request, *, config: memecry.config.Config = Injected
 ) -> HTMLResponse:
     async with request.form() as form:
         # TODO: unwrap form in relax
@@ -97,7 +96,7 @@ async def signup(
     "/signout",
     auth_scopes=[AuthScope.Authenticated],
 )
-async def signout(_: memecry.types.Request) -> Response:
+async def signout(_: memecry.schema.Request) -> Response:
     response = Response()
     response.delete_cookie(key="authorization")
     response.headers["HX-Refresh"] = "true"

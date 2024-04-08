@@ -8,7 +8,7 @@ from relax.html import (
     div,
     form,
     head,
-    hmr_scripts,
+    hmr_script,
     html,
     i,
     input,
@@ -93,7 +93,7 @@ def page_root(
                 "flex-row",
                 "justify-between",
             ]
-        ).insert(child, hmr_scripts() if config.ENV == "dev" else None),
+        ).insert(child, hmr_script() if config.ENV == "dev" else None),
     )
 
 
@@ -240,7 +240,6 @@ def section_separator(name: str) -> Element:
     )
 
 
-@component(lambda key: key)
 def commands_helper(*, key: str, display_hack: bool = False) -> Element:
     return aside(
         classes=[

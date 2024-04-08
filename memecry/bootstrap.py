@@ -1,6 +1,6 @@
-from functools import lru_cache
 import sqlite3
 import subprocess
+from functools import lru_cache
 from pathlib import Path
 
 import alembic.command
@@ -54,9 +54,9 @@ async def bootstrap(app: App) -> memecry.config.Config:
     add_injectable(async_sessionmaker[AsyncSession], async_session)
 
     if config.ENV == "prod":
-        run_migrations("./memecry/alembic_migrations", dsn)
         async with engine.begin() as conn:
             await conn.run_sync(memecry.model.Base.metadata.create_all)
+        run_migrations("./memecry/alembic_migrations", dsn)
 
     # TODO: maybe relax should do this?
     js_constants_fn = Path("static/js/constants.js")

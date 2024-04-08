@@ -99,6 +99,7 @@ async def get_random_post_id(
 async def get_posts_by_search_query(  # noqa: PLR0913, C901
     query: memecry.schema.Query,
     # TODO: limit should have default value of None instead
+    # so that we can provide them in env vars
     # TODO: offset and limit should always come together
     limit: int = 0,
     offset: int = 0,

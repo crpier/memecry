@@ -1,5 +1,6 @@
 import asyncio
 import contextlib
+import os
 from typing import AsyncIterator, cast
 
 import uvicorn
@@ -99,21 +100,35 @@ def app_factory() -> App:
     return app
 
 
-if __name__ == "__main__":
+def start_app(app_path: str, port: int = 8000, log_level: str = "info") -> None:
     config_args = {
-        "app": "memecry.main:app_factory",
-        "port": 8000,
-        "log_level": "info",
+        "app": app_path,
+        "port": port,
+        "log_level": log_level,
         "factory": True,
     }
-    app_config = uvicorn.Config(**config_args)  # type: ignore
+    server_config = uvicorn.Config(**config_args)  # type: ignore
 
-    server = uvicorn.Server(app_config)
+    server = uvicorn.Server(server_config)
+
+    import dotenv
+
+    dotenv.load_dotenv()
+    templates_dir = os.environ.get("TEMPLATES_DIR")
+    if templates_dir is None:
+        msg = "TEMPLATES_DIR not set"
+        raise ValueError(msg)
 
     reload_config = uvicorn.Config(
-        **config_args, reload=True, reload_excludes=["memecry/views/*"]  # type: ignore
+        **config_args,  # type: ignore
+        reload=True,
+        reload_excludes=[templates_dir + "/*"],
     )
     sock = reload_config.bind_socket()
     reloader = WatchFilesReload(reload_config, target=server.run, sockets=[sock])
     add_injectable(WatchFilesReload, reloader)
     reloader.run()
+
+
+if __name__ == "__main__":
+    start_app(app_path="memecry.main:app_factory", port=8000, log_level="info")

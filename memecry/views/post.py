@@ -19,13 +19,12 @@ from relax.html import (
     video,
 )
 from relax.injection import Injected, component, injectable_sync
-from uvicorn.supervisors.watchfilesreload import WatchFilesReload
 
 import memecry.config
+import memecry.main
 import memecry.routes.post
 import memecry.schema
 import memecry.views.common
-import memecry.main
 
 IMAGE_FORMATS = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
 VIDEO_FORMATS = [".mp4", ".webm"]
@@ -112,7 +111,8 @@ def tags_component(  # noqa: PLR0913
     )
 
 
-def post_title_section(post: memecry.schema.PostRead) -> Element:
+@component(key=lambda post: post.id)
+def post_title_section(*, post: memecry.schema.PostRead) -> Element:
     return div(
         classes=memecry.views.common.FLEX_ROW_WRAPPER_CLASSES,
     ).insert(
@@ -320,7 +320,7 @@ def post_component(post: memecry.schema.PostRead, *, id: str = Injected) -> div:
         ],
         attrs={"tabindex": -1},
     ).insert(
-        post_title_section(post),
+        post_title_section(post=post),
         post_content_component(post),
         post_info_pane(post=post),
         post_interaction_pane(

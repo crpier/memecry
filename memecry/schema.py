@@ -1,9 +1,10 @@
 from datetime import datetime
-from typing import TypedDict
+from typing import TypeAlias, TypedDict
 
 import babel.dates
 import zoneinfo
 from pydantic import BaseModel
+from relax.app import Request as BaseRequest
 from starlette.authentication import SimpleUser
 
 import memecry.model
@@ -110,3 +111,6 @@ class Query:
     @property
     def content(self) -> str:
         return " ".join(self._content_parts)
+
+
+Request: TypeAlias = BaseRequest[UserRead]

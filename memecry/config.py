@@ -17,7 +17,6 @@ class Config(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 720  # 30 days
     MEDIA_UPLOAD_STORAGE: Path = Path("./media")
     COMMENT_SUBDIR: Path = Path("comments")
-    # TODO: allow using a remote sqlite db
     DB_FILE: Path = Path("dev.db")
     DEFAULT_POSTS_LIMIT: int = 5
     # This should be in the db instead
