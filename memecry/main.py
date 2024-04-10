@@ -1,25 +1,20 @@
 import asyncio
-import contextlib
-import os
-from typing import AsyncIterator, cast
+from typing import cast
 
-import uvicorn
 from jose import ExpiredSignatureError
 from relax.app import (
     App,
     AuthScope,
     hot_replace_templates,
-    run_async,
+    start_app,
     websocket_endpoint,
 )
-from relax.injection import add_injectable
 from starlette.authentication import AuthCredentials, AuthenticationBackend
 from starlette.middleware import Middleware
 from starlette.middleware.authentication import AuthenticationMiddleware
 from starlette.requests import HTTPConnection
-from starlette.routing import Mount, WebSocketRoute
+from starlette.routing import Mount
 from starlette.staticfiles import StaticFiles
-from uvicorn.supervisors.watchfilesreload import WatchFilesReload
 
 import memecry.bootstrap
 import memecry.routes.auth
@@ -27,7 +22,6 @@ import memecry.routes.post
 import memecry.schema
 import memecry.security
 import memecry.user_service
-from memecry.config import Config
 
 
 class BasicAuthBackend(AuthenticationBackend):
@@ -54,9 +48,17 @@ class BasicAuthBackend(AuthenticationBackend):
         return None
 
 
-@contextlib.asynccontextmanager
-async def lifespan(app: App) -> AsyncIterator[None]:
-    config = app.config
+def app_factory() -> App:
+    app = App(
+        middleware=[Middleware(AuthenticationMiddleware, backend=BasicAuthBackend())],
+    )
+
+    config = memecry.bootstrap.bootstrap(app)
+    app.add_router(memecry.routes.auth.router)
+    app.add_router(memecry.routes.post.router)
+    asyncio.create_task(hot_replace_templates(config.TEMPLATES_DIR))
+    app.add_websocket_route("/ws", websocket_endpoint, name="ws")
+
     app.routes.append(
         Mount(
             "/media",
@@ -78,56 +80,7 @@ async def lifespan(app: App) -> AsyncIterator[None]:
             name="favicon",
         ),
     )
-    if config.ENV == "dev":
-        update_task = asyncio.create_task(hot_replace_templates(config.TEMPLATES_DIR))
-    yield
-    if config.ENV == "dev":
-        update_task.cancel()  # type: ignore
-
-
-def app_factory() -> App:
-    app = App[Config](
-        middleware=[Middleware(AuthenticationMiddleware, backend=BasicAuthBackend())],
-        lifespan=lifespan,
-    )
-
-    run_async(memecry.bootstrap.bootstrap(app))
-    app.add_router(memecry.routes.auth.router)
-    app.add_router(memecry.routes.post.router)
-    if app.config.ENV == "dev":
-        app.routes.append(WebSocketRoute("/ws", endpoint=websocket_endpoint))
-
     return app
-
-
-def start_app(app_path: str, port: int = 8000, log_level: str = "info") -> None:
-    config_args = {
-        "app": app_path,
-        "port": port,
-        "log_level": log_level,
-        "factory": True,
-    }
-    server_config = uvicorn.Config(**config_args)  # type: ignore
-
-    server = uvicorn.Server(server_config)
-
-    import dotenv
-
-    dotenv.load_dotenv()
-    templates_dir = os.environ.get("TEMPLATES_DIR")
-    if templates_dir is None:
-        msg = "TEMPLATES_DIR not set"
-        raise ValueError(msg)
-
-    reload_config = uvicorn.Config(
-        **config_args,  # type: ignore
-        reload=True,
-        reload_excludes=[templates_dir + "/*"],
-    )
-    sock = reload_config.bind_socket()
-    reloader = WatchFilesReload(reload_config, target=server.run, sockets=[sock])
-    add_injectable(WatchFilesReload, reloader)
-    reloader.run()
 
 
 if __name__ == "__main__":

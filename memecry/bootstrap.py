@@ -8,6 +8,7 @@ import alembic.config
 from loguru import logger
 from relax.app import App, ViewContext
 from relax.injection import _COMPONENT_NAMES, add_injectable
+from sqlalchemy.engine import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlite_fts4 import register_functions
 
@@ -29,9 +30,8 @@ def run_migrations(script_location: str, dsn: str) -> None:
 
 
 @lru_cache
-async def bootstrap(app: App) -> memecry.config.Config:
+def bootstrap(app: App) -> memecry.config.Config:
     config = memecry.config.Config()
-    app.config = config
     add_injectable(memecry.config.Config, config)
 
     add_injectable(ViewContext, app.view_context)
@@ -49,13 +49,14 @@ async def bootstrap(app: App) -> memecry.config.Config:
 
     dsn = f"sqlite+aiosqlite:///{config.DB_FILE}"
     engine = create_async_engine(dsn)
+    engine_sync = create_engine(dsn)
 
     async_session = async_sessionmaker(engine, expire_on_commit=False)
     add_injectable(async_sessionmaker[AsyncSession], async_session)
 
     if config.ENV == "prod":
-        async with engine.begin() as conn:
-            await conn.run_sync(memecry.model.Base.metadata.create_all)
+        with engine_sync.begin() as conn:
+            memecry.model.Base.metadata.create_all(conn)
         run_migrations("./memecry/alembic_migrations", dsn)
 
     # TODO: maybe relax should do this?

@@ -1,40 +1,45 @@
 from pathlib import Path
-from typing import Literal
 
-from pydantic import Field
-from pydantic_settings import BaseSettings
-
+from relax.config import BaseConfig
+from starlette.datastructures import CommaSeparatedStrings
 
 # TODO: use starlette config instead of pydantic
 # TODO: make sure that alembic can use this
 # (i.e. we don't need unnecessary vars to be set)
-class Config(BaseSettings):
-    TEMPLATES_DIR: str = Field(default=...)
-    SECRET_KEY: str = Field(default=...)
-    ENV: Literal["dev", "prod", "unit", "acceptance"] = "prod"
-    ALGORITHM: str = "HS256"
-    ALLOW_SIGNUPS: bool = False
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 720  # 30 days
-    MEDIA_UPLOAD_STORAGE: Path = Path("./media")
-    COMMENT_SUBDIR: Path = Path("comments")
-    DB_FILE: Path = Path("dev.db")
-    DEFAULT_POSTS_LIMIT: int = 5
-    # This should be in the db instead
-    # TODO: constraint that tags are one word only
-    # guess alphanumeric chars and hyphens are ok?
-    # TODO: this can be converted into string only
-    DEFAULT_TAGS: list[str] = Field(
-        default=[
-            "reaction",
-            "animals",
-            "postironic",
-            "meirl",
-        ],
-        validate_default=False,
-    )
-    RESTRICTED_TAGS: list[str] = Field(
-        default=[
-            "postironic",
-        ],
-        validate_default=False,
-    )
+
+
+class Config(BaseConfig):
+    def __init__(self) -> None:
+        super().__init__()
+        # required vars
+        self.SECRET_KEY = self.config("SECRET_KEY")
+
+        # optional vars
+        self.ALGORITHM = self.config("ALGORITHM", default="HS256")
+        self.ACCESS_TOKEN_EXPIRE_MINUTES = self.config(
+            "ACCESS_TOKEN_EXPIRE_MINUTES", cast=int, default=720
+        )  # 30 days
+        self.ALLOW_SIGNUPS = self.config("ALLOW_SIGNUP", cast=bool, default=False)
+        self.MEDIA_UPLOAD_STORAGE = self.config(
+            "MEDIA_UPLOAD_STORAGE", cast=Path, default=Path("./media")
+        )
+        self.COMMENT_SUBDIR = self.config(
+            "COMMENT_SUBDIR", cast=Path, default=Path("comments")
+        )
+        self.DB_FILE = self.config("DB_FILE", cast=Path, default=Path("dev.db"))
+        self.DEFAULT_POSTS_LIMIT = self.config(
+            "DEFAULT_POSTS_LIMIT", cast=int, default=5
+        )
+        # This should be in the db instead
+        # TODO: constraint that tags are one word only
+        # guess alphanumeric chars and hyphens are ok?
+        self.DEFAULT_TAGS = self.config(
+            "DEFAULT_TAGS",
+            cast=CommaSeparatedStrings,
+            default=CommaSeparatedStrings("reaction,animals,postironic,meirl"),
+        )
+        self.RESTRICTED_TAGS = self.config(
+            "RESTRICTED_TAGS",
+            cast=CommaSeparatedStrings,
+            default=CommaSeparatedStrings("postironic"),
+        )
