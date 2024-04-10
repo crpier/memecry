@@ -1,14 +1,12 @@
-import asyncio
 from typing import cast
 
 from jose import ExpiredSignatureError
 from relax.app import (
     App,
     AuthScope,
-    hot_replace_templates,
-    start_app,
     websocket_endpoint,
 )
+from relax.server import start_app
 from starlette.authentication import AuthCredentials, AuthenticationBackend
 from starlette.middleware import Middleware
 from starlette.middleware.authentication import AuthenticationMiddleware
@@ -17,6 +15,7 @@ from starlette.routing import Mount
 from starlette.staticfiles import StaticFiles
 
 import memecry.bootstrap
+import memecry.config
 import memecry.routes.auth
 import memecry.routes.post
 import memecry.schema
@@ -49,16 +48,17 @@ class BasicAuthBackend(AuthenticationBackend):
 
 
 def app_factory() -> App:
+    config, view_context = memecry.bootstrap.bootstrap()
+    middleware = Middleware(AuthenticationMiddleware, backend=BasicAuthBackend())
     app = App(
-        middleware=[Middleware(AuthenticationMiddleware, backend=BasicAuthBackend())],
+        middleware=[middleware],
+        config=config,
+        view_context=view_context,
     )
 
-    config = memecry.bootstrap.bootstrap(app)
     app.add_router(memecry.routes.auth.router)
     app.add_router(memecry.routes.post.router)
-    asyncio.create_task(hot_replace_templates(config.TEMPLATES_DIR))
     app.add_websocket_route("/ws", websocket_endpoint, name="ws")
-
     app.routes.append(
         Mount(
             "/media",
@@ -80,8 +80,15 @@ def app_factory() -> App:
             name="favicon",
         ),
     )
+
+    if config.ENV == "dev":
+        app.listen_to_template_changes()
     return app
 
 
+# This runs in a different process
 if __name__ == "__main__":
-    start_app(app_path="memecry.main:app_factory", port=8000, log_level="info")
+    config = memecry.config.Config()
+    start_app(
+        app_path="memecry.main:app_factory", config=config, reload=config.ENV == "dev"
+    )

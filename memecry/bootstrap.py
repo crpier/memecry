@@ -29,12 +29,12 @@ def run_migrations(script_location: str, dsn: str) -> None:
     alembic.command.upgrade(alembic_cfg, "head")
 
 
-@lru_cache
-def bootstrap(app: App) -> memecry.config.Config:
+def bootstrap() -> tuple[memecry.config.Config, ViewContext]:
     config = memecry.config.Config()
     add_injectable(memecry.config.Config, config)
 
-    add_injectable(ViewContext, app.view_context)
+    view_context = ViewContext()
+    add_injectable(ViewContext, view_context)
 
     # ensure media folder exists
     config.MEDIA_UPLOAD_STORAGE.mkdir(parents=True, exist_ok=True)
@@ -70,4 +70,4 @@ def bootstrap(app: App) -> memecry.config.Config:
     # TODO: run this in background, it's not needed for dev work
     # always run this, just so we don't forget
     subprocess.run(["tailwindcss", "-o", "static/css/tailwind.css"], check=False)  # noqa: S603, S607
-    return config
+    return config, view_context
