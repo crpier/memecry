@@ -1,6 +1,6 @@
 import datetime
 import functools
-from typing import Any
+from typing import Any, TypedDict, TypeGuard
 
 import jose
 import jose.jwt
@@ -36,9 +36,23 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context().verify(plain_password, hashed_password)
 
 
+class TokenPayload(TypedDict):
+    sub: str | None
+
+
+def validate_token_payload(payload: dict[str, Any]) -> TypeGuard[TokenPayload]:
+    if not isinstance(payload, dict):
+        return False
+    return True
+
+
 @injectable
 # TODO: don't use any: parse the payload into a dataclass instead
-async def decode_payload(
+async def decode_token(
     token: str, *, config: memecry.config.Config = Injected
-) -> dict[str, Any]:
-    return jose.jwt.decode(token, config.SECRET_KEY, algorithms=["HS256"])
+) -> TokenPayload:
+    decoded_payload = jose.jwt.decode(token, config.SECRET_KEY, algorithms=["HS256"])
+    if not validate_token_payload(decoded_payload):
+        msg = "Invalid token payload"
+        raise ValueError(msg)
+    return decoded_payload

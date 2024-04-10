@@ -1,5 +1,3 @@
-from typing import cast
-
 from jose import ExpiredSignatureError
 from relax.app import (
     App,
@@ -32,10 +30,10 @@ class BasicAuthBackend(AuthenticationBackend):
             return None
         token = conn.cookies["authorization"]
         try:
-            payload = await memecry.security.decode_payload(token)
+            payload = await memecry.security.decode_token(token)
         except ExpiredSignatureError:
             return None
-        if (username := cast(str, payload.get("sub"))) is None:
+        if (username := payload.get("sub")) is None:
             return None
 
         if user := await memecry.user_service.get_user_by_username(username):

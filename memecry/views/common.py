@@ -127,6 +127,7 @@ MODAL_UNDERLAY = div(
     hyperscript="on click trigger closeModal",
 )
 
+
 def error_element(error: str) -> div:
     return div(classes=["bg-red-700", "p-2", "rounded-md", "w-max"]).text(error)
 

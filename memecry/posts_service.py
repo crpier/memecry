@@ -51,13 +51,15 @@ async def upload_post(
 
 @injectable
 async def get_posts(
-    limit: int = 10,
+    limit: int | None = None,
     offset: int = 0,
     viewer: memecry.schema.UserRead | None = None,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
     config: memecry.config.Config = Injected,
 ) -> list[memecry.schema.PostRead]:
+    if limit is None:
+        limit = config.POSTS_LIMIT
     async with asession() as session:
         query = (
             select(memecry.model.Post)
@@ -98,16 +100,15 @@ async def get_random_post_id(
 @injectable
 async def get_posts_by_search_query(  # noqa: PLR0913, C901
     query: memecry.schema.Query,
-    # TODO: limit should have default value of None instead
-    # so that we can provide them in env vars
-    # TODO: offset and limit should always come together
-    limit: int = 0,
+    limit: int | None = None,
     offset: int = 0,
     viewer: memecry.schema.UserRead | None = None,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
     config: memecry.config.Config = Injected,
 ) -> list[memecry.schema.PostRead]:
+    if limit is None:
+        limit = config.POSTS_LIMIT
     async with asession() as session:
         db_query = select(memecry.model.Post).order_by(
             memecry.model.Post.created_at.desc()
@@ -115,7 +116,6 @@ async def get_posts_by_search_query(  # noqa: PLR0913, C901
         if limit:
             db_query = db_query.limit(limit).offset(offset)
 
-        # TODO: more consistent way to work with tags
         for tag in query.tags["included"]:
             db_query = db_query.where(memecry.model.Post.tags.contains(tag))
 

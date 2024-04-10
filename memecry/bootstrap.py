@@ -1,13 +1,11 @@
 import sqlite3
 import subprocess
-from functools import lru_cache
-from pathlib import Path
 
 import alembic.command
 import alembic.config
 from loguru import logger
-from relax.app import App, ViewContext
-from relax.injection import _COMPONENT_NAMES, add_injectable
+from relax.app import ViewContext, update_js_constants
+from relax.injection import add_injectable
 from sqlalchemy.engine import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlite_fts4 import register_functions
@@ -59,15 +57,7 @@ def bootstrap() -> tuple[memecry.config.Config, ViewContext]:
             memecry.model.Base.metadata.create_all(conn)
         run_migrations("./memecry/alembic_migrations", dsn)
 
-    # TODO: maybe relax should do this?
-    js_constants_fn = Path("static/js/constants.js")
-    with js_constants_fn.open("w") as f:
-        f.write("export const CONSTANTS = {\n")
-        for name in _COMPONENT_NAMES:
-            f.write(f'   {name.upper().replace("-", "_")}_CLASS: "{name}",\n')
-        f.write("}")
+    update_js_constants(config)
 
-    # TODO: run this in background, it's not needed for dev work
-    # always run this, just so we don't forget
-    subprocess.run(["tailwindcss", "-o", "static/css/tailwind.css"], check=False)  # noqa: S603, S607
+    subprocess.Popen(["tailwindcss", "-o", "static/css/tailwind.css"])
     return config, view_context

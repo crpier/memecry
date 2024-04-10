@@ -40,11 +40,10 @@ def tags_component(  # noqa: PLR0913
     config: memecry.config.Config = Injected,
     context: ViewContext = Injected,
 ) -> div:
-    # TODO: get put element_id in component
     element_id = f"tags-{post_id}"
     tags_selector_id = f"tags-selector-{post_id}"
+    update_tags_url = context.url_of(memecry.routes.post.update_tags)
 
-    # TODO: can I use "truncate" class to hide overflow instead?
     def li_tag(tag: str) -> li:
         return li(
             classes=[
@@ -69,8 +68,7 @@ def tags_component(  # noqa: PLR0913
             )
             .text(tag)
             .hx_put(
-                # TODO: fixme
-                context.url_of(memecry.routes.post.update_tags)(post_id=post_id),  # type: ignore
+                update_tags_url(post_id=post_id),  # type: ignore
                 hx_target=f"#{element_id}",
                 hx_swap="outerHTML",
             ),
@@ -216,7 +214,6 @@ def post_interaction_pane(tags: Element, search_content_id: str) -> Element:
 
 @component(key=lambda post: post.id)
 def post_settings_pane(
-    # TODO: we should ensure it's mandatory that framwork params are keyword only
     post: memecry.schema.PostRead,
     parent_id: str,
     *,
@@ -306,9 +303,8 @@ def post_content_component(post: memecry.schema.PostRead) -> Element:
     return div().text(f"Unsupported format: {Path(post.source).suffix}")
 
 
-# TODO: either allow positional args, or encode their absence in a type sig somehow
 @component(key=lambda post: post.id)
-def post_component(post: memecry.schema.PostRead, *, id: str = Injected) -> div:
+def post_component(*, post: memecry.schema.PostRead, id: str = Injected) -> div:
     post_settings = post_settings_pane(post=post, parent_id=id)
 
     return div(
@@ -335,14 +331,18 @@ def post_component(post: memecry.schema.PostRead, *, id: str = Injected) -> div:
     )
 
 
-def home_view(
+@injectable_sync
+def home_view(  # noqa: PLR0913
     posts: list[memecry.schema.PostRead],
     offset: int = 0,
-    limit: int = 5,
+    limit: int | None = None,
     *,
     keep_scrolling: bool = False,
     partial: bool = False,
+    config: memecry.config.Config = Injected,
 ) -> Element:
+    if limit is None:
+        limit = config.POSTS_LIMIT
     post_views = [
         post_component(
             post=post,

@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import cast
 
 from relax.app import AuthScope, HTMLResponse, Router
@@ -49,45 +50,51 @@ async def signin_form(request: memecry.schema.Request) -> HTMLResponse:
 @router.path_function("GET", "/signup-form")
 async def signup_form(request: memecry.schema.Request) -> HTMLResponse:
     if request.scope["from_htmx"]:
-        return HTMLResponse(memecry.views.misc.signup_form(request.url_of(signup)))
+        return HTMLResponse(memecry.views.misc.signup_form(request.url_of(signup)))  # type: ignore
     return HTMLResponse(
         memecry.views.misc.page_root(
-            memecry.views.misc.signup_form(request.url_of(signup)),
+            memecry.views.misc.signup_form(request.url_of(signup)),  # type: ignore
         ),
     )
 
 
+@dataclass
+class SignupForm:
+    username: str
+    password: str
+
+
 @router.path_function("POST", "/signup")
 async def signup(
-    request: memecry.schema.Request, *, config: memecry.config.Config = Injected
+    request: memecry.schema.Request,
+    *,
+    config: memecry.config.Config = Injected,
 ) -> HTMLResponse:
-    async with request.form() as form:
-        # TODO: unwrap form in relax
-        if not config.ALLOW_SIGNUPS:
-            return HTMLResponse(
-                memecry.views.common.error_element(
-                    "Signups not allowed",
-                ),
-            )
-
-        username = cast(str, form["username"])
-        password = cast(str, form["password"])
-        user_create = memecry.schema.UserCreate(username=username, password=password)
+    if not config.ALLOW_SIGNUPS:
+        return HTMLResponse(
+            memecry.views.common.error_element(
+                "Signups not allowed",
+            ),
+        )
+    async with request.parse_form(SignupForm) as form_data:
+        user_create = memecry.schema.UserCreate(
+            username=form_data.username, password=form_data.password
+        )
         new_user_id = await memecry.user_service.create_user(user_create)
         if new_user_id is None:
             return HTMLResponse(
                 memecry.views.common.error_element(
-                    f'Username "{username}" already exists',
+                    f'Username "{form_data.username}" already exists',
                 ),
             )
         access_token = await memecry.security.create_access_token(
-            data={"sub": username}
+            data={"sub": form_data.username}
         )
-        resp = HTMLResponse(div())
-        resp.set_cookie(key="authorization", value=access_token, httponly=True)
-        resp.headers["HX-Refresh"] = "true"
-        resp.status_code = 303
-        return resp
+    resp = HTMLResponse(div())
+    resp.set_cookie(key="authorization", value=access_token, httponly=True)
+    resp.headers["HX-Refresh"] = "true"
+    resp.status_code = 303
+    return resp
 
 
 # Signout

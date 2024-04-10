@@ -1,12 +1,10 @@
 from dataclasses import dataclass
 from typing import (
-    Annotated,
     cast,
 )
 
 from relax.app import (
     AuthScope,
-    FormData,
     HTMLResponse,
     PathInt,
     QueryInt,
@@ -34,7 +32,6 @@ async def get_post(request: memecry.schema.Request, post_id: PathInt) -> HTMLRes
     )
     if post is None:
         return HTMLResponse(memecry.views.common.error_element("Post not found"))
-    # TODO: honestly, I think I'd prefer request.from_htmx
     if request.scope["from_htmx"]:
         return HTMLResponse(memecry.views.post.post_component(post=post))
     return HTMLResponse(
@@ -58,7 +55,6 @@ async def random_post(
     request: memecry.schema.Request,
 ) -> RedirectResponse | HTMLResponse:
     random_post_id = await memecry.posts_service.get_random_post_id(
-        # TODO: find a nicer way to give the user
         viewer=request.user if request.user.is_authenticated else None
     )
     if random_post_id is None:
@@ -79,35 +75,32 @@ class TagForm:
     "PUT", "/posts/{post_id}/tags", auth_scopes=[AuthScope.Authenticated]
 )
 async def update_tags(
-    request: memecry.schema.Request,
-    post_id: PathInt,
-    form_data: FormData[TagForm],
+    request: memecry.schema.Request, post_id: PathInt
 ) -> HTMLResponse:
-    new_tag = form_data.tag
-    old_tags_in_form = form_data.tags
-    if post_id != 0:
-        try:
-            updated_tags = await memecry.posts_service.toggle_post_tag(
-                post_id, new_tag, request.user.id
-            )
-        except PermissionError:
-            return HTMLResponse(
-                memecry.views.common.error_element("Permission denied"),
-                status_code=403,
-            )
-    else:
-        old_tags = old_tags_in_form.split(", ")
-
-        if new_tag in old_tags:
-            old_tags.remove(new_tag)
-            if old_tags == []:
-                old_tags = ["no tags"]
+    async with request.parse_form(TagForm) as form:
+        if post_id != 0:
+            try:
+                updated_tags = await memecry.posts_service.toggle_post_tag(
+                    post_id, form.tag, request.user.id
+                )
+            except PermissionError:
+                return HTMLResponse(
+                    memecry.views.common.error_element("Permission denied"),
+                    status_code=403,
+                )
         else:
-            if old_tags == ["no tags"]:
-                old_tags = []
-            old_tags.append(new_tag)
+            old_tags = form.tags.split(", ")
 
-        updated_tags = ", ".join(old_tags)
+            if form.tag in old_tags:
+                old_tags.remove(form.tag)
+                if old_tags == []:
+                    old_tags = ["no tags"]
+            else:
+                if old_tags == ["no tags"]:
+                    old_tags = []
+                old_tags.append(form.tag)
+
+            updated_tags = ", ".join(old_tags)
 
     return HTMLResponse(
         memecry.views.post.tags_component(
@@ -180,20 +173,19 @@ class UploadForm:
 
 
 @router.path_function("POST", "/upload", auth_scopes=[AuthScope.Authenticated])
-async def upload(
-    request: memecry.schema.Request, form_data: Annotated[UploadForm, "form_data"]
-) -> Response:
-    post_data = memecry.schema.PostCreate(
-        title=form_data.title,
-        tags=form_data.tags,
-        searchable_content=form_data.searchable_content,
-        user_id=request.user.id,
-    )
-    new_post_id = await memecry.posts_service.upload_post(
-        # TODO: why is the file in file.file???
-        post_data=post_data,
-        uploaded_file=form_data.file.file,  # type: ignore
-    )
+async def upload(request: memecry.schema.Request) -> Response:
+    async with request.parse_form(UploadForm) as form_data:
+        post_data = memecry.schema.PostCreate(
+            title=form_data.title,
+            tags=form_data.tags,
+            searchable_content=form_data.searchable_content,
+            user_id=request.user.id,
+        )
+        new_post_id = await memecry.posts_service.upload_post(
+            post_data=post_data,
+            uploaded_file=form_data.file,
+        )
+
     resp = Response()
     resp.headers["HX-Redirect"] = f"/posts/{new_post_id}"
     resp.status_code = 201

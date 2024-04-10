@@ -3,7 +3,6 @@ from pathlib import Path
 from relax.config import BaseConfig
 from starlette.datastructures import CommaSeparatedStrings
 
-# TODO: use starlette config instead of pydantic
 # TODO: make sure that alembic can use this
 # (i.e. we don't need unnecessary vars to be set)
 
@@ -19,7 +18,7 @@ class Config(BaseConfig):
         self.ACCESS_TOKEN_EXPIRE_MINUTES = self.config(
             "ACCESS_TOKEN_EXPIRE_MINUTES", cast=int, default=720
         )  # 30 days
-        self.ALLOW_SIGNUPS = self.config("ALLOW_SIGNUP", cast=bool, default=False)
+        self.ALLOW_SIGNUPS = self.config("ALLOW_SIGNUPS", cast=bool, default=False)
         self.MEDIA_UPLOAD_STORAGE = self.config(
             "MEDIA_UPLOAD_STORAGE", cast=Path, default=Path("./media")
         )
@@ -31,8 +30,6 @@ class Config(BaseConfig):
             "DEFAULT_POSTS_LIMIT", cast=int, default=5
         )
         # This should be in the db instead
-        # TODO: constraint that tags are one word only
-        # guess alphanumeric chars and hyphens are ok?
         self.DEFAULT_TAGS = self.config(
             "DEFAULT_TAGS",
             cast=CommaSeparatedStrings,
@@ -43,3 +40,4 @@ class Config(BaseConfig):
             cast=CommaSeparatedStrings,
             default=CommaSeparatedStrings("postironic"),
         )
+        self.POSTS_LIMIT = self.config("POSTS_LIMIT", cast=int, default=15)
