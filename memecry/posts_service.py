@@ -28,8 +28,12 @@ async def upload_post(
         session.add(new_post)
         await session.commit()
         logger.info("New post has id: {}", new_post.id)
+        if uploaded_file.filename is None:
+            msg = (
+                f"No filename provided for the uploaded file for post id {new_post.id}"
+            )
+            raise ValueError(msg)
         # we do this hack to preserve the suffix, but change the stem
-        assert uploaded_file.filename is not None  # noqa: S101
         dest = (config.MEDIA_UPLOAD_STORAGE / uploaded_file.filename).with_stem(
             str(new_post.id),
         )

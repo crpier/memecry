@@ -47,7 +47,6 @@ def validate_token_payload(payload: dict[str, Any]) -> TypeGuard[TokenPayload]:
 
 
 @injectable
-# TODO: don't use any: parse the payload into a dataclass instead
 async def decode_token(
     token: str, *, config: memecry.config.Config = Injected
 ) -> TokenPayload:

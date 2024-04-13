@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 from enum import StrEnum
 
-from sqlalchemy import ForeignKey, func
+from sqlalchemy import ForeignKey, UniqueConstraint, func
 from sqlalchemy.ext.asyncio import AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -101,10 +101,13 @@ class Reaction(Base):
 
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     post_id: Mapped[int] = mapped_column(ForeignKey("posts.id"))
-    comment_id: Mapped[int] = mapped_column(ForeignKey("comments.id"))
+    comment_id: Mapped[int] = mapped_column(ForeignKey("comments.id"), nullable=True)
 
     user: Mapped[User] = relationship("User", back_populates="reactions")
     post: Mapped[Post] = relationship("Post", back_populates="reactions")
     comment: Mapped[Comment] = relationship("Comment", back_populates="reactions")
 
-    # TODO: add unique constraint on user_id and post_id or comment_id
+    __table_args__ = (
+        UniqueConstraint("user_id", "post_id"),
+        UniqueConstraint("user_id", "comment_id"),
+    )

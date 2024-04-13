@@ -224,11 +224,12 @@ def post_settings_pane(
     update_searchable_content_url = context.url_of(
         memecry.routes.post.update_searchable_content
     )
+    searcheable_content_input_name = f"content-input-{post.id}"
     return div(
         classes=[*memecry.views.common.FLEX_COL_WRAPPER_CLASSES, "hidden"],
     ).insert(
         textarea(
-            name=f"content-input-{post.id}",
+            name=searcheable_content_input_name,
             type="text",
             classes=[
                 "block",
@@ -259,7 +260,6 @@ def post_settings_pane(
              })
              if result.isConfirmed issueRequest()""",
             )
-            # TODO: can I do something like hx_request(url_func, kwargs, hx_trigger, ..)
             .hx_delete(
                 delete_post_url(post_id=post.id),
                 hx_trigger="click",
@@ -277,8 +277,7 @@ def post_settings_pane(
                 update_searchable_content_url(post_id=post.id),
                 hx_trigger="click",
                 hx_swap="none",
-                # TODO: weird that I have to duplicate this
-                hx_include=f"[name='content-input-{post.id}']",
+                hx_include=searcheable_content_input_name,
                 hx_encoding="multipart/form-data",
             ),
         )

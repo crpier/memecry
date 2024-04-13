@@ -14,7 +14,6 @@ import memecry.config
 import memecry.model
 
 
-@logger.catch
 def run_migrations(script_location: str, dsn: str) -> None:
     logger.info("Running DB migrations in {}", script_location)
     alembic_cfg = alembic.config.Config("alembic.ini")
@@ -25,6 +24,7 @@ def run_migrations(script_location: str, dsn: str) -> None:
         alembic_cfg.get_section_option("alembic", "here"),
     )
     alembic.command.upgrade(alembic_cfg, "head")
+    logger.info("wtf")
 
 
 def bootstrap() -> tuple[memecry.config.Config, ViewContext]:
@@ -36,28 +36,27 @@ def bootstrap() -> tuple[memecry.config.Config, ViewContext]:
 
     # ensure media folder exists
     config.MEDIA_UPLOAD_STORAGE.mkdir(parents=True, exist_ok=True)
-    # we need a bit of an sync piece on startup lel
-    db = sqlite3.connect(config.DB_FILE)
 
+    # create search table
+    db = sqlite3.connect(config.DB_FILE)
     register_functions(db)
     c = db.cursor()
     c.execute(
         "CREATE VIRTUAL TABLE IF NOT EXISTS posts_data USING fts4(title, content)",
     )
 
-    dsn = f"sqlite+aiosqlite:///{config.DB_FILE}"
-    engine = create_async_engine(dsn)
-    engine_sync = create_engine(dsn)
+    async_engine = create_async_engine(f"sqlite+aiosqlite:///{config.DB_FILE}")
+    sync_engine = create_engine(f"sqlite:///{config.DB_FILE}")
 
-    async_session = async_sessionmaker(engine, expire_on_commit=False)
+    async_session = async_sessionmaker(async_engine, expire_on_commit=False)
     add_injectable(async_sessionmaker[AsyncSession], async_session)
 
     if config.ENV == "prod":
-        with engine_sync.begin() as conn:
+        run_migrations("./memecry/alembic_migrations", f"sqlite:///{config.DB_FILE}")
+    elif config.ENV == "env":
+        with sync_engine.begin() as conn:
             memecry.model.Base.metadata.create_all(conn)
-        run_migrations("./memecry/alembic_migrations", dsn)
+        subprocess.Popen(["tailwindcss", "-o", "static/css/tailwind.css"])  # noqa: S603, S607
 
     update_js_constants(config)
-
-    subprocess.Popen(["tailwindcss", "-o", "static/css/tailwind.css"])
     return config, view_context

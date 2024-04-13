@@ -3,9 +3,6 @@ from pathlib import Path
 from relax.config import BaseConfig
 from starlette.datastructures import CommaSeparatedStrings
 
-# TODO: make sure that alembic can use this
-# (i.e. we don't need unnecessary vars to be set)
-
 
 class Config(BaseConfig):
     def __init__(self) -> None:

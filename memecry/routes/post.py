@@ -117,7 +117,6 @@ async def update_tags(
     "/posts/{post_id}/searchable-content",
     auth_scopes=[AuthScope.Authenticated],
 )
-# TODO: maybe better to have a single update endpoint?
 async def update_searchable_content(
     request: memecry.schema.Request, post_id: PathInt
 ) -> Response:
