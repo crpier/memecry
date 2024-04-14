@@ -94,7 +94,9 @@ def page_root(
     *,
     config: memecry.config.Config = Injected,
 ) -> html:
-    return html(lang="en", attrs={"data-theme": "luxury"}).insert(
+    return html(
+        lang="en", attrs={"data-theme": "luxury"}, classes=["bg-base-200"]
+    ).insert(
         page_head(),
         body(
             classes=[
@@ -102,7 +104,6 @@ def page_root(
                 "flex",
                 "flex-row",
                 "justify-between",
-                "bg-base-200",
             ]
             # TODO: find a more visible place to put this (or at least document it)
         ).insert(child, hmr_script() if config.ENV == "dev" else None),
@@ -273,7 +274,7 @@ def page_nav(
         ),
         # > md screen elements
         div(classes=["gap-2", "navbar-end", "hidden", "sm:flex"]).insert(
-            form(classes=["form-control"]).insert(
+            form(classes=["form-control"], action="/search").insert(
                 input(
                     name="query",
                     classes=["input", "input-bordered", "w-24", "sm:w-auto"],
