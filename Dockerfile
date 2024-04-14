@@ -23,4 +23,4 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 ENV PATH="/app/.venv/bin:$PATH"
 COPY --from=poetry /app /app
-CMD ["uvicorn", "memecry.main:app", "--host", "0.0.0.0", "--port", "$PORT", "--proxy-headers"]
+CMD ["python", "memecry/main.py"]
