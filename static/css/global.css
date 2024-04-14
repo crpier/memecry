@@ -5,7 +5,7 @@
 
 /* TODO: should have a css variable handy for class names, I think */
 .post-component {
-  scroll-margin-top: 5rem;
+  scroll-margin-top: 4.1rem;
 }
 
 /* Hide scrollbars, because modals hiden them too and shifts the page

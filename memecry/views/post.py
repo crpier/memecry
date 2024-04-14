@@ -62,7 +62,11 @@ def tags_component(  # noqa: PLR0913
 
     options = [option_input(tag, active=tag in active_tags) for tag in available_tags]
 
-    return div(classes=["dropdown"]).insert(
+    return div(
+        classes=[
+            "dropdown",
+        ]
+    ).insert(
         useless_element,
         script(  # TODO: revert change to dropdown text if we got an error from htmx
             js=f"""
@@ -88,6 +92,8 @@ def tags_component(  # noqa: PLR0913
         }});
     }}"""
         ),
+        # TODO: find a way to make this a span, or something easier to style
+        # so that I can set width to max-content
         input(
             id=text_div_id,
             type="text",
@@ -96,13 +102,12 @@ def tags_component(  # noqa: PLR0913
             classes=[
                 "btn",
                 "btn-sm",
-                "w-max",
-                "max-w-full",
+                "btn-outline",
                 "truncate",
-                "align-center",
                 "block",
                 "leading-8",
                 "pointer-events-none" if not editable else "",
+                "max-w-[6rem]",
             ],
             value=", ".join(active_tags),
         ),
@@ -114,9 +119,10 @@ def tags_component(  # noqa: PLR0913
                 "z-[1]",
                 "p-2",
                 "shadow",
-                "bg-base-100",
-                "space-y-1",
+                "space-y-2",
                 "space-x-1",
+                "rounded-b-lg",
+                "bg-base-200",
                 "hidden" if not editable else "",
             ],
         ).insert(options),
@@ -124,67 +130,52 @@ def tags_component(  # noqa: PLR0913
 
 
 @component(key=lambda post: post.id)
-def post_title_section(*, post: memecry.schema.PostRead) -> Element:
-    return div(classes=["text-center", "text-lg"], text=post.title)
-    return div(
-        classes=memecry.views.common.FLEX_ROW_WRAPPER_CLASSES,
-    ).insert(
-        input(
-            id=f"title-{post.id}",
+def post_title_section(
+    *, post: memecry.schema.PostRead, view_context: ViewContext = Injected
+) -> Element:
+    return div(classes=["text-center", "p-2"]).insert(
+        a(
+            href=view_context.url_of(memecry.routes.post.get_post)(post_id=post.id),
             classes=[
-                *memecry.views.common.INPUT_CLASSES,
-                "text-center",
-                "flex-1",
+                "text-lg",
+                "font-bold",
+                "link",
+                "link-hover",
             ],
-            type="text",
-            name=f"title-{post.id}",
-            value=post.title,
-            disabled=not post.editable,
-        ),
-        div(
-            classes=[
-                "flex-0",
-                "text-right",
-                "invisible" if not post.editable else "",
-            ],
-        ).insert(
-            button(classes=["w-max", "pb-4", "px-2"])
-            .insert(i(classes=["fa", "fa-lg", "fa-gear"]))
-            .hx_put(
-                f"/posts/{post.id}/title",
-                hx_swap="none",
-                hx_encoding="multipart/form-data",
-                hx_include=f"#title-{post.id}",
-            ),
-        ),
+            text=post.title,
+        )
     )
 
 
 def post_info_pane(*, post: memecry.schema.PostRead) -> Element:
     return div(
-        classes=[*memecry.views.common.FLEX_ROW_WRAPPER_CLASSES, "max-w-xl"]
+        classes=[
+            "flex",
+            "justify-between",
+            "px-1",
+            "sm:px-0",
+            "sm:py-2",
+        ]
     ).insert(
-        div(
-            classes=[
-                "sm:font-semibold",
-                "text-sm",
-                "sm:text-base",
-            ]
-        ).text(f"{post.score} good boi points"),
+        div().insert(
+            span(
+                classes=[
+                    "sm:font-semibold",
+                ]
+            ).text(f"{post.score} good boi points"),
+        ),
         div(classes=["space-x-1"]).insert(
             span(
                 classes=[
                     "sm:font-semibold",
-                    "text-sm",
-                    "sm:text-base",
                 ]
             ).text(f"{post.created_since} by"),
             a(
                 href="#",
                 classes=[
-                    "sm:font-semibold",
-                    "text-sm",
-                    "sm:text-base",
+                    "link",
+                    "link-hover",
+                    "font-semibold",
                     "text-secondary-content",
                 ],
             ).text(post.author_name),
@@ -192,17 +183,23 @@ def post_info_pane(*, post: memecry.schema.PostRead) -> Element:
     )
 
 
-def post_interaction_pane(tags: Element, search_content_id: str) -> Element:
-    return div(
-        classes=[*memecry.views.common.FLEX_ROW_WRAPPER_CLASSES, "max-w-xl"]
-    ).insert(
-        div(
-            classes=[*memecry.views.common.FLEX_ROW_WRAPPER_CLASSES, "max-w-xl"]
-        ).insert(
+def post_interaction_pane(
+    post: memecry.schema.PostRead, search_content_id: str
+) -> Element:
+    tags = tags_component(
+        post_id=post.id,
+        selected_tags=post.tags,
+        editable=post.editable,
+    )
+    return div(classes=["flex", "pb-2", "items-center"]).insert(
+        div(classes=[]).insert(
             button(
                 type="button",
                 classes=[
                     *memecry.views.common.SIMPLE_BUTTON_CLASSES,
+                    "btn-ghost",
+                    "text-primary",
+                    "hover:bg-base-100",
                     "hover:text-green-700",
                     "hover:border-green-700",
                 ],
@@ -211,25 +208,29 @@ def post_interaction_pane(tags: Element, search_content_id: str) -> Element:
                 type="button",
                 classes=[
                     *memecry.views.common.SIMPLE_BUTTON_CLASSES,
+                    "btn-ghost",
+                    "text-primary",
+                    "hover:bg-base-100",
                     "hover:text-red-800",
                     "hover:border-red-800",
                 ],
             ).insert(i(classes=["fa", "fa-arrow-down"])),
         ),
-        tags,
         div(classes=["flex-grow"]),
+        tags.classes(["mr-2"]),
         button(
             type="button",
-            classes=memecry.views.common.SIMPLE_BUTTON_CLASSES,
+            classes=[*memecry.views.common.SIMPLE_BUTTON_CLASSES, "btn-ghost"],
             hyperscript=f"on click toggle .hidden on #{search_content_id}",
         ).insert(i(classes=["fa", "fa-gear", "fa-lg"])),
         button(
             classes=[
                 *memecry.views.common.SIMPLE_BUTTON_CLASSES,
+                "btn-ghost",
                 "font-semibold",
                 "whitespace-nowrap",
             ]
-        ).text("0 comments"),
+        ).insert(span(text="0"), i(classes=["fa", "fa-comment"])),
     )
 
 
@@ -328,21 +329,23 @@ def post_component(*, post: memecry.schema.PostRead, id: str = Injected) -> div:
 
     return div(
         classes=[
-            *memecry.views.common.FLEX_ELEMENT_WRAPPER_CLASSES,
+            "space-y-1",
+            "w-full",
             "outline-none",
             "w-screen",
-            "sm:max-w-4xl",
+            "sm:max-w-lg",
+            "sm:border",
+            "sm:border-gray-600",
+            "sm:px-4",
+            "sm:rounded-lg",
+            "bg-base-100",
         ]
     ).insert(
         post_title_section(post=post),
         post_content_component(post),
         post_info_pane(post=post),
         post_interaction_pane(
-            tags_component(
-                post_id=post.id,
-                selected_tags=post.tags,
-                editable=post.editable,
-            ),
+            post,
             post_settings.id,
         ),
         post_settings,
@@ -378,7 +381,6 @@ def home_view(  # noqa: PLR0913
     if partial:
         return Fragment(post_views)
     return main(
-        # use the "divide-*" class to split posts, instead
         classes=[
             *memecry.views.common.FLEX_COL_WRAPPER_CLASSES,
             "mx-auto",

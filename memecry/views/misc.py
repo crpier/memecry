@@ -102,6 +102,7 @@ def page_root(
                 "flex",
                 "flex-row",
                 "justify-between",
+                "bg-base-200",
             ]
             # TODO: find a more visible place to put this (or at least document it)
         ).insert(child, hmr_script() if config.ENV == "dev" else None),
@@ -335,20 +336,20 @@ def page_nav(
 
 
 def keybind_helper(keybind: str, explanation: str) -> Element:
-    return div(classes=["space-x-2", "px-4", "text-left", "text-sm", "ml-4"]).insert(
-        span(classes=["font-bold"], text=keybind),
-        span(text="-"),
+    return div(classes=["space-x-2", "px-2", "text-left", "text-sm"]).insert(
+        span(classes=["font-bold", "kbd"], text=keybind),
         span(text=explanation),
     )
 
 
 def section_separator(name: str) -> Element:
     return div(
-        classes=["space-x-2", "px-4", "text-left", "text-sm", "font-semibold", "mt-4"],
+        classes=["space-x-2", "px-4", "text-left", "text-sm", "font-semibold", "pt-4"],
         text=name,
     )
 
 
+# TODO: maybe this would be better as a card, or a modal?
 def commands_helper(*, key: str, display_hack: bool = False) -> Element:
     return aside(
         classes=[
@@ -369,6 +370,7 @@ def commands_helper(*, key: str, display_hack: bool = False) -> Element:
                 "border",
                 "border-gray-600",
                 "text-white",
+                "bg-base-100",
             ]
         ).insert(
             div(
@@ -380,7 +382,7 @@ def commands_helper(*, key: str, display_hack: bool = False) -> Element:
                     key,
                 ]
             ).text("Keybindings"),
-            div(classes=["pb-4"]).insert(
+            div(classes=["pb-4", "space-y-1"]).insert(
                 section_separator("Movement"),
                 keybind_helper("j", "focus on next post"),
                 keybind_helper("k", "focus on previous post"),
@@ -553,7 +555,7 @@ def signin_form(*, context: ViewContext = Injected) -> dialog:
         id="signin-error", classes=["!m-0", "flex", "justify-center", "pt-4"]
     )
     return dialog(classes=["modal", "modal-bottom", "sm:modal-middle"]).insert(
-        div(classes=["modal-box", "space-y-4", "max-w-sm", "sm:max-w-lg"]).insert(
+        div(classes=["modal-box", "space-y-4", "max-w-full", "sm:max-w-lg"]).insert(
             form(
                 attrs={"method": "dialog"},
             ).insert(
@@ -643,7 +645,7 @@ def signup_form(*, view_context: ViewContext = Injected) -> dialog:
         id="signup-error", classes=["!m-0", "flex", "justify-center", "pt-4"]
     )
     return dialog(classes=["modal", "modal-bottom", "sm:modal-middle"]).insert(
-        div(classes=["modal-box", "space-y-4", "max-w-sm", "sm:max-w-lg"]).insert(
+        div(classes=["modal-box", "space-y-4", "max-w-full", "sm:max-w-lg"]).insert(
             form(
                 attrs={"method": "dialog"},
             ).insert(

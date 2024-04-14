@@ -9,7 +9,7 @@ IMAGE_FORMATS = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
 VIDEO_FORMATS = [".mp4", ".webm"]
 
 
-SIMPLE_BUTTON_CLASSES = ["btn", "btn-xs", "sm:btn-sm", "sm:btn-md", "lg:btn-lg"]
+SIMPLE_BUTTON_CLASSES = ["btn", "btn-xs", "sm:btn-sm", "sm:btn-md"]
 
 
 NEUTRAL_BUTTON_CLASSES = [*SIMPLE_BUTTON_CLASSES, "btn-neutral"]
@@ -38,7 +38,6 @@ FLEX_COL_WRAPPER_CLASSES = [
     "justify-center",
     "justify-items-center",
     "space-y-8",
-    "sm:space-y-4",
 ]
 
 
@@ -62,15 +61,6 @@ BASIC_FORM_CLASSES = [
     "items-start",
     "w-max",
     "p-4",
-]
-
-FLEX_ELEMENT_WRAPPER_CLASSES = [
-    "sm:border",
-    "sm:border-gray-600",
-    "sm:p-4",
-    "sm:rounded-lg",
-    "space-y-1",
-    "w-full",
 ]
 
 INPUT_CLASSES = [
