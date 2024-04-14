@@ -102,7 +102,7 @@ function copyLinkToImage() {
     canvas.width = result.width;
     canvas.height = result.height;
     ctx.drawImage(result, 0, 0);
-    canvas.toBlob(function(blob) {
+    canvas.toBlob(function (blob) {
       let item;
       try {
         item = new ClipboardItem({ "image/png": blob });
@@ -122,7 +122,7 @@ function copyLinkToImage() {
         }
       }
       navigator.clipboard.write([item]).then(
-        function() {
+        function () {
           Toastify({
             text: "Yanked image",
             position: "center",
@@ -134,7 +134,7 @@ function copyLinkToImage() {
             },
           }).showToast();
         },
-        function(error) {
+        function (error) {
           console.error("Unable to copy image to clipboard :", error);
         },
       );
@@ -147,7 +147,7 @@ function copyUrlOfContent() {
   const result = currentPost.querySelector("[src]");
   const src = result.src;
   navigator.clipboard.writeText(src).then(
-    function() {
+    function () {
       Toastify({
         text: `Yanked link ${src}`,
         position: "center",
@@ -159,7 +159,7 @@ function copyUrlOfContent() {
         },
       }).showToast();
     },
-    function(error) {
+    function (error) {
       console.error("Unable to copy link to clipboard :", error);
     },
   );
@@ -245,7 +245,7 @@ function reloadAvailablePosts() {
   for (let i = 0; i < elements.length; i++) {
     availablePosts.push(elements[i]);
     if (elements[i].onblur === null) {
-      elements[i].onblur = function(event) {
+      elements[i].onblur = function (event) {
         const video = event.target.querySelector("video");
         if (video !== null) {
           if (!video.paused) {
@@ -257,7 +257,7 @@ function reloadAvailablePosts() {
   }
 }
 
-htmx.on("htmx:afterSettle", function(_) {
+htmx.on("htmx:afterSettle", function (_) {
   reloadAvailablePosts();
 });
 
@@ -266,7 +266,7 @@ setTimeout(() => {
   updateCurrentPostIdx();
 });
 
-document.onscroll = function() {
+document.onscroll = function () {
   updateCurrentPostIdx();
 };
 
@@ -382,7 +382,7 @@ function startedCompositeKey() {
   return false;
 }
 
-document.onkeydown = function(e) {
+document.onkeydown = function (e) {
   const { key } = e;
   // Escape is a special case: we always want the script to handle it
   if (key === "Escape") {
@@ -390,6 +390,7 @@ document.onkeydown = function(e) {
       document.activeElement.blur();
       return;
     }
+    // TODO: Also close all existing dialogs
     resetCompositeKeys();
     return;
   }

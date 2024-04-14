@@ -11,8 +11,8 @@ from relax.html import (
     i,
     img,
     input,
-    li,
     main,
+    script,
     span,
     textarea,
     ul,
@@ -30,87 +30,102 @@ IMAGE_FORMATS = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
 VIDEO_FORMATS = [".mp4", ".webm"]
 
 
-@injectable_sync
+# TODO: allow default values for params used in lambda function
+@component(key=lambda post_id: post_id)
 def tags_component(  # noqa: PLR0913
-    post_id: int = 0,
-    post_tags: str = "no-tags",
     *,
+    post_id: int,
+    selected_tags: str = "no-tags",
     editable: bool = False,
-    hidden_dropdown: bool = True,
     config: memecry.config.Config = Injected,
     context: ViewContext = Injected,
-) -> div:
-    element_id = f"tags-{post_id}"
-    tags_selector_id = f"tags-selector-{post_id}"
+    id: str = Injected,
+) -> Element:
     update_tags_url = context.url_of(memecry.routes.post.update_tags)
+    text_div_id = f"tags-text-{id}"
+    useless_element = div(id="empty-useless-target", classes=["hidden"])
 
-    def li_tag(tag: str) -> li:
-        return li(
-            classes=[
-                *memecry.views.common.SIMPLE_BUTTON_CLASSES,
-                "!p-0",
-                "!border-0",
-                "[&:not(:first-child)]:!rounded-t-none",
-                "[&:not(:last-child)]:!rounded-b-none",
-                "bg-gray-800" if tag in post_tags else "",
-                "w-full",
-            ]
-        ).insert(
-            button(
-                attrs={"name": "tag", "value": tag},
-                classes=[
-                    *memecry.views.common.SIMPLE_BUTTON_CLASSES,
-                    "!border-0",
-                    "!rounded-none",
-                    "w-full",
-                    "m-auto",
-                ],
-            )
-            .text(tag)
-            .hx_put(
-                update_tags_url(post_id=post_id),  # type: ignore
-                hx_target=f"#{element_id}",
-                hx_swap="outerHTML",
-            ),
+    active_tags = selected_tags.split(", ")
+    available_tags = config.DEFAULT_TAGS
+
+    def option_input(tag: str, *, active: bool = False) -> input:
+        attrs = {"aria-label": tag, "onclick": f"input_clicked_{post_id}(event)"}
+        if active:
+            attrs["checked"] = "true"
+        return input(
+            name=id,
+            type="checkbox",
+            classes=["btn", "btn-xs", "btn-ghost"],
+            value=tag,
+            attrs=attrs,
         )
 
-    return div(
-        id=element_id,
-        classes=[
-            "max-w-full",
-            "whitespace-nowrap",
-            "overflow-hidden",
-        ],
-    ).insert(
-        input(name="tags", type="text", value=post_tags, classes=["hidden"]),
-        button(
-            classes=[
-                *memecry.views.common.SIMPLE_BUTTON_CLASSES,
-                "cursor-default" if not editable else "cursor-pointer",
-                "max-w-full",
-                "overflow-hidden",
-                "overflow-ellipsis",
-            ],
-            hyperscript=f"on click toggle .hidden on #{tags_selector_id}"
-            if editable
-            else "",
-        ).text(post_tags),
-        div(
-            id=tags_selector_id,
-            classes=[
-                *memecry.views.common.DROPDOWN_CLASSES,
-                "hidden" if hidden_dropdown else "",
-            ],
-        ).insert(
-            ul().insert(
-                [li_tag(tag) for tag in config.DEFAULT_TAGS],
-            ),
+    options = [option_input(tag, active=tag in active_tags) for tag in available_tags]
+
+    return div(classes=["dropdown"]).insert(
+        useless_element,
+        script(  # TODO: revert change to dropdown text if we got an error from htmx
+            js=f"""
+    var input_clicked_{post_id} = function(event) {{
+        const target = event.target;
+        const siblingOptions = document.getElementsByName(target.name);
+        let activeOptions = Array.from(siblingOptions).filter(
+            option => option.checked).map(
+            option => option.value
+        ).join(", ");
+        if (activeOptions === "") {{
+            activeOptions = "no-tags";
+        }}
+        const dropdown = document.getElementById("{text_div_id}");
+        dropdown.setAttribute("value", activeOptions);
+        htmx.ajax("PUT", "{update_tags_url(post_id=post_id)}", {{
+            swap: "none",
+            target: "#empty-useless-target",
+            values: {{
+                tag: target.value,
+                tags: activeOptions,
+            }}
+        }});
+    }}"""
         ),
+        input(
+            id=text_div_id,
+            type="text",
+            name="tags",
+            attrs={"readonly": "true"},
+            classes=[
+                "btn",
+                "btn-sm",
+                "w-max",
+                "max-w-full",
+                "truncate",
+                "align-center",
+                "block",
+                "leading-8",
+                "pointer-events-none" if not editable else "",
+            ],
+            value=", ".join(active_tags),
+        ),
+        ul(
+            attrs={"tabindex": "0"},
+            classes=[
+                "dropdown-content",
+                "menu",
+                "z-[1]",
+                "p-2",
+                "shadow",
+                "bg-base-100",
+                "space-y-1",
+                "space-x-1",
+                "hidden" if not editable else "",
+            ],
+        ).insert(options),
     )
 
 
 @component(key=lambda post: post.id)
 def post_title_section(*, post: memecry.schema.PostRead) -> Element:
+    return div(classes=["text-center", "text-lg"], text=post.title)
     return div(
         classes=memecry.views.common.FLEX_ROW_WRAPPER_CLASSES,
     ).insert(
@@ -146,29 +161,31 @@ def post_title_section(*, post: memecry.schema.PostRead) -> Element:
 
 
 def post_info_pane(*, post: memecry.schema.PostRead) -> Element:
-    return div(classes=memecry.views.common.FLEX_ROW_WRAPPER_CLASSES).insert(
+    return div(
+        classes=[*memecry.views.common.FLEX_ROW_WRAPPER_CLASSES, "max-w-xl"]
+    ).insert(
         div(
             classes=[
-                "md:font-semibold",
+                "sm:font-semibold",
                 "text-sm",
-                "md:text-base",
+                "sm:text-base",
             ]
         ).text(f"{post.score} good boi points"),
         div(classes=["space-x-1"]).insert(
             span(
                 classes=[
-                    "md:font-semibold",
+                    "sm:font-semibold",
                     "text-sm",
-                    "md:text-base",
+                    "sm:text-base",
                 ]
             ).text(f"{post.created_since} by"),
             a(
                 href="#",
                 classes=[
-                    "md:font-semibold",
+                    "sm:font-semibold",
                     "text-sm",
-                    "md:text-base",
-                    "text-green-300",
+                    "sm:text-base",
+                    "text-secondary-content",
                 ],
             ).text(post.author_name),
         ),
@@ -176,8 +193,12 @@ def post_info_pane(*, post: memecry.schema.PostRead) -> Element:
 
 
 def post_interaction_pane(tags: Element, search_content_id: str) -> Element:
-    return div(classes=memecry.views.common.FLEX_ROW_WRAPPER_CLASSES).insert(
-        div(classes=memecry.views.common.FLEX_ROW_WRAPPER_CLASSES).insert(
+    return div(
+        classes=[*memecry.views.common.FLEX_ROW_WRAPPER_CLASSES, "max-w-xl"]
+    ).insert(
+        div(
+            classes=[*memecry.views.common.FLEX_ROW_WRAPPER_CLASSES, "max-w-xl"]
+        ).insert(
             button(
                 type="button",
                 classes=[
@@ -236,7 +257,6 @@ def post_settings_pane(
                 "p-2",
                 "w-full",
                 "my-4",
-                "bg-black",
                 "outline-none",
             ],
             disabled=not post.editable,
@@ -244,7 +264,7 @@ def post_settings_pane(
         div(classes=memecry.views.common.FLEX_ROW_WRAPPER_CLASSES).insert(
             button(
                 type="button",
-                classes=memecry.views.common.DANGER_SPECIAL_BUTTON_CLASSES,
+                classes=memecry.views.common.SECONDARY_BUTTON_CLASSES,
                 hyperscript="""on htmx:confirm(issueRequest)
              halt the event
              call Swal.fire({
@@ -269,7 +289,7 @@ def post_settings_pane(
             .text("Delete post"),
             button(
                 type="button",
-                classes=memecry.views.common.ATTENTION_SPECIAL_BUTTON_CLASSES,
+                classes=memecry.views.common.SECONDARY_BUTTON_CLASSES,
                 hyperscript=f"on click toggle .hidden on #{id}",
             )
             .text("Save")
@@ -309,19 +329,18 @@ def post_component(*, post: memecry.schema.PostRead, id: str = Injected) -> div:
     return div(
         classes=[
             *memecry.views.common.FLEX_ELEMENT_WRAPPER_CLASSES,
-            "focus:!border-gray-400",
             "outline-none",
-            "md:max-w-2xl",
-        ],
-        attrs={"tabindex": -1},
+            "w-screen",
+            "sm:max-w-4xl",
+        ]
     ).insert(
         post_title_section(post=post),
         post_content_component(post),
         post_info_pane(post=post),
         post_interaction_pane(
             tags_component(
-                post.id,
-                post.tags,
+                post_id=post.id,
+                selected_tags=post.tags,
                 editable=post.editable,
             ),
             post_settings.id,
@@ -362,7 +381,6 @@ def home_view(  # noqa: PLR0913
         # use the "divide-*" class to split posts, instead
         classes=[
             *memecry.views.common.FLEX_COL_WRAPPER_CLASSES,
-            "md:w-[32rem]",
             "mx-auto",
         ],
     ).insert(

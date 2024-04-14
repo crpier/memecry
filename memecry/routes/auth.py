@@ -24,7 +24,8 @@ async def signin(request: memecry.schema.Request) -> HTMLResponse | Response:
         # lolwtf
         username = cast(str, form["username"])
         password = cast(str, form["password"])
-        if await memecry.user_service.authenticate_user(username, password) is None:
+        auth_result = await memecry.user_service.authenticate_user(username, password)
+        if auth_result is None:
             return HTMLResponse(
                 memecry.views.common.error_element("Invalid username or password"),
             )
@@ -36,26 +37,6 @@ async def signin(request: memecry.schema.Request) -> HTMLResponse | Response:
         resp.headers["HX-Refresh"] = "true"
         resp.status_code = 303
         return resp
-
-
-@router.path_function("GET", "/signin-form")
-async def signin_form(request: memecry.schema.Request) -> HTMLResponse:
-    if request.scope["from_htmx"]:
-        return HTMLResponse(memecry.views.misc.signin_form())
-    return HTMLResponse(
-        memecry.views.misc.page_root(memecry.views.misc.signin_form()),
-    )
-
-
-@router.path_function("GET", "/signup-form")
-async def signup_form(request: memecry.schema.Request) -> HTMLResponse:
-    if request.scope["from_htmx"]:
-        return HTMLResponse(memecry.views.misc.signup_form(request.url_of(signup)))  # type: ignore
-    return HTMLResponse(
-        memecry.views.misc.page_root(
-            memecry.views.misc.signup_form(request.url_of(signup)),  # type: ignore
-        ),
-    )
 
 
 @dataclass

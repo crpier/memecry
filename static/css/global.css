@@ -5,5 +5,22 @@
 
 /* TODO: should have a css variable handy for class names, I think */
 .post-component {
-  scroll-margin-top: 3.5em;
+  scroll-margin-top: 5rem;
+}
+
+/* Hide scrollbars, because modals hiden them too and shifts the page
+ * looking weird and ugly */
+::-webkit-scrollbar {
+  height: 0px;
+  width: 0px;
+}
+
+::-webkit-scrollbar-track {
+  border-radius: 0;
+  background: #eeeeee;
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 0;
+  background: #b0b0b0;
 }

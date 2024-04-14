@@ -11,7 +11,7 @@ from relax.app import (
     QueryStr,
     Router,
 )
-from relax.html import div
+from relax.html import div, input
 from starlette.datastructures import UploadFile
 from starlette.responses import RedirectResponse, Response
 
@@ -41,7 +41,7 @@ async def get_post(request: memecry.schema.Request, post_id: PathInt) -> HTMLRes
                     user=request.user if request.user.is_authenticated else None,
                 ),
                 memecry.views.misc.commands_helper(key="visible", display_hack=False),
-                div(classes=["md:w-[32rem]"]).insert(
+                div(classes=["sm:w-[32rem]"]).insert(
                     memecry.views.post.post_component(post=post)
                 ),
                 memecry.views.misc.commands_helper(display_hack=True, key="hidden"),
@@ -80,7 +80,7 @@ async def update_tags(
     async with request.parse_form(TagForm) as form:
         if post_id != 0:
             try:
-                updated_tags = await memecry.posts_service.toggle_post_tag(
+                await memecry.posts_service.toggle_post_tag(
                     post_id, form.tag, request.user.id
                 )
             except PermissionError:
@@ -100,16 +100,7 @@ async def update_tags(
                     old_tags = []
                 old_tags.append(form.tag)
 
-            updated_tags = ", ".join(old_tags)
-
-    return HTMLResponse(
-        memecry.views.post.tags_component(
-            post_id=post_id,
-            post_tags=updated_tags,
-            editable=True,
-            hidden_dropdown=False,
-        ),
-    )
+        return HTMLResponse(input(value=form.tags, name="lol", type="text"))
 
 
 @router.path_function(
@@ -144,30 +135,11 @@ async def update_title(request: memecry.schema.Request, post_id: PathInt) -> Res
     return Response("success")
 
 
-@router.path_function(
-    "GET",
-    "/upload-form",
-    auth_scopes=[AuthScope.Authenticated],
-)
-async def upload_form(request: memecry.schema.Request) -> HTMLResponse:
-    if request.scope["from_htmx"]:
-        return HTMLResponse(
-            memecry.views.misc.upload_form(),
-        )
-    return HTMLResponse(
-        memecry.views.misc.page_root(
-            [
-                memecry.views.misc.upload_form(),
-            ],
-        ),
-    )
-
-
 @dataclass
 class UploadForm:
     title: str
-    tags: str
     file: UploadFile
+    tags: str = "no-tags"
     searchable_content: str = ""
 
 

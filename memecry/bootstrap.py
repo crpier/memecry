@@ -24,7 +24,6 @@ def run_migrations(script_location: str, dsn: str) -> None:
         alembic_cfg.get_section_option("alembic", "here"),
     )
     alembic.command.upgrade(alembic_cfg, "head")
-    logger.info("wtf")
 
 
 def bootstrap() -> tuple[memecry.config.Config, ViewContext]:
@@ -53,10 +52,10 @@ def bootstrap() -> tuple[memecry.config.Config, ViewContext]:
 
     if config.ENV == "prod":
         run_migrations("./memecry/alembic_migrations", f"sqlite:///{config.DB_FILE}")
-    elif config.ENV == "env":
+    elif config.ENV == "dev":
         with sync_engine.begin() as conn:
             memecry.model.Base.metadata.create_all(conn)
-        subprocess.Popen(["tailwindcss", "-o", "static/css/tailwind.css"])  # noqa: S603, S607
+        subprocess.Popen(["npx", "tailwindcss", "-o", "static/css/tailwind.css"])  # noqa: S603, S607
 
     update_js_constants(config)
     return config, view_context

@@ -3,3 +3,4 @@ __pycache__/
 /testdata
 /.env
 /*.db
+/node_modules

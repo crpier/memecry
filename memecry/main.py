@@ -88,5 +88,8 @@ def app_factory() -> App:
 if __name__ == "__main__":
     config = memecry.config.Config()
     start_app(
-        app_path="memecry.main:app_factory", config=config, reload=config.ENV == "dev"
+        app_path="memecry.main:app_factory",
+        config=config,
+        reload=config.ENV == "dev",
+        host="0.0.0.0",  # noqa: S104
     )

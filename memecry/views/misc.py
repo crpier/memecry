@@ -1,27 +1,31 @@
 from relax.app import ViewContext
 from relax.html import (
     Element,
+    Fragment,
     a,
     aside,
     body,
     button,
+    dialog,
     div,
     form,
     head,
     hmr_script,
     html,
     i,
+    img,
     input,
+    label,
+    li,
     link,
     meta,
-    nav,
-    p,
     script,
     span,
     title,
+    ul,
+    video,
 )
 from relax.injection import Injected, component, injectable_sync
-from starlette.datastructures import URL
 
 import memecry.config
 import memecry.routes.auth
@@ -36,10 +40,18 @@ VIDEO_FORMATS = [".mp4", ".webm"]
 
 @injectable_sync
 def tailwind_css(*, config: memecry.config.Config = Injected) -> Element:
-    return (
-        link(href="/static/css/tailwind.css", rel="stylesheet")
-        if config.ENV == "prod"
-        else script(src="https://cdn.tailwindcss.com")
+    if config.ENV == "prod":
+        return link(href="/static/css/tailwind.css", rel="stylesheet")
+
+    return Fragment(
+        [
+            link(
+                href="https://cdn.jsdelivr.net/npm/daisyui@4.10.1/dist/full.min.css",
+                rel="stylesheet",
+                type="text/css",
+            ),
+            script(src="https://cdn.tailwindcss.com"),
+        ],
     )
 
 
@@ -49,7 +61,7 @@ def page_head() -> head:
         meta(charset="UTF-8"),
         meta(
             name="viewport",
-            content="width=device-width; initial-scale=1.0; maximum-scale=1.0;",
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0",
         ),
         tailwind_css(),
         link(href="/static/css/global.css", rel="stylesheet"),
@@ -82,144 +94,241 @@ def page_root(
     *,
     config: memecry.config.Config = Injected,
 ) -> html:
-    return html(lang="en").insert(
+    return html(lang="en", attrs={"data-theme": "luxury"}).insert(
         page_head(),
         body(
             classes=[
-                "bg-black",
-                "text-white",
-                "pt-14",
+                "pt-20",
                 "flex",
                 "flex-row",
                 "justify-between",
             ]
+            # TODO: find a more visible place to put this (or at least document it)
         ).insert(child, hmr_script() if config.ENV == "dev" else None),
     )
 
 
 @component()
 def page_nav(
-    user: memecry.schema.UserRead | None = None,
     *,
+    user: memecry.schema.UserRead | None = None,
     context: ViewContext = Injected,
-    config: memecry.config.Config = Injected,
-) -> nav:
-    search_form = form(
-        classes=[*memecry.views.common.FLEX_ROW_WRAPPER_CLASSES],
-        # TODO: find a way to provide this url and its args from context
-        action="/search",
+) -> Element:
+    upload_form_element = upload_form()
+    large_upload_button = (
+        button(classes=["btn", "btn-primary"], text="Upload").hyperscript(
+            f"on click call #{upload_form_element.id}'s showModal()"
+        )
+        if user
+        else None
+    )
+    small_upload_button = (
+        (
+            li().insert(
+                button(text="Upload").hyperscript(
+                    f"on click call #{upload_form_element.id}'s showModal()"
+                )
+            ),
+        )
+        if user
+        else None
+    )
+
+    large_signout_button = (
+        li().insert(
+            button(text="Sign out").hx_get(
+                target=context.url_of(memecry.routes.auth.signout)(),
+                hx_target="body",
+                hx_swap="beforeend",
+            )
+        )
+        if user
+        else None
+    )
+    small_signout_button = (
+        li().insert(
+            button(text="Sign out").hx_get(
+                target=context.url_of(memecry.routes.auth.signout)(),
+                hx_target="body",
+                hx_swap="beforeend",
+            )
+        )
+        if user
+        else None
+    )
+
+    signin_form_element = signin_form()
+    large_signin_button = (
+        (
+            button(
+                id="signin",
+                classes=["btn", "btn-primary"],
+                text="Sign in",
+            ).hyperscript(f"on click call #{signin_form_element.id}'s showModal()")
+        )
+        if not user
+        else None
+    )
+
+    small_signin_button = (
+        li().insert(
+            button(
+                id="signin",
+                text="Sign in",
+            ).hyperscript(f"on click call #{signin_form_element.id}'s showModal()")
+        )
+        if not user
+        else None
+    )
+
+    signup_form_element = signup_form()
+    large_signup_button = (
+        button(classes=["btn", "btn-neutral"], text="Sign up").hyperscript(
+            f"on click call #{signup_form_element.id}'s showModal()"
+        )
+        # TODO: make this a disabled button if signups are disabled
+        if not user
+        else None
+    )
+    small_signup_button = li().insert(
+        button(text="Sign up").hyperscript(
+            f"on click call #{signup_form_element.id}'s showModal()"
+        )
+        if not user
+        else None
+    )
+
+    small_preferences_button = (
+        li().insert(
+            button(
+                text="Preferences",
+            )
+        )
+        if user
+        else None
+    )
+
+    large_preferences_button = (
+        li().insert(
+            a(
+                text="Preferences",
+                href="/",
+            )
+        )
+        if user
+        else None
+    )
+
+    avatar_dropdown = (
+        div(classes=["dropdown", "dropdown-end"]).insert(
+            div(
+                attrs={"tabindex": "0", "role": "button"},
+                classes=["btn", "btn-ghost", "btn-circle", "avatar"],
+            ).insert(
+                div(classes=["w-10", "rounded-full"]).insert(
+                    img(
+                        alt="avatar",
+                        src="https://avatars.githubusercontent.com/u/31815875?v=4",
+                    ),
+                )
+            ),
+            ul(
+                attrs={"tabindex": "0"},
+                classes=[
+                    "menu",
+                    "menu-sm",
+                    "dropdown-content",
+                    "mt-3",
+                    "p-2",
+                    "shadow",
+                    "bg-base-100",
+                    "rounded-box",
+                ],
+            ).insert(
+                large_preferences_button,
+                large_signout_button,
+            ),
+        )
+        if user
+        else None
+    )
+
+    return div(
+        classes=["navbar", "bg-base-100", "fixed", "top-0", "left-0", "z-[1]"]
     ).insert(
-        div(id="search-error"),
-        input(
-            id="search",
-            name="query",
-            type="text",
-            classes=[
-                "rounded",
-                "px-1",
-                "md:mr-4",
-                "text-black",
-            ],
+        signup_form_element,
+        signin_form_element,
+        upload_form_element,
+        # always visible elements
+        div(classes=["flex-1", "navbar-start", "gap-4"]).insert(
+            a(classes=["btn", "btn-ghost", "text-2xl"], text="Memecry", href="/"),
         ),
-        button(
-            classes=["hidden", "md:block"],
-            hyperscript="on click toggle .hidden on #search",
-        ).insert(
-            i(classes=["fa", "fa-search", "fa-lg"]),
+        div(classes=["flex-auto", "navbar-start", "hidden", "lg:flex"]).insert(
+            a(
+                classes=["btn", "btn-ghost", "text-lg", "text-secondary-content"],
+                text="Random",
+                href="/random",
+            ),
         ),
-    )
-
-    signin_button = (
-        button(
-            id="signin",
-            classes=[*memecry.views.common.SIMPLE_BUTTON_CLASSES, "border-0"],
-        )
-        .hx_get(
-            target=context.url_of(memecry.routes.auth.signin_form)(),
-            hx_target="body",
-            hx_swap="beforeend",
-        )
-        .text("Sign in")
-    )
-
-    signup_button = (
-        button(
-            classes=[*memecry.views.common.special_button_classes("green")],
-        )
-        .hx_get(
-            target=context.url_of(memecry.routes.auth.signup_form)(),
-            hx_target="body",
-            hx_swap="beforeend",
-        )
-        .text("Sign up")
-    )
-
-    upload_button = (
-        button(
-            classes=[*memecry.views.common.special_button_classes("green"), "mr-1"],
-        )
-        .hx_get(
-            target=context.url_of(memecry.routes.post.upload_form)(),
-            hx_target="body",
-            hx_swap="beforeend",
-        )
-        .text("Upload")
-    )
-
-    signout_button = (
-        button(
-            classes=[*memecry.views.common.SIMPLE_BUTTON_CLASSES, "border-0"],
-        )
-        .hx_get(
-            target=context.url_of(memecry.routes.auth.signout)(),
-            hx_target="body",
-            hx_swap="beforeend",
-        )
-        .text("Sign out")
-    )
-
-    return nav(
-        classes=["bg-gray-900", "fixed", "top-0", "left-0", "w-full"],
-    ).insert(
-        div(classes=["flex", "w-full", "justify-end", "md:justify-between"]).insert(
+        # > md screen elements
+        div(classes=["gap-2", "navbar-end", "hidden", "sm:flex"]).insert(
+            form(classes=["form-control"]).insert(
+                input(
+                    name="query",
+                    classes=["input", "input-bordered", "w-24", "sm:w-auto"],
+                    type="text",
+                    placeholder="Search",
+                ),
+            ),
+            large_signin_button,
+            large_signup_button,
+            large_upload_button,
+            avatar_dropdown,
+        ),
+        # < md screen elements
+        div(classes=["navbar-end", "gap-2", "w-auto", "sm:hidden"]).insert(
+            div(classes=["form-control"]).insert(
+                input(
+                    name="query",
+                    classes=["input", "input-bordered", "w-full"],
+                    type="text",
+                    placeholder="Search",
+                ),
+            ),
             div(
                 classes=[
-                    "flex",
-                    "flex-row",
+                    "dropdown",
+                    "dropdown-end",
                 ]
             ).insert(
-                a(
-                    href="/",
+                button(
+                    attrs={"tabindex": "0", "role": "button"},
+                    classes=["btn", "btn-sm"],
+                ).insert(i(classes=["fa", "fa-bars", "fa-sm"])),
+                ul(
+                    attrs={"tabindex": "1"},
                     classes=[
-                        "hidden",
-                        "md:block",
-                        "items-center",
-                        "md:px-2",
-                        "md:py-2",
+                        "menu",
+                        "menu-sm",
+                        "dropdown-content",
+                        "mt-3",
+                        "p-2",
+                        "shadow",
+                        "bg-base-100",
+                        "rounded-box",
                     ],
                 ).insert(
-                    span(
-                        classes=[
-                            "font-bold",
-                            "text-2xl",
-                            "md:hover:text-green-500",
-                        ],
-                    ).text("Memecry"),
+                    small_upload_button,
+                    small_preferences_button,
+                    li().insert(
+                        button(
+                            text="Random",
+                        )
+                    ),
+                    small_signout_button,
+                    small_signin_button,
+                    small_signup_button,
                 ),
-                a(
-                    href=context.url_of(memecry.routes.post.random_post)(),
-                    classes=["my-auto", "mx-4"],
-                ).text("Random"),
-            ),
-            # Secondary Navbar items
-            div(
-                classes=[*memecry.views.common.FLEX_ROW_WRAPPER_CLASSES],
-            ).insert(
-                search_form,
-                signin_button if not user else None,
-                signup_button if not user and config.ALLOW_SIGNUPS else None,
-                signout_button if user else None,
-                upload_button if user else None,
             ),
         ),
     )
@@ -244,11 +353,11 @@ def commands_helper(*, key: str, display_hack: bool = False) -> Element:
     return aside(
         classes=[
             "hidden",
-            "md:block",
+            "sm:block",
             "px-8",
             "max-h-full",
             "text-white",
-            "md:max-w-lg",
+            "sm:max-w-lg",
             "invisible" if display_hack is True else "",
         ]
     ).insert(
@@ -257,7 +366,6 @@ def commands_helper(*, key: str, display_hack: bool = False) -> Element:
                 "block",
                 "rounded-lg",
                 "text-center",
-                "bg-black",
                 "border",
                 "border-gray-600",
                 "text-white",
@@ -313,147 +421,305 @@ def commands_helper(*, key: str, display_hack: bool = False) -> Element:
 
 
 @component()
-def upload_form(*, context: ViewContext = Injected) -> div:
-    tags = memecry.views.post.tags_component(editable=True)
-    upload_url = context.url_of(memecry.routes.post.upload)
-    return div(
-        id="upload-form",
-        classes=[
-            *memecry.views.common.FLEX_COL_WRAPPER_CLASSES,
-            "fixed",
-            "inset-48",
-            "z-40",
-        ],
-        hyperscript="on closeModal remove me",
-    ).insert(
-        memecry.views.common.MODAL_UNDERLAY,
-        form(
-            classes=memecry.views.common.BASIC_FORM_CLASSES,
-        )
-        .hx_post(
-            upload_url(),  # type: ignore
-            hx_swap="afterend",
-            hx_encoding="multipart/form-data",
-        )
-        .insert(
-            input(
-                type="text",
-                name="title",
-                placeholder="Title",
-                classes=["w-96", "text-black", "px-2"],
-            ),
-            input(
-                type="file",
-                name="file",
-            ),
-            tags,
-            div(classes=["w-full", "flex", "flex-col", "items-end"]).insert(
+def upload_form(*, context: ViewContext = Injected, id: str = Injected) -> dialog:
+    upload_error_placeholder = div(
+        id="signin-error", classes=["!m-0", "flex", "justify-center", "pt-4"]
+    )
+    tags_element = memecry.views.post.tags_component(post_id=0, editable=True).classes(
+        ["mr-auto", "my-auto"]
+    )
+
+    return dialog(classes=["modal", "modal-bottom", "sm:modal-middle"]).insert(
+        div(
+            classes=[
+                "modal-box",
+                "space-y-4",
+                "max-w-full",
+                "sm:max-w-xl",
+            ]
+        ).insert(
+            form(
+                attrs={"method": "dialog"},
+            ).insert(
                 button(
                     type="submit",
-                    classes=memecry.views.common.special_button_classes("green"),
-                ).text("Upload"),
+                    classes=[
+                        "btn",
+                        "btn-xs",
+                        "btn-circle",
+                        "btn-outline",
+                        "ml-auto",
+                        "absolute",
+                        "right-2",
+                        "top-2",
+                    ],
+                    text="X",
+                )
+            ),
+            div(
+                classes=[
+                    "font-bold",
+                    "text-xl",
+                    "text-center",
+                ],
+                text="Go ahead, take a sip",
+            ),
+            form(
+                classes=["form-control", "space-y-4", "flex"],
+                id=f"form-{id}",
+            )
+            .hx_post(
+                context.url_of(memecry.routes.post.upload)(),
+                hx_encoding="multipart/form-data",
+                hx_target=f"#{upload_error_placeholder.id}",
+                hx_swap="innerHTML",
+                hx_include=f"#tags-text-{tags_element.id}",
+            )
+            .insert(
+                label(
+                    classes=[
+                        "input",
+                        "input-bordered",
+                        "flex",
+                        "items-center",
+                        "gap-2",
+                    ],
+                    _for="title",
+                ).insert(
+                    input(
+                        type="text",
+                        name="title",
+                        placeholder="Title",
+                        classes=["grow"],
+                    ),
+                ),
+                input(
+                    type="file",
+                    name="file",
+                    classes=[
+                        "file-input",
+                        "file-input-bordered",
+                        "w-full",
+                    ],
+                    attrs={"onchange": "loadFile(event)"},
+                ),
+                div(classes=["flex", "align-center"]).insert(
+                    tags_element,
+                    button(
+                        type="submit",
+                        classes=["btn", "btn-primary"],
+                        text="Upload",
+                    ),
+                ),
+                img(id="preview_img", src="", alt="", classes=["hidden"]),
+                video(id="preview_video", src="", classes=["hidden"], controls=True),
+            ),
+            upload_error_placeholder,
+            # TODO: need to figure out how to reload scripts in the browser
+            script(
+                js="""
+           var loadFile = function(event) {
+               var input = event.target;
+               var file = input.files[0];
+               var type = file.type;
+               if (type.startsWith("image")) {
+                   var output = document.getElementById('preview_img');
+                   output.classList.remove("hidden")
+                   output.src = URL.createObjectURL(event.target.files[0]);
+                   output.onload = function() {
+                       URL.revokeObjectURL(output.src) // free memory
+                   }
+               } else if (type.startsWith("video")) {
+                   var output = document.getElementById('preview_video');
+                   output.classList.remove("hidden")
+                   output.src = URL.createObjectURL(event.target.files[0]);
+                   output.play()
+                   output.onload = function() {
+                       URL.revokeObjectURL(output.src) // free memory
+                   }
+               } else {
+                   console.error("Unsupported file type")
+               }
+
+        };"""
             ),
         ),
     )
 
 
 @component()
-def signin_form(*, context: ViewContext = Injected) -> div:
-    return div(
-        classes=[
-            *memecry.views.common.FLEX_COL_WRAPPER_CLASSES,
-            "fixed",
-            "inset-48",
-            "z-40",
-        ],
-        hyperscript="on closeModal remove me",
-    ).insert(
-        memecry.views.common.MODAL_UNDERLAY,
-        form(
-            classes=memecry.views.common.BASIC_FORM_CLASSES,
-        )
-        .hx_post(
-            context.url_of(memecry.routes.auth.signin)(),
-            hx_encoding="multipart/form-data",
-            hx_target="#signin-error",
-        )
-        .insert(
-            p(classes=["text-2xl"]).text("Sign in"),
+def signin_form(*, context: ViewContext = Injected) -> dialog:
+    signin_error_placeholder = div(
+        id="signin-error", classes=["!m-0", "flex", "justify-center", "pt-4"]
+    )
+    return dialog(classes=["modal", "modal-bottom", "sm:modal-middle"]).insert(
+        div(classes=["modal-box", "space-y-4", "max-w-sm", "sm:max-w-lg"]).insert(
+            form(
+                attrs={"method": "dialog"},
+            ).insert(
+                button(
+                    type="submit",
+                    classes=[
+                        "btn",
+                        "btn-xs",
+                        "btn-circle",
+                        "btn-outline",
+                        "ml-auto",
+                        "absolute",
+                        "right-2",
+                        "top-2",
+                    ],
+                    text="X",
+                )
+            ),
             div(
                 classes=[
-                    *memecry.views.common.FLEX_COL_WRAPPER_CLASSES,
-                    "max-h-24",
-                    "w-full",
+                    "font-bold",
+                    "text-xl",
+                    "text-center",
+                    "items-center",
+                    "justify-center",
                 ],
-            ).insert(
-                input(
-                    type="text",
-                    name="username",
-                    placeholder="username",
-                    classes=["p-1", "rounded-sm", "text-black", "w-full"],
-                ),
-                input(
-                    type="password",
-                    name="password",
-                    placeholder="password",
-                    classes=["p-1", "rounded-sm", "text-black", "w-full"],
-                ),
+                text="Welcome back",
             ),
-            button(
-                classes=memecry.views.common.special_button_classes("green"),
-                type="submit",
-            ).text("Sign in"),
+            form(classes=["form-control", "space-y-4"])
+            .hx_post(
+                context.url_of(memecry.routes.auth.signin)(),
+                hx_encoding="multipart/form-data",
+                hx_target=f"#{signin_error_placeholder.id}",
+                hx_swap="innerHTML",
+            )
+            .insert(
+                label(
+                    classes=[
+                        "input",
+                        "input-bordered",
+                        "flex",
+                        "items-center",
+                        "gap-2",
+                    ],
+                    _for="username",
+                ).insert(
+                    i(classes=["fa", "fa-user"]),
+                    input(
+                        type="text",
+                        name="username",
+                        placeholder="Username",
+                        classes=["grow"],
+                    ),
+                ),
+                label(
+                    classes=[
+                        "input",
+                        "input-bordered",
+                        "flex",
+                        "items-center",
+                        "gap-2",
+                    ],
+                    _for="password",
+                ).insert(
+                    i(classes=["fa", "fa-lock"]),
+                    input(
+                        type="password",
+                        name="password",
+                        placeholder="Password",
+                        classes=["grow"],
+                    ),
+                ),
+                button(
+                    type="submit",
+                    classes=["btn", "btn-primary", "m-auto"],
+                ).text("Sign in"),
+            ),
+            signin_error_placeholder,
         ),
-        div(id="signin-error"),
     )
 
 
-def signup_form(signup_url: URL) -> div:
-    return div(
-        classes=[
-            *memecry.views.common.FLEX_COL_WRAPPER_CLASSES,
-            "fixed",
-            "inset-48",
-            "z-40",
-        ],
-        hyperscript="on closeModal remove me",
-    ).insert(
-        memecry.views.common.MODAL_UNDERLAY,
-        form(
-            classes=memecry.views.common.BASIC_FORM_CLASSES,
-        )
-        .hx_post(
-            signup_url,
-            hx_encoding="multipart/form-data",
-            hx_target="#signup-error",
-        )
-        .insert(
-            p(classes=["text-xl"]).text("Sign up"),
+@component()
+# TODO: make a URL that is jsonable
+def signup_form(*, view_context: ViewContext = Injected) -> dialog:
+    signup_error_placeholder = div(
+        id="signup-error", classes=["!m-0", "flex", "justify-center", "pt-4"]
+    )
+    return dialog(classes=["modal", "modal-bottom", "sm:modal-middle"]).insert(
+        div(classes=["modal-box", "space-y-4", "max-w-sm", "sm:max-w-lg"]).insert(
+            form(
+                attrs={"method": "dialog"},
+            ).insert(
+                button(
+                    type="submit",
+                    classes=[
+                        "btn",
+                        "btn-xs",
+                        "btn-circle",
+                        "btn-outline",
+                        "ml-auto",
+                        "absolute",
+                        "right-2",
+                        "top-2",
+                    ],
+                    text="X",
+                )
+            ),
             div(
                 classes=[
-                    *memecry.views.common.FLEX_COL_WRAPPER_CLASSES,
-                    "h-screen",
-                    "max-h-24",
-                    "w-full",
+                    "font-bold",
+                    "text-xl",
+                    "text-center",
+                    "items-center",
+                    "justify-center",
                 ],
-            ).insert(
-                input(
-                    type="text",
-                    name="username",
-                    placeholder="username",
-                    classes=["p-1", "rounded-sm", "text-black", "w-full"],
-                ),
-                input(
-                    type="password",
-                    name="password",
-                    placeholder="password",
-                    classes=["p-1", "rounded-sm", "text-black", "w-full"],
-                ),
+                text="Might as well make an account",
             ),
-            button(
-                classes=memecry.views.common.special_button_classes("green"),
-                type="submit",
-            ).text("Sign up"),
+            form(classes=["form-control", "space-y-4"])
+            .hx_post(
+                view_context.url_of(memecry.routes.auth.signup)(),
+                hx_encoding="multipart/form-data",
+                hx_target=f"#{signup_error_placeholder.id}",
+            )
+            .insert(
+                label(
+                    classes=[
+                        "input",
+                        "input-bordered",
+                        "flex",
+                        "items-center",
+                        "gap-2",
+                    ],
+                    _for="username",
+                ).insert(
+                    i(classes=["fa", "fa-user"]),
+                    input(
+                        type="text",
+                        name="username",
+                        placeholder="Username",
+                        classes=["grow"],
+                    ),
+                ),
+                label(
+                    classes=[
+                        "input",
+                        "input-bordered",
+                        "flex",
+                        "items-center",
+                        "gap-2",
+                    ],
+                    _for="password",
+                ).insert(
+                    i(classes=["fa", "fa-lock"]),
+                    input(
+                        type="password",
+                        name="password",
+                        placeholder="Password",
+                        classes=["grow"],
+                    ),
+                ),
+                button(
+                    type="submit",
+                    classes=["btn", "btn-primary", "m-auto"],
+                ).text("Sign up"),
+            ),
+            signup_error_placeholder,
         ),
-        div(id="signup-error"),
     )
