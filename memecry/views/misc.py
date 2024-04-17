@@ -274,12 +274,16 @@ def page_nav(
         ),
         # > md screen elements
         div(classes=["gap-2", "navbar-end", "hidden", "sm:flex"]).insert(
-            form(classes=["form-control"], action="/search").insert(
+            form(
+                classes=["form-control"],
+                action="/search",
+            ).insert(
                 input(
                     name="query",
                     classes=["input", "input-bordered", "w-24", "sm:w-auto"],
                     type="text",
                     placeholder="Search",
+                    attrs={"enterkeyhint": "search"},
                 ),
             ),
             large_signin_button,
@@ -289,12 +293,13 @@ def page_nav(
         ),
         # < md screen elements
         div(classes=["navbar-end", "gap-2", "w-auto", "sm:hidden"]).insert(
-            div(classes=["form-control"]).insert(
+            form(classes=["form-control"], action="/search").insert(
                 input(
                     name="query",
                     classes=["input", "input-bordered", "w-full"],
                     type="text",
                     placeholder="Search",
+                    attrs={"enterkeyhint": "search"},
                 ),
             ),
             div(
@@ -323,9 +328,11 @@ def page_nav(
                     small_upload_button,
                     small_preferences_button,
                     li().insert(
-                        button(
+                        a(
+                            classes=[],
                             text="Random",
-                        )
+                            href="/random",
+                        ),
                     ),
                     small_signout_button,
                     small_signin_button,
@@ -640,7 +647,6 @@ def signin_form(*, context: ViewContext = Injected) -> dialog:
 
 
 @component()
-# TODO: make a URL that is jsonable
 def signup_form(*, view_context: ViewContext = Injected) -> dialog:
     signup_error_placeholder = div(
         id="signup-error", classes=["!m-0", "flex", "justify-center", "pt-4"]

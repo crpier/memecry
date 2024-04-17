@@ -7,7 +7,9 @@ from relax.html import (
     Fragment,
     a,
     button,
+    dialog,
     div,
+    form,
     i,
     img,
     input,
@@ -235,6 +237,55 @@ def post_interaction_pane(
 
 
 @component(key=lambda post: post.id)
+def delete_confirmation_modal(
+    *,
+    post: memecry.schema.PostRead,
+    parent_post_id: str,
+    context: ViewContext = Injected,
+) -> Element:
+    return dialog(classes=["modal", "modal-bottom", "sm:modal-middle"]).insert(
+        div(classes=["modal-box", "space-y-4", "max-w-full", "sm:max-w-lg"]).insert(
+            div(
+                classes=[
+                    "font-bold",
+                    "text-xl",
+                    "text-center",
+                    "items-center",
+                    "justify-center",
+                ],
+                text="Whoa slow down. Are you sure you want to delete this post?",
+            ),
+            div(classes=["flex", "justify-evenly"]).insert(
+                form(
+                    attrs={"method": "dialog"},
+                ).insert(
+                    button(
+                        type="submit",
+                        classes=["btn"],
+                        text="No, go back",
+                    ),
+                ),
+                form(classes=["form-control", "space-y-4", "flex-row"])
+                .insert(
+                    button(
+                        type="submit",
+                        classes=["btn", "btn-primary"],
+                    ).text("Delete"),
+                )
+                # TODO: this should also redirect us to the home page
+                # when clicked from the `/post/{post_id}` page
+                .hx_delete(
+                    context.url_of(memecry.routes.post.delete_post)(post_id=post.id),
+                    hx_trigger="click",
+                    hx_swap="delete",
+                    hx_target=f"#{parent_post_id}",
+                ),
+            ),
+        ),
+    )
+
+
+@component(key=lambda post: post.id)
 def post_settings_pane(
     post: memecry.schema.PostRead,
     parent_id: str,
@@ -242,68 +293,53 @@ def post_settings_pane(
     id: str = Injected,
     context: ViewContext = Injected,
 ) -> Element:
-    delete_post_url = context.url_of(memecry.routes.post.delete_post)
-    update_searchable_content_url = context.url_of(
-        memecry.routes.post.update_searchable_content
+    delete_confirmation_element = delete_confirmation_modal(
+        post=post, parent_post_id=parent_id
     )
     searcheable_content_input_name = f"content-input-{post.id}"
-    return div(
-        classes=[*memecry.views.common.FLEX_COL_WRAPPER_CLASSES, "hidden"],
-    ).insert(
-        textarea(
-            name=searcheable_content_input_name,
-            type="text",
+    return div(classes=["hidden", "m-auto"]).insert(
+        delete_confirmation_element,
+        form(
             classes=[
-                "block",
-                "p-2",
-                "w-full",
-                "my-4",
-                "outline-none",
+                *memecry.views.common.FLEX_COL_WRAPPER_CLASSES,
+                "!space-y-4",
             ],
-            disabled=not post.editable,
-        ).text(post.searchable_content),
-        div(classes=memecry.views.common.FLEX_ROW_WRAPPER_CLASSES).insert(
-            button(
-                type="button",
-                classes=memecry.views.common.SECONDARY_BUTTON_CLASSES,
-                hyperscript="""on htmx:confirm(issueRequest)
-             halt the event
-             call Swal.fire({
-                 title: 'Confirm',
-                 text: 'Are you sure you want to delete this post?',
-                 // same color as the navbar
-                 background: '#111827',
-                 color: '#ffffff',
-                 buttonsStyling: false,
-                 customClass: {
-                     confirmButton: 'bg-green-600 px-4 py-1 rounded-md text-lg'
-                 }
-             })
-             if result.isConfirmed issueRequest()""",
+        ).insert(
+            textarea(
+                name=searcheable_content_input_name,
+                id=searcheable_content_input_name,
+                type="text",
+                classes=["textarea", "textarea-bordered", "w-full", "mt-4"],
+                disabled=not post.editable,
+            ).text(post.searchable_content),
+            div(classes=memecry.views.common.FLEX_ROW_WRAPPER_CLASSES).insert(
+                button(
+                    type="button",
+                    classes=[*memecry.views.common.SIMPLE_BUTTON_CLASSES],
+                    hyperscript=f"on click call #{delete_confirmation_element.id}'s "
+                    "showModal()",
+                ).text("Delete"),
+                button(
+                    type="button",
+                    classes=[
+                        *memecry.views.common.SIMPLE_BUTTON_CLASSES,
+                        "btn-neutral",
+                    ],
+                    hyperscript=f"on click toggle .hidden on #{id}",
+                )
+                .text("Save")
+                .hx_put(
+                    context.url_of(memecry.routes.post.update_searchable_content)(
+                        post_id=post.id
+                    ),
+                    hx_trigger="click",
+                    hx_swap="none",
+                    hx_encoding="multipart/form-data",
+                ),
             )
-            .hx_delete(
-                delete_post_url(post_id=post.id),
-                hx_trigger="click",
-                hx_swap="delete",
-                hx_target=f"#{parent_id}",
-            )
-            .text("Delete post"),
-            button(
-                type="button",
-                classes=memecry.views.common.SECONDARY_BUTTON_CLASSES,
-                hyperscript=f"on click toggle .hidden on #{id}",
-            )
-            .text("Save")
-            .hx_put(
-                update_searchable_content_url(post_id=post.id),
-                hx_trigger="click",
-                hx_swap="none",
-                hx_include=searcheable_content_input_name,
-                hx_encoding="multipart/form-data",
-            ),
-        )
-        if post.editable
-        else div(),
+            if post.editable
+            else div(),
+        ),
     )
 
 
