@@ -23,7 +23,6 @@ async def upload_post(
 ) -> int:
     async with asession() as session:
         new_post = memecry.model.Post(**post_data.__dict__)
-        # TODO: surely there's a smarter way to do this
         new_post.source = "sentinel"
         session.add(new_post)
         await session.commit()
@@ -42,6 +41,7 @@ async def upload_post(
         async with aiofiles.open(dest, "wb") as f:
             await f.write(content)
 
+        # what am I doing here, and why?
         new_post.source = str(Path("/media") / str(dest.name))
         session.add(new_post)
         conn = await session.connection()
@@ -286,8 +286,23 @@ async def delete_post(
     asession: async_sessionmaker[AsyncSession] = Injected,
 ) -> None:
     async with asession() as session:
-        # TODO: also remove the media file
-        # TODO: a soft delete
+        post_to_delete = (
+            (
+                await session.execute(
+                    select(memecry.model.Post).where(memecry.model.Post.id == post_id)
+                )
+            )
+            .scalars()
+            .one_or_none()
+        )
+        if post_to_delete is None:
+            logger.debug("Tried removing nonexistent post with id {}", post_id)
+            msg = "Cannot find post to delete"
+            raise ValueError(msg)
+        media_path = Path(str(post_to_delete.source)[1:])
+        logger.debug("Going to delete media in {}", media_path)
+        media_path.unlink()
+
         query = delete(memecry.model.Post).where(memecry.model.Post.id == post_id)
         await session.execute(query)
 

@@ -32,7 +32,6 @@ IMAGE_FORMATS = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
 VIDEO_FORMATS = [".mp4", ".webm"]
 
 
-# TODO: allow default values for params used in lambda function
 @component(key=lambda post_id: post_id)
 def tags_component(  # noqa: PLR0913
     *,
@@ -70,7 +69,7 @@ def tags_component(  # noqa: PLR0913
         ]
     ).insert(
         useless_element,
-        script(  # TODO: revert change to dropdown text if we got an error from htmx
+        script(
             js=f"""
     var input_clicked_{post_id} = function(event) {{
         const target = event.target;
@@ -94,8 +93,6 @@ def tags_component(  # noqa: PLR0913
         }});
     }}"""
         ),
-        # TODO: find a way to make this a span, or something easier to style
-        # so that I can set width to max-content
         input(
             id=text_div_id,
             type="text",
@@ -272,8 +269,6 @@ def delete_confirmation_modal(
                         classes=["btn", "btn-primary"],
                     ).text("Delete"),
                 )
-                # TODO: this should also redirect us to the home page
-                # when clicked from the `/post/{post_id}` page
                 .hx_delete(
                     context.url_of(memecry.routes.post.delete_post)(post_id=post.id),
                     hx_trigger="click",

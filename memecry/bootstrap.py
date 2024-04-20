@@ -1,6 +1,5 @@
 import sqlite3
 import subprocess
-import sys
 
 import alembic.command
 import alembic.config
@@ -56,8 +55,6 @@ def bootstrap() -> tuple[memecry.config.Config, ViewContext]:
     elif config.ENV == "dev":
         with sync_engine.begin() as conn:
             memecry.model.Base.metadata.create_all(conn)
-        # TODO: I should do this before commit instead of at startup
-        # since after HMR this isn't updated after changing templates
         subprocess.Popen(["npx", "tailwindcss", "-o", "static/css/tailwind.css"])  # noqa: S603, S607
 
     update_js_constants(config)

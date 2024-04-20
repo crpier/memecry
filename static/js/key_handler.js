@@ -221,10 +221,21 @@ function updateCurrentPostIdx() {
 
   if (availablePosts[currentPostIdx] !== undefined) {
     availablePosts[currentPostIdx].focus();
-    const video = availablePosts[currentPostIdx].querySelector("video.autoplayable");
+    const video =
+      availablePosts[currentPostIdx].querySelector("video.autoplayable");
     if (video !== null) {
       if (video.paused) {
         video.play();
+      }
+    }
+  }
+
+  // pause videos out of view
+  for (let post of availablePosts) {
+    if (post !== availablePosts[currentPostIdx]) {
+      const video = post.querySelector("video");
+      if (video !== null && !video.paused) {
+        video.pause();
       }
     }
   }

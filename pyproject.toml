@@ -78,11 +78,3 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = ["icecream", "sqlite_fts4"]
 ignore_missing_imports = "true"
-
-[tool.poe.tasks]
-cclear = "poetry cache clear PyPI --all --no-interaction"
-# TODO: this cannot use pdb as it opens a new process. Try to use another task runner
-serve.shell = "dotenv run -- uvicorn memecry.main:app --reload --reload-exclude $(dotenv get TEMPLATES_DIR)'/*'"
-serve.envfile = ".env"
-lint = "./scripts/lint.sh"
-format = "ruff format memecry"

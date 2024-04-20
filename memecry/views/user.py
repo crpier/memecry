@@ -38,7 +38,6 @@ def preferences_page(
             "bg-base-100",
             "shadow-xl",
             "p-4",
-            # TODO: real widths later
             "w-[32rem]",
         ]
     ).insert(
@@ -65,6 +64,5 @@ def preferences_page(
         )
         .hx_put(
             context.url_of(memecry.routes.misc.update_user)(user_id=user.id),
-            # TODO: try to remove this
         ),
     )

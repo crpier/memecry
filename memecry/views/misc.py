@@ -105,7 +105,6 @@ def page_root(
                 "flex-row",
                 "justify-between",
             ]
-            # TODO: find a more visible place to put this (or at least document it)
         ).insert(child, hmr_script() if config.ENV == "dev" else None),
     )
 
@@ -114,6 +113,7 @@ def page_root(
 def page_nav(
     *,
     user: memecry.schema.UserRead | None = None,
+    config: memecry.config.Config = Injected,
     context: ViewContext = Injected,
 ) -> Element:
     upload_form_element = upload_form()
@@ -184,17 +184,25 @@ def page_nav(
     )
 
     signup_form_element = signup_form()
+    signup_attrs = {"disabled": True} if not config.ALLOW_SIGNUPS else {}
     large_signup_button = (
-        button(classes=["btn", "btn-neutral"], text="Sign up").hyperscript(
-            f"on click call #{signup_form_element.id}'s showModal()"
+        button(
+            classes=["btn", "btn-neutral"],
+            text="Sign up",
+            attrs=signup_attrs,
+            hyperscript=f"on click call #{signup_form_element.id}'s showModal()",
         )
-        # TODO: make this a disabled button if signups are disabled
         if not user
         else None
     )
     small_signup_button = li().insert(
-        button(text="Sign up").hyperscript(
-            f"on click call #{signup_form_element.id}'s showModal()"
+        button(
+            text="Sign up",
+            attrs=signup_attrs,
+            classes=["text-base-300" if not config.ALLOW_SIGNUPS else ""],
+            hyperscript=f"on click call #{signup_form_element.id}'s showModal()"
+            if config.ALLOW_SIGNUPS
+            else None,
         )
         if not user
         else None
@@ -358,7 +366,6 @@ def section_separator(name: str) -> Element:
     )
 
 
-# TODO: maybe this would be better as a card, or a modal?
 def commands_helper(*, key: str, display_hack: bool = False) -> Element:
     return aside(
         classes=[
@@ -525,7 +532,6 @@ def upload_form(*, context: ViewContext = Injected, id: str = Injected) -> dialo
                 video(id="preview_video", src="", classes=["hidden"], controls=True),
             ),
             upload_error_placeholder,
-            # TODO: need to figure out how to reload scripts in the browser
             script(
                 js="""
            var loadFile = function(event) {
