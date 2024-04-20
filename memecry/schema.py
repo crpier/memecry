@@ -22,9 +22,18 @@ class UserRead(BaseModel, SimpleUser):
     created_at: datetime
     verified: bool
     pfp_src: str
+    mobile_autoplay: bool = False
+    desktop_autoplay: bool = False
 
     class Config:
         from_attributes = True
+
+
+class UserUpdate(BaseModel):
+    username: str | None = None
+    pfp_src: str | None = None
+    mobile_autoplay: bool = False
+    desktop_autoplay: bool = False
 
 
 class PostCreate(BaseModel):
@@ -43,9 +52,10 @@ class PostRead(BaseModel):
     author_name: str
     tags: str
     searchable_content: str
-    editable: bool = False
     created_since: str
     score: int
+    editable: bool = False
+    autoplayable: bool = False
 
     class Config:
         from_attributes = True
@@ -68,6 +78,7 @@ class PostRead(BaseModel):
             locale="en_US",
         )
         post_dict["editable"] = editable
+        post_dict["autoplayable"] = post_in_db.user.desktop_autoplay
         post_dict["author_name"] = post_in_db.user.username
         return PostRead(**post_dict)
 

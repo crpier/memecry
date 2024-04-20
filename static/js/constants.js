@@ -1,4 +1,5 @@
 export const CONSTANTS = {
+   PREFERENCES_PAGE_CLASS: "preferences-page",
    TAGS_COMPONENT_CLASS: "tags-component",
    POST_TITLE_SECTION_CLASS: "post-title-section",
    DELETE_CONFIRMATION_MODAL_CLASS: "delete-confirmation-modal",

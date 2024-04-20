@@ -227,13 +227,12 @@ function updateCurrentPostIdx() {
 
   if (availablePosts[currentPostIdx] !== undefined) {
     availablePosts[currentPostIdx].focus();
-    // TODO: allow config option for user to autoplay video
-    // const video = availablePosts[currentPostIdx].querySelector("video");
-    // if (video !== null) {
-    //   if (video.paused) {
-    //     video.play();
-    //   }
-    // }
+    const video = availablePosts[currentPostIdx].querySelector("video.autoplayable");
+    if (video !== null) {
+      if (video.paused) {
+        video.play();
+      }
+    }
   }
 }
 

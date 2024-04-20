@@ -353,7 +353,7 @@ def post_content_component(post: memecry.schema.PostRead) -> Element:
     if Path(post.source).suffix in VIDEO_FORMATS:
         return video(
             src=post.source,
-            classes=["w-full"],
+            classes=["w-full", "autoplayable" if post.autoplayable else ""],
             controls=True,
         )
     return div().text(f"Unsupported format: {Path(post.source).suffix}")

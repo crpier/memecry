@@ -202,7 +202,8 @@ def page_nav(
 
     small_preferences_button = (
         li().insert(
-            button(
+            a(
+                href="/preferences",
                 text="Preferences",
             )
         )
@@ -214,7 +215,7 @@ def page_nav(
         li().insert(
             a(
                 text="Preferences",
-                href="/",
+                href="/preferences",
             )
         )
         if user

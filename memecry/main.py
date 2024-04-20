@@ -15,6 +15,7 @@ from starlette.staticfiles import StaticFiles
 import memecry.bootstrap
 import memecry.config
 import memecry.routes.auth
+import memecry.routes.misc
 import memecry.routes.post
 import memecry.schema
 import memecry.security
@@ -56,6 +57,7 @@ def app_factory() -> App:
 
     app.add_router(memecry.routes.auth.router)
     app.add_router(memecry.routes.post.router)
+    app.add_router(memecry.routes.misc.router)
     app.add_websocket_route("/ws", websocket_endpoint, name="ws")
     app.routes.append(
         Mount(

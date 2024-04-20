@@ -23,6 +23,9 @@ class User(Base):
     verified: Mapped[bool] = mapped_column(default=False)
     pfp_src: Mapped[str] = mapped_column(default="default.png")
 
+    desktop_autoplay: Mapped[bool] = mapped_column(default=False)
+    mobile_autoplay: Mapped[bool] = mapped_column(default=False)
+
     posts: Mapped[list[Post]] = relationship()
     comments: Mapped[list[Comment]] = relationship()
     reactions: Mapped[list[Reaction]] = relationship()

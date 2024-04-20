@@ -67,3 +67,21 @@ async def authenticate_user(
         ):
             return memecry.schema.UserRead.model_validate(user_in_db)
         return None
+
+
+@injectable
+async def update_user(
+    user_id: int,
+    user_update: memecry.schema.UserUpdate,
+    *,
+    asession: async_sessionmaker[AsyncSession] = Injected,
+) -> None:
+    async with asession() as session, session.begin():
+        stmt = select(memecry.model.User).filter(memecry.model.User.id == user_id)
+        result = await session.execute(stmt)
+        user_in_db = result.scalars().one_or_none()
+        for key, val in user_update.model_dump().items():
+            if val is not None:
+                setattr(user_in_db, key, val)
+        session.add(user_in_db)
+        await session.commit()
