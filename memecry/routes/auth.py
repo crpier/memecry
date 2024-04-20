@@ -87,6 +87,6 @@ async def signup(
 async def signout(_: memecry.schema.Request) -> Response:
     response = Response()
     response.delete_cookie(key="authorization")
-    response.headers["HX-Refresh"] = "true"
+    response.headers["HX-Redirect"] = "/"
     response.status_code = 303
     return response

@@ -412,8 +412,8 @@ def commands_helper(*, key: str, display_hack: bool = False) -> Element:
                 #
                 section_separator("Video posts"),
                 keybind_helper("space", "play/pause video in focused"),
-                keybind_helper(",", "skip 1 second of video"),
-                keybind_helper(".", "rewind 1 second of video"),
+                keybind_helper(",", "rewind 1 second of video"),
+                keybind_helper(".", "skip 1 second of video"),
                 keybind_helper(">", "increase volume of video"),
                 keybind_helper("<", "decrease volume of video"),
                 #
@@ -424,7 +424,6 @@ def commands_helper(*, key: str, display_hack: bool = False) -> Element:
                 keybind_helper("i", "open signing form"),
                 keybind_helper("Q", "sign out"),
                 keybind_helper("gu", "go to root of site"),
-                keybind_helper("gi", "focus most proeminent input"),
                 keybind_helper("esc", "unfocus from input"),
             ),
         ),

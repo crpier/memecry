@@ -20,14 +20,16 @@ function closeSettingsPane() {
   settingsPane.classList.add("hidden");
 }
 
-function openForm(formUrl) {
-  htmx.ajax("GET", formUrl, { target: "body", swap: "beforeend" });
+function openForm(formId) {
+  /** @type DialogElement */
+  const dialog = document.getElementById(formId);
+  dialog.showModal();
 }
 
 let currentPostIdx = -1;
 /** @type  Element[] */
 let availablePosts = [];
-const searchBox = document.getElementById("search");
+const searchBox = document.getElementsByName("query")[0];
 
 function inputIsFocused() {
   if (
@@ -83,14 +85,6 @@ function lowerVolumeOfVideo(amount) {
     // video.volume -= amount
     video.volume = Math.floor(video.volume * 10 - amount * 10) / 10;
   }
-}
-
-// Focus the last found input, so that newer elements have priority
-function focusInputInForm() {
-  const queryResult = document.querySelectorAll("form");
-  const form = queryResult[queryResult.length - 1];
-  const someInput = form.querySelector("input");
-  someInput.focus();
 }
 
 function copyLinkToImage() {
@@ -278,10 +272,10 @@ function resetCompositeKeys() {
 function handleSimpleKey(key, event) {
   switch (key) {
     case "i":
-      openForm("/signin-form");
+      openForm("signin-form");
       break;
     case "a":
-      openForm("/upload-form");
+      openForm("upload-form");
       break;
     case "j":
       scrollDown(1);
@@ -352,10 +346,6 @@ function handleCompositeKey(key, event) {
         break;
       case "y":
         copyUrlOfContent();
-        break;
-      case "i":
-        event.preventDefault();
-        focusInputInForm();
         break;
       default:
         break;
