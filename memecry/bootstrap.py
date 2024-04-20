@@ -1,5 +1,6 @@
 import sqlite3
 import subprocess
+import sys
 
 import alembic.command
 import alembic.config
@@ -15,11 +16,11 @@ import memecry.model
 
 
 def run_migrations(script_location: str, dsn: str) -> None:
-    logger.info("Running DB migrations in {}", script_location)
+    logger.debug("Running DB migrations in {}", script_location)
     alembic_cfg = alembic.config.Config("alembic.ini")
     alembic_cfg.set_main_option("script_location", script_location)
     alembic_cfg.set_main_option("sqlalchemy.url", dsn)
-    logger.info(
+    logger.debug(
         "Running alembic upgrade from {}",
         alembic_cfg.get_section_option("alembic", "here"),
     )
@@ -55,6 +56,8 @@ def bootstrap() -> tuple[memecry.config.Config, ViewContext]:
     elif config.ENV == "dev":
         with sync_engine.begin() as conn:
             memecry.model.Base.metadata.create_all(conn)
+        # TODO: I should do this before commit instead of at startup
+        # since after HMR this isn't updated after changing templates
         subprocess.Popen(["npx", "tailwindcss", "-o", "static/css/tailwind.css"])  # noqa: S603, S607
 
     update_js_constants(config)

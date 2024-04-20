@@ -1,3 +1,4 @@
+from loguru import logger
 from relax.app import (
     AuthScope,
     HTMLResponse,
@@ -34,9 +35,11 @@ async def preferences_page(request: memecry.schema.Request) -> HTMLResponse:
 
 @router.path_function("PUT", "/user/{user_id}", auth_scopes=[AuthScope.Authenticated])
 async def update_user(request: memecry.schema.Request, user_id: PathInt) -> Response:
+    logger.debug("Update requested for user {}", user_id)
     if user_id != request.user.id:
         return HTMLResponse(error_element("You can only update your own user"))
 
     async with request.parse_form(memecry.schema.UserUpdate) as user_update:
         await memecry.user_service.update_user(user_id, user_update)
+    logger.debug("User {} updated", user_id)
     return Response(headers={"HX-Refresh": "true"})
