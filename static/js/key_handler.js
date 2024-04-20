@@ -379,7 +379,6 @@ document.onkeydown = function (e) {
       document.activeElement.blur();
       return;
     }
-    // TODO: Also close all existing dialogs
     resetCompositeKeys();
     return;
   }
