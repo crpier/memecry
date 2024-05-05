@@ -1,4 +1,5 @@
-from loguru import logger
+from logging import Logger
+
 from relax.injection import Injected, injectable
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -76,8 +77,9 @@ async def update_user(
     user_update: memecry.schema.UserUpdate,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
+    logger: Logger = Injected,
 ) -> None:
-    logger.debug("Updating user {} with {}", user_id, user_update.model_dump())
+    logger.debug("Updating user %s with %s", user_id, user_update.model_dump())
     async with asession() as session, session.begin():
         stmt = select(memecry.model.User).filter(memecry.model.User.id == user_id)
         result = await session.execute(stmt)
@@ -86,5 +88,5 @@ async def update_user(
             if val is not None:
                 setattr(user_in_db, key, val)
         session.add(user_in_db)
-        logger.debug("Committing update for user {}", user_in_db)
+        logger.debug("Committing update for user %s", user_in_db)
         await session.commit()

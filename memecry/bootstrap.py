@@ -1,9 +1,9 @@
 import sqlite3
 import subprocess
+from logging import Logger, basicConfig, getLogger
 
 import alembic.command
 import alembic.config
-from loguru import logger
 from relax.app import ViewContext, update_js_constants
 from relax.injection import add_injectable
 from sqlalchemy.engine import create_engine
@@ -14,13 +14,13 @@ import memecry.config
 import memecry.model
 
 
-def run_migrations(script_location: str, dsn: str) -> None:
-    logger.debug("Running DB migrations in {}", script_location)
+def run_migrations(script_location: str, dsn: str, logger: Logger) -> None:
+    logger.debug("Running DB migrations in %s", script_location)
     alembic_cfg = alembic.config.Config("alembic.ini")
     alembic_cfg.set_main_option("script_location", script_location)
     alembic_cfg.set_main_option("sqlalchemy.url", dsn)
     logger.debug(
-        "Running alembic upgrade from {}",
+        "Running alembic upgrade from %s",
         alembic_cfg.get_section_option("alembic", "here"),
     )
     alembic.command.upgrade(alembic_cfg, "head")
@@ -32,6 +32,10 @@ def bootstrap() -> tuple[memecry.config.Config, ViewContext]:
 
     view_context = ViewContext()
     add_injectable(ViewContext, view_context)
+
+    basicConfig(level=config.LOG_LEVEL)
+    logger = getLogger("memecry")
+    add_injectable(Logger, logger)
 
     # ensure media folder exists
     config.MEDIA_UPLOAD_STORAGE.mkdir(parents=True, exist_ok=True)
@@ -51,7 +55,9 @@ def bootstrap() -> tuple[memecry.config.Config, ViewContext]:
     add_injectable(async_sessionmaker[AsyncSession], async_session)
 
     if config.ENV == "prod":
-        run_migrations("./memecry/alembic_migrations", f"sqlite:///{config.DB_FILE}")
+        run_migrations(
+            "./memecry/alembic_migrations", f"sqlite:///{config.DB_FILE}", logger=logger
+        )
     elif config.ENV == "dev":
         with sync_engine.begin() as conn:
             memecry.model.Base.metadata.create_all(conn)

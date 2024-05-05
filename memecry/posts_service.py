@@ -1,7 +1,8 @@
+import time
+from logging import Logger
 from pathlib import Path
 
 import aiofiles
-from loguru import logger
 from relax.injection import Injected, injectable
 from sqlalchemy import delete, func, not_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -20,13 +21,14 @@ async def upload_post(
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
     config: memecry.config.Config = Injected,
+    logger: Logger = Injected,
 ) -> int:
     async with asession() as session:
         new_post = memecry.model.Post(**post_data.__dict__)
         new_post.source = "sentinel"
         session.add(new_post)
         await session.commit()
-        logger.info("New post has id: {}", new_post.id)
+        logger.info("New post has id: %s", new_post.id)
         if uploaded_file.filename is None:
             msg = (
                 f"No filename provided for the uploaded file for post id {new_post.id}"
@@ -61,28 +63,40 @@ async def get_posts(
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
     config: memecry.config.Config = Injected,
+    logger: Logger = Injected,
 ) -> list[memecry.schema.PostRead]:
+    start = time.time()
     if limit is None:
         limit = config.POSTS_LIMIT
-    async with asession() as session:
-        query = (
-            select(memecry.model.Post)
-            .order_by(memecry.model.Post.created_at.desc())
-            .limit(limit)
-            .offset(offset)
-        )
-        if not viewer:
-            for tag in config.RESTRICTED_TAGS:
-                query = query.where(memecry.model.Post.tags.not_like(f"%{tag}%"))
-        result = await session.execute(query)
-        post_reads = [
-            memecry.schema.PostRead.from_model(post) for post in result.scalars().all()
-        ]
-        if viewer:
-            for post in post_reads:
-                if viewer.id == post.user_id:
-                    post.editable = True
-        return post_reads
+    logger.debug(
+        "Getting %s posts, offset by %s for %s",
+        limit,
+        offset,
+        viewer.id if viewer else "anonymous",
+    )
+    try:
+        async with asession() as session:
+            query = (
+                select(memecry.model.Post)
+                .order_by(memecry.model.Post.created_at.desc())
+                .limit(limit)
+                .offset(offset)
+            )
+            if not viewer:
+                for tag in config.RESTRICTED_TAGS:
+                    query = query.where(memecry.model.Post.tags.not_like(f"%{tag}%"))
+            result = await session.execute(query)
+            post_reads = [
+                memecry.schema.PostRead.from_model(post)
+                for post in result.scalars().all()
+            ]
+            if viewer:
+                for post in post_reads:
+                    if viewer.id == post.user_id:
+                        post.editable = True
+            return post_reads
+    finally:
+        logger.debug("Getting posts took %.2f seconds", time.time() - start)
 
 
 @injectable
@@ -91,14 +105,22 @@ async def get_random_post_id(
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
     config: memecry.config.Config = Injected,
+    logger: Logger = Injected,
 ) -> int | None:
-    async with asession() as session:
-        query = select(memecry.model.Post.id).order_by(func.random())
-        if not viewer:
-            for tag in config.RESTRICTED_TAGS:
-                query = query.where(memecry.model.Post.tags.not_like(f"%{tag}%"))
-        result = await session.execute(query)
-        return result.scalars().first()
+    start = time.time()
+    logger.debug(
+        "Getting random post for user %s", viewer.id if viewer else "anonymous"
+    )
+    try:
+        async with asession() as session:
+            query = select(memecry.model.Post.id).order_by(func.random())
+            if not viewer:
+                for tag in config.RESTRICTED_TAGS:
+                    query = query.where(memecry.model.Post.tags.not_like(f"%{tag}%"))
+            result = await session.execute(query)
+            return result.scalars().first()
+    finally:
+        logger.debug("Getting random post took %.2f seconds", time.time() - start)
 
 
 @injectable
@@ -110,51 +132,59 @@ async def get_posts_by_search_query(  # noqa: PLR0913, C901
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
     config: memecry.config.Config = Injected,
+    logger: Logger = Injected,
 ) -> list[memecry.schema.PostRead]:
-    if limit is None:
-        limit = config.POSTS_LIMIT
-    async with asession() as session:
-        db_query = select(memecry.model.Post).order_by(
-            memecry.model.Post.created_at.desc()
-        )
-        if limit:
-            db_query = db_query.limit(limit).offset(offset)
-
-        for tag in query.tags["included"]:
-            db_query = db_query.where(memecry.model.Post.tags.contains(tag))
-
-        for tag in query.tags["excluded"]:
-            db_query = db_query.where(not_(memecry.model.Post.tags.contains(tag)))
-
-        if not viewer:
-            for tag in config.RESTRICTED_TAGS:
-                db_query = db_query.where(memecry.model.Post.tags.not_like(f"%{tag}%"))
-
-        if query.content:
-            conn = await session.connection()
+    logger.debug("Searching posts for %s", viewer.id if viewer else "anonymous")
+    start = time.time()
+    try:
+        if limit is None:
+            limit = config.POSTS_LIMIT
+        async with asession() as session:
+            db_query = select(memecry.model.Post).order_by(
+                memecry.model.Post.created_at.desc()
+            )
             if limit:
-                result = await conn.exec_driver_sql(
-                    "SELECT rowid FROM posts_data WHERE posts_data "
-                    "MATCH ? LIMIT ? OFFSET ?",
-                    (query.content, limit, offset),
-                )
-            else:
-                result = await conn.exec_driver_sql(
-                    "SELECT rowid FROM posts_data WHERE posts_data MATCH ?",
-                    (query.content,),
-                )
-            post_ids: list[int] = [res[0] for res in result.fetchall()]
-            db_query = db_query.where(memecry.model.Post.id.in_(post_ids))
+                db_query = db_query.limit(limit).offset(offset)
 
-        res = await session.execute(db_query)
-        post_reads = [
-            memecry.schema.PostRead.from_model(post) for post in res.scalars().all()
-        ]
-        if viewer:
-            for post in post_reads:
-                if viewer.id == post.user_id:
-                    post.editable = True
-        return post_reads
+            for tag in query.tags["included"]:
+                db_query = db_query.where(memecry.model.Post.tags.contains(tag))
+
+            for tag in query.tags["excluded"]:
+                db_query = db_query.where(not_(memecry.model.Post.tags.contains(tag)))
+
+            if not viewer:
+                for tag in config.RESTRICTED_TAGS:
+                    db_query = db_query.where(
+                        memecry.model.Post.tags.not_like(f"%{tag}%")
+                    )
+
+            if query.content:
+                conn = await session.connection()
+                if limit:
+                    result = await conn.exec_driver_sql(
+                        "SELECT rowid FROM posts_data WHERE posts_data "
+                        "MATCH ? LIMIT ? OFFSET ?",
+                        (query.content, limit, offset),
+                    )
+                else:
+                    result = await conn.exec_driver_sql(
+                        "SELECT rowid FROM posts_data WHERE posts_data MATCH ?",
+                        (query.content,),
+                    )
+                post_ids: list[int] = [res[0] for res in result.fetchall()]
+                db_query = db_query.where(memecry.model.Post.id.in_(post_ids))
+
+            res = await session.execute(db_query)
+            post_reads = [
+                memecry.schema.PostRead.from_model(post) for post in res.scalars().all()
+            ]
+            if viewer:
+                for post in post_reads:
+                    if viewer.id == post.user_id:
+                        post.editable = True
+            return post_reads
+    finally:
+        logger.debug("Searching posts took %.2f seconds", time.time() - start)
 
 
 @injectable
@@ -284,6 +314,7 @@ async def delete_post(
     post_id: int,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
+    logger: Logger = Injected,
 ) -> None:
     async with asession() as session:
         post_to_delete = (
@@ -296,11 +327,11 @@ async def delete_post(
             .one_or_none()
         )
         if post_to_delete is None:
-            logger.debug("Tried removing nonexistent post with id {}", post_id)
+            logger.debug("Tried removing nonexistent post with id %s", post_id)
             msg = "Cannot find post to delete"
             raise ValueError(msg)
         media_path = Path(str(post_to_delete.source)[1:])
-        logger.debug("Going to delete media in {}", media_path)
+        logger.debug("Going to delete media in %s", media_path)
         media_path.unlink()
 
         query = delete(memecry.model.Post).where(memecry.model.Post.id == post_id)

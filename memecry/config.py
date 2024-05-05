@@ -38,3 +38,12 @@ class Config(BaseConfig):
             default=CommaSeparatedStrings("postironic"),
         )
         self.POSTS_LIMIT = self.config("POSTS_LIMIT", cast=int, default=15)
+
+        env_log_level = self.config("LOG_LEVEL", default=None)
+        if env_log_level is None:
+            if self.ENV == "prod":
+                self.LOG_LEVEL = "INFO"
+            else:
+                self.LOG_LEVEL = "DEBUG"
+        else:
+            self.LOG_LEVEL = env_log_level
