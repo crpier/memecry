@@ -228,6 +228,7 @@ async def search_posts(
     logger.debug(
         "Took %.2f seconds to build home view", time.time() - start_build_home_view
     )
+    logger.debug("Home view posts: %s", posts)
     return HTMLResponse(
         memecry.views.misc.page_root(
             [
