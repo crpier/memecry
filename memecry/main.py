@@ -8,7 +8,10 @@ from relax.server import start_app
 from starlette.authentication import AuthCredentials, AuthenticationBackend
 from starlette.middleware import Middleware
 from starlette.middleware.authentication import AuthenticationMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.requests import HTTPConnection
+from starlette.requests import Request as BaseRequest
+from starlette.responses import Response
 from starlette.routing import Mount
 from starlette.staticfiles import StaticFiles
 
@@ -46,6 +49,15 @@ class BasicAuthBackend(AuthenticationBackend):
         return None
 
 
+class AuthRequiredMiddlerware(BaseHTTPMiddleware):
+    async def dispatch(
+        self, request: BaseRequest, call_next: RequestResponseEndpoint
+    ) -> Response:
+        if not request.user.is_authenticated:
+            return Response("Not authenticated", status_code=403)
+        return await call_next(request)
+
+
 def app_factory() -> App:
     config, view_context = memecry.bootstrap.bootstrap()
     middleware = Middleware(AuthenticationMiddleware, backend=BasicAuthBackend())
@@ -64,6 +76,7 @@ def app_factory() -> App:
             "/media",
             app=StaticFiles(directory=config.MEDIA_UPLOAD_STORAGE),
             name="media",
+            middleware=[Middleware(AuthRequiredMiddlerware)],
         ),
     )
     app.routes.append(
