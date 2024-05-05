@@ -1,3 +1,5 @@
+import logging
+import time
 from dataclasses import dataclass
 from typing import (
     cast,
@@ -201,10 +203,13 @@ async def get_homepage(
 async def search_posts(
     request: memecry.schema.Request, query: QueryStr
 ) -> HTMLResponse | Response:
+    logger = logging.getLogger()
+    start_parse_query = time.time()
     try:
         parsed_query = memecry.schema.Query(query)
     except ValueError as e:
         return HTMLResponse(memecry.views.common.error_element(str(e)))
+    logger.debug("Took %.2f seconds to parse query", time.time() - start_parse_query)
 
     posts = await memecry.posts_service.get_posts_by_search_query(
         parsed_query,
@@ -212,12 +217,16 @@ async def search_posts(
         offset=0,
         limit=0,
     )
+    start_build_home_view = time.time()
     home_view = memecry.views.post.home_view(
         posts,
         offset=0,
         limit=-1,
         keep_scrolling=False,
         partial=request.scope["from_htmx"],
+    )
+    logger.debug(
+        "Took %.2f seconds to build home view", time.time() - start_build_home_view
     )
     return HTMLResponse(
         memecry.views.misc.page_root(
