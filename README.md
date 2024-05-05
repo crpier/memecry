@@ -1,22 +1,24 @@
 # Memecry
 
-## Dev TODO
+A meme website built with [relax-py](https://github.com/crpier/relax-py)
 
-- docker-compose to run
-- starter test data
-- linting for JavaScript
-- why do the prod logs say
-    'Downloading 'tailwindcss-linux-x64' from
-    <!-- markdownlint-disable-next-lint -->
-    '<https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64>
-- make videos smaller on upload (maybe?)
-- don't rely on browser focus for posts anymore
+## Running
 
-### Features TODO
+- Clone the repository
+- `poetry install`
+- `cp example.env .env`
+- edit `.env` to your liking (only the args in the first paragraph are required)
+- `dotenv run python memecry/main.py`
 
-- allow changing the default volume of videos
-- allow changing time of token expiry
-- allow users to choose whether to hide video controls
-- make video controls disapper after playing for a while
-  (or maybe somehow make controls be outside the video?)
-- make input elements multi-row for long titles (also maybe make title text smaller)
+## Deployment
+
+The deployment was configured with [dokku](https://dokku.com/) in mind, but it should work with other platforms.
+
+The only thing to bear in mind when using `dokku` is that the default size for uploads is too small, so you need to increase it.
+Can do it with this [plugin](https://github.com/Zeilenwerk/dokku-nginx-max-upload-size))
+
+You can also scale the app to have more workers, with no issue, with something like
+
+```sh
+dokku ps:scale memecry web=5
+```

@@ -210,12 +210,12 @@ async def get_homepage(
 async def search_posts(
     request: memecry.schema.Request,
     query: QueryStr,
-    limit: QueryInt = 5,
+    limit: QueryInt = 0,
     offset: QueryInt = 0,
 ) -> HTMLResponse | Response:
     logger = logging.getLogger()
     start_parse_query = time.time()
-    if limit == -1:
+    if limit == 0:
         limit = retrieve_injectable(Config).DEFAULT_POSTS_LIMIT
     try:
         parsed_query = memecry.schema.Query(query)

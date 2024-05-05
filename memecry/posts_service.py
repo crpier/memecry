@@ -126,8 +126,8 @@ async def get_random_post_id(
 @injectable
 async def get_posts_by_search_query(  # noqa: PLR0913, C901
     query: memecry.schema.Query,
-    limit: int | None = None,
-    offset: int = 0,
+    limit: int,
+    offset: int,
     viewer: memecry.schema.UserRead | None = None,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
@@ -137,8 +137,6 @@ async def get_posts_by_search_query(  # noqa: PLR0913, C901
     logger.debug("Searching posts for %s", viewer.id if viewer else "anonymous")
     start = time.time()
     try:
-        if limit is None:
-            limit = config.POSTS_LIMIT
         async with asession() as session:
             db_query = select(memecry.model.Post).order_by(
                 memecry.model.Post.created_at.desc()

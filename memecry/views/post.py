@@ -141,7 +141,7 @@ def post_title_section(
                 "link",
                 "link-hover",
             ],
-            text=str(post.id),
+            text=post.title,
         )
     )
 
