@@ -12,8 +12,10 @@ from relax.app import (
     QueryInt,
     QueryStr,
     Router,
+    ViewContext,
 )
 from relax.html import div, input
+from relax.injection import retrieve_injectable
 from starlette.datastructures import UploadFile
 from starlette.responses import RedirectResponse, Response
 
@@ -23,6 +25,7 @@ import memecry.schema
 import memecry.views.common
 import memecry.views.misc
 import memecry.views.post
+from memecry.config import Config
 
 router = Router()
 
@@ -168,18 +171,22 @@ async def upload(request: memecry.schema.Request) -> Response:
 @router.path_function("GET", "/")
 async def get_homepage(
     request: memecry.schema.Request,
-    limit: QueryInt = 5,
+    limit: QueryInt = -1,
     offset: QueryInt = 0,
 ) -> HTMLResponse:
+    if limit == -1:
+        limit = retrieve_injectable(Config).DEFAULT_POSTS_LIMIT
+
     posts = await memecry.posts_service.get_posts(
         viewer=request.user if request.user.is_authenticated else None,
         limit=limit,
         offset=offset,
     )
+    view_context = retrieve_injectable(ViewContext)
+    next_page_url = view_context.url_of(get_homepage)
     home_view = memecry.views.post.home_view(
+        str(next_page_url()) + f"?limit={limit}&offset={offset + limit}",
         posts,
-        offset=offset,
-        limit=limit,
         keep_scrolling=True,
         partial=request.scope["from_htmx"],
     )
@@ -201,10 +208,15 @@ async def get_homepage(
 
 @router.path_function("GET", "/search")
 async def search_posts(
-    request: memecry.schema.Request, query: QueryStr
+    request: memecry.schema.Request,
+    query: QueryStr,
+    limit: QueryInt = 5,
+    offset: QueryInt = 0,
 ) -> HTMLResponse | Response:
     logger = logging.getLogger()
     start_parse_query = time.time()
+    if limit == -1:
+        limit = retrieve_injectable(Config).DEFAULT_POSTS_LIMIT
     try:
         parsed_query = memecry.schema.Query(query)
     except ValueError as e:
@@ -214,21 +226,25 @@ async def search_posts(
     posts = await memecry.posts_service.get_posts_by_search_query(
         parsed_query,
         viewer=request.user if request.user.is_authenticated else None,
-        offset=0,
-        limit=0,
+        offset=offset,
+        limit=limit,
     )
     start_build_home_view = time.time()
+    view_context = retrieve_injectable(ViewContext)
+    next_page_url = view_context.url_of(search_posts)
     home_view = memecry.views.post.home_view(
+        # TODO: implement query params in relax url getters
+        str(next_page_url()) + f"?limit={limit}&offset={offset + limit}&query={query}",  # type: ignore
         posts,
-        offset=0,
-        limit=-1,
-        keep_scrolling=False,
+        keep_scrolling=True,
         partial=request.scope["from_htmx"],
     )
     logger.debug(
         "Took %.2f seconds to build home view", time.time() - start_build_home_view
     )
-    logger.debug("Home view posts: %s", posts)
+    logger.debug("%s found posts: %s", len(posts), posts)
+    if request.scope["from_htmx"]:
+        return HTMLResponse(home_view)
     return HTMLResponse(
         memecry.views.misc.page_root(
             [

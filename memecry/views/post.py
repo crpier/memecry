@@ -141,7 +141,7 @@ def post_title_section(
                 "link",
                 "link-hover",
             ],
-            text=post.title,
+            text=str(post.id),
         )
     )
 
@@ -384,17 +384,13 @@ def post_component(*, post: memecry.schema.PostRead, id: str = Injected) -> div:
 
 
 @injectable_sync
-def home_view(  # noqa: PLR0913
+def home_view(
+    next_page_url: str,
     posts: list[memecry.schema.PostRead],
-    offset: int = 0,
-    limit: int | None = None,
     *,
     keep_scrolling: bool = False,
     partial: bool = False,
-    config: memecry.config.Config = Injected,
 ) -> Element:
-    if limit is None:
-        limit = config.POSTS_LIMIT
     post_views = [
         post_component(
             post=post,
@@ -404,7 +400,7 @@ def home_view(  # noqa: PLR0913
     if keep_scrolling:
         with contextlib.suppress(IndexError):
             post_views[-1].hx_get(
-                f"/?offset={offset+limit}",
+                next_page_url,
                 hx_trigger="revealed",
                 hx_swap="afterend",
             )
