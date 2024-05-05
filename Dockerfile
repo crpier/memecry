@@ -23,4 +23,4 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 ENV PATH="/app/.venv/bin:$PATH"
 COPY --from=poetry /app /app
-CMD ["python", "memecry/main.py"]
+CMD ["python", "-u", "memecry/main.py"]

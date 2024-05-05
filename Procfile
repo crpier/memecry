@@ -1,1 +1,1 @@
-web: python memecry/main.py
+web: python -u memecry/main.py
