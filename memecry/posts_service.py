@@ -316,6 +316,7 @@ async def delete_post(
     post_id: int,
     *,
     asession: async_sessionmaker[AsyncSession] = Injected,
+    config: memecry.config.Config = Injected,
     logger: Logger = Injected,
 ) -> None:
     async with asession() as session:
@@ -332,7 +333,9 @@ async def delete_post(
             logger.debug("Tried removing nonexistent post with id %s", post_id)
             msg = "Cannot find post to delete"
             raise ValueError(msg)
-        media_path = Path(str(post_to_delete.source)[1:])
+        media_path = (
+            config.MEDIA_UPLOAD_STORAGE / post_to_delete.source.rsplit("/", 1)[1]
+        )
         logger.debug("Going to delete media in %s", media_path)
         media_path.unlink()
 
