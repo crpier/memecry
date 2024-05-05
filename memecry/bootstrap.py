@@ -33,8 +33,8 @@ def bootstrap() -> tuple[memecry.config.Config, ViewContext]:
     view_context = ViewContext()
     add_injectable(ViewContext, view_context)
 
-    basicConfig(level=config.LOG_LEVEL)
-    logger = getLogger("memecry")
+    basicConfig(level=config.LOG_LEVEL, force=True)
+    logger = getLogger()
     add_injectable(Logger, logger)
 
     # ensure media folder exists

@@ -56,7 +56,7 @@ async def upload_post(
 
 
 @injectable
-async def get_posts(
+async def get_posts(  # noqa: PLR0913
     limit: int | None = None,
     offset: int = 0,
     viewer: memecry.schema.UserRead | None = None,
