@@ -349,3 +349,25 @@ async def delete_post(
         )
 
         await session.commit()
+
+
+@injectable
+async def get_post_by_media_path(
+    path: str,
+    *,
+    authenticated_viewer: bool = False,
+    asession: async_sessionmaker[AsyncSession] = Injected,
+    config: memecry.config.Config = Injected,
+) -> memecry.schema.PostRead | None:
+    async with asession() as session:
+        query = select(memecry.model.Post).where(memecry.model.Post.source == path)
+        if not authenticated_viewer:
+            for tag in config.RESTRICTED_TAGS:
+                query = query.where(memecry.model.Post.tags.not_like(f"%{tag}%"))
+        result = await session.execute(query)
+        post = result.scalars().one_or_none()
+        if not post:
+            return None
+        return memecry.schema.PostRead.from_model(
+            post,
+        )
