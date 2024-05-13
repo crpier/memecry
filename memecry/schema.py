@@ -65,6 +65,7 @@ class PostRead(BaseModel):
         post_in_db: memecry.model.Post,
         *,
         editable: bool = False,
+        autoplayable: bool = False,
     ) -> "PostRead":
         now = datetime.now(tz=zoneinfo.ZoneInfo("UTC"))
         post_in_db.created_at = post_in_db.created_at.replace(
@@ -78,7 +79,7 @@ class PostRead(BaseModel):
             locale="en_US",
         )
         post_dict["editable"] = editable
-        post_dict["autoplayable"] = post_in_db.user.desktop_autoplay
+        post_dict["autoplayable"] = autoplayable
         post_dict["author_name"] = post_in_db.user.username
         return PostRead(**post_dict)
 
