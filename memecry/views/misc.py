@@ -373,14 +373,15 @@ def section_separator(name: str) -> Element:
 def commands_helper() -> Element:
     return aside(
         classes=[
-            "sm:block",
-            "px-8",
+            "hidden",
+            "lg:block",
+            "xl:px-8",
             "text-white",
             "max-w-[calc(30vw)]",
             "fixed",
             "top-18",
             "left-0",
-            "max-h-[80%]",
+            "max-h-[90%]",
             "overflow-y-scroll",
         ]
     ).insert(
