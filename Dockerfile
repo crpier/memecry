@@ -15,5 +15,6 @@ RUN poetry install --no-interaction --no-ansi -vvv --only main --no-root
 
 FROM python as runtime
 ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONPATH=/app
 COPY --from=poetry /app /app
 CMD ["python", "-u", "memecry/main.py"]
