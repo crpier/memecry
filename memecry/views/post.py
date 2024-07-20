@@ -14,7 +14,6 @@ from relax.html import (
     img,
     input,
     main,
-    script,
     span,
     textarea,
     ul,
@@ -45,87 +44,72 @@ def tags_component(  # noqa: PLR0913
 ) -> Element:
     update_tags_url = context.url_of(memecry.routes.post.update_tags)
     text_div_id = f"tags-text-{id}"
-    useless_element = div(id="empty-useless-target", classes=["hidden"])
 
     active_tags = selected_tags.split(", ")
-    available_tags = config.DEFAULT_TAGS
+    all_tags = config.DEFAULT_TAGS
 
     def option_input(tag: str, *, active: bool = False) -> input:
-        attrs = {"aria-label": tag, "onclick": f"input_clicked_{post_id}(event)"}
+        attrs = {"aria-label": tag}
         if active:
             attrs["checked"] = "true"
         return input(
-            name=id,
+            name=tag,
             type="checkbox",
-            classes=["btn", "btn-xs", "btn-ghost"],
+            classes=[
+                "btn",
+                "btn-xs",
+                "btn-ghost",
+                "text-left",
+                "m-0",
+                "rounded-none",
+                "first:rounded-t-md",
+                "last:rounded-b-md",
+            ],
             value=tag,
             attrs=attrs,
         )
 
-    options = [option_input(tag, active=tag in active_tags) for tag in available_tags]
-
-    return div(
-        classes=[
-            "dropdown",
-        ]
-    ).insert(
-        useless_element,
-        script(
-            js=f"""
-    var input_clicked_{post_id} = function(event) {{
-        const target = event.target;
-        const siblingOptions = document.getElementsByName(target.name);
-        let activeOptions = Array.from(siblingOptions).filter(
-            option => option.checked).map(
-            option => option.value
-        ).join(", ");
-        if (activeOptions === "") {{
-            activeOptions = "no-tags";
-        }}
-        const dropdown = document.getElementById("{text_div_id}");
-        dropdown.setAttribute("value", activeOptions);
-        htmx.ajax("PUT", "{update_tags_url(post_id=post_id)}", {{
-            swap: "none",
-            target: "#empty-useless-target",
-            values: {{
-                tag: target.value,
-                tags: activeOptions,
-            }}
-        }});
-    }}"""
-        ),
-        input(
-            id=text_div_id,
-            type="text",
-            name="tags",
-            attrs={"readonly": "true"},
-            classes=[
-                "btn",
-                "btn-sm",
-                "btn-outline",
-                "truncate",
-                "block",
-                "leading-8",
-                "pointer-events-none" if not editable else "",
-                "max-w-[6rem]",
-            ],
-            value=", ".join(active_tags),
-        ),
-        ul(
-            attrs={"tabindex": "0"},
-            classes=[
-                "dropdown-content",
-                "menu",
-                "z-[1]",
-                "p-2",
-                "shadow",
-                "space-y-2",
-                "space-x-1",
-                "rounded-b-lg",
-                "bg-base-200",
-                "hidden" if not editable else "",
-            ],
-        ).insert(options),
+    return (
+        form(classes=["dropdown", "dropdown-end"])
+        .hx_put(
+            target=update_tags_url(post_id=post_id),
+            hx_target=f"#{text_div_id}",
+            hx_trigger="change",
+            hx_swap="outerHTML",
+        )
+        .insert(
+            div(
+                id=text_div_id,
+                attrs={
+                    "tabindex": "0",
+                    "role": "button",
+                },
+                classes=[
+                    "btn",
+                    "btn-sm",
+                    "btn-outline",
+                    "block",
+                    "leading-8",
+                    "pointer-events-none" if not editable else "",
+                ],
+                text=", ".join(active_tags),
+            ),
+            ul(
+                attrs={"tabindex": "0"},
+                classes=[
+                    "dropdown-content",
+                    "menu",
+                    "z-[1]",
+                    "shadow",
+                    "rounded-b-md",
+                    "bg-base-100",
+                    "p-0",
+                    "hidden" if not editable else "",
+                ],
+            ).insert(
+                [option_input(tag, active=tag in active_tags) for tag in all_tags]
+            ),
+        )
     )
 
 

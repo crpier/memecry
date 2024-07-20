@@ -212,6 +212,37 @@ async def get_post_by_id(
 
 
 @injectable
+async def update_post_tags(
+    post_id: int,
+    tags: list[str],
+    requester_user_id: int,
+    *,
+    asession: async_sessionmaker[AsyncSession] = Injected,
+    config: memecry.config.Config = Injected,
+) -> str:
+    new_tags = config.NO_TAGS_STRING if len(tags) == 0 else ", ".join(tags)
+    async with asession() as session:
+        get_old_tags_query = (
+            select(memecry.model.Post)
+            .where(memecry.model.Post.id == post_id)
+            .options(load_only(memecry.model.Post.user_id, memecry.model.Post.user_id))
+        )
+        result = await session.execute(get_old_tags_query)
+        post_in_db = result.scalars().one()
+        if post_in_db.user_id != requester_user_id:
+            raise PermissionError
+
+        query = (
+            update(memecry.model.Post)
+            .where(memecry.model.Post.id == post_id)
+            .values(tags=new_tags)
+        )
+        await session.execute(query)
+        await session.commit()
+        return new_tags
+
+
+@injectable
 async def toggle_post_tag(
     post_id: int,
     tag: str,

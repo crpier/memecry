@@ -14,7 +14,7 @@ from relax.app import (
     Router,
     ViewContext,
 )
-from relax.html import div, input
+from relax.html import div
 from relax.injection import retrieve_injectable
 from starlette.datastructures import UploadFile
 from starlette.responses import RedirectResponse, Response
@@ -81,11 +81,14 @@ class TagForm:
 async def update_tags(
     request: memecry.schema.Request, post_id: PathInt
 ) -> HTMLResponse:
-    async with request.parse_form(TagForm) as form:
+    async with request.form() as form:
+        tags_from_request = list(form.keys())
         if post_id != 0:
             try:
-                await memecry.posts_service.toggle_post_tag(
-                    post_id, form.tag, request.user.id
+                new_tags = await memecry.posts_service.update_post_tags(
+                    post_id=post_id,
+                    tags=tags_from_request,
+                    requester_user_id=request.user.id,
                 )
             except PermissionError:
                 return HTMLResponse(
@@ -93,18 +96,17 @@ async def update_tags(
                     status_code=403,
                 )
         else:
-            old_tags = form.tags.split(", ")
-
-            if form.tag in old_tags:
-                old_tags.remove(form.tag)
-                if old_tags == []:
-                    old_tags = ["no tags"]
-            else:
-                if old_tags == ["no tags"]:
-                    old_tags = []
-                old_tags.append(form.tag)
-
-        return HTMLResponse(input(value=form.tags, name="lol", type="text"))
+            config = retrieve_injectable(Config)
+            new_tags = (
+                config.NO_TAGS_STRING
+                if len(tags_from_request) == 0
+                else ", ".join(tags_from_request)
+            )
+        return HTMLResponse(
+            memecry.views.post.tags_component(
+                post_id=post_id, selected_tags=new_tags, editable=True
+            )
+        )
 
 
 @router.path_function(

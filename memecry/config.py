@@ -34,3 +34,4 @@ class Config(BaseConfig):
     DEFAULT_TAGS: CommaSeparatedStringList = Field(
         default=["reaction", "animals", "postironic", "meirl"]
     )
+    NO_TAGS_STRING: str = Field(default="no-tags")
