@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import Annotated, Any
 
 from pydantic import Field
-from relax.config import BaseConfig
+from relax.config import AbsolutePath, BaseConfig
 
 
 def comma_separated_list_validator(value: Any) -> list[str]:  # noqa: ANN401
@@ -27,6 +27,7 @@ class Config(BaseConfig):
     DB_FILE: Path = Field(default=Path("dev.db"))
     DEFAULT_POSTS_LIMIT: int = Field(default=5)
 
+    # TODO: let me write a simple string in the env var
     RESTRICTED_TAGS: CommaSeparatedStringList = Field(default=["postironic"])
     POSTS_LIMIT: int = Field(default=15)
 
@@ -35,3 +36,4 @@ class Config(BaseConfig):
         default=["reaction", "animals", "postironic", "meirl"]
     )
     NO_TAGS_STRING: str = Field(default="no-tags")
+    TEMPLATES_DIR: AbsolutePath = Field(default=Path("./memecry/views"))
