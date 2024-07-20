@@ -11,6 +11,7 @@
     '<https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64>
 - make videos smaller on upload (maybe?)
 - don't rely on browser focus for posts anymore
+- don't crash when I search for "animals
 
 ### Features TODO
 

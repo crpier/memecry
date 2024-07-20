@@ -113,7 +113,7 @@ def app_factory() -> App:
         ),
     )
 
-    if config.ENV == "dev":
+    if config.ENV == "DEV":
         app.listen_to_template_changes()
     return app
 
@@ -124,6 +124,6 @@ if __name__ == "__main__":
     start_app(
         app_path="memecry.main:app_factory",
         config=config,
-        reload=config.ENV == "dev",
+        reload=config.ENV == "DEV",
         host="0.0.0.0",  # noqa: S104
     )

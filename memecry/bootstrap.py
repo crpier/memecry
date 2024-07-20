@@ -1,3 +1,4 @@
+import logging
 import sqlite3
 import subprocess
 from logging import Logger, basicConfig, getLogger
@@ -33,9 +34,12 @@ def bootstrap() -> tuple[memecry.config.Config, ViewContext]:
     view_context = ViewContext()
     add_injectable(ViewContext, view_context)
 
-    basicConfig(level=config.LOG_LEVEL, force=True)
-    logger = getLogger()
+    basicConfig(
+        level=logging.WARNING if config.ENV == "PROD" else logging.DEBUG, force=True
+    )
+    logger = getLogger("memecry")
     add_injectable(Logger, logger)
+    getLogger("aiosqlite").setLevel("WARNING")
 
     # ensure media folder exists
     config.MEDIA_UPLOAD_STORAGE.mkdir(parents=True, exist_ok=True)
@@ -54,11 +58,11 @@ def bootstrap() -> tuple[memecry.config.Config, ViewContext]:
     async_session = async_sessionmaker(async_engine, expire_on_commit=False)
     add_injectable(async_sessionmaker[AsyncSession], async_session)
 
-    if config.ENV == "prod":
+    if config.ENV == "PROD":
         run_migrations(
             "./memecry/alembic_migrations", f"sqlite:///{config.DB_FILE}", logger=logger
         )
-    elif config.ENV == "dev":
+    elif config.ENV == "DEV":
         with sync_engine.begin() as conn:
             memecry.model.Base.metadata.create_all(conn)
         subprocess.Popen(["npx", "tailwindcss", "-o", "static/css/tailwind.css"])  # noqa: S603, S607

@@ -3,7 +3,7 @@ from typing import Annotated
 import pytest
 from relax.test import check
 from sqlalchemy import create_engine
-from sqlalchemy.exc import IntegrityError, OperationalError
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, sessionmaker
 
 import memecry.model

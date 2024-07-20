@@ -21,6 +21,7 @@ from relax.html import (
     video,
 )
 from relax.injection import Injected, component, injectable_sync
+from starlette.datastructures import URL
 
 import memecry.config
 import memecry.main
@@ -385,7 +386,7 @@ def post_component(*, post: memecry.schema.PostRead, id: str = Injected) -> div:
 
 @injectable_sync
 def home_view(
-    next_page_url: str,
+    next_page_url: URL,
     posts: list[memecry.schema.PostRead],
     *,
     keep_scrolling: bool = False,

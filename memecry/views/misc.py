@@ -40,7 +40,7 @@ VIDEO_FORMATS = [".mp4", ".webm"]
 
 @injectable_sync
 def tailwind_css(*, config: memecry.config.Config = Injected) -> Element:
-    if config.ENV == "prod":
+    if config.ENV == "PROD":
         return link(href="/static/css/tailwind.css", rel="stylesheet")
 
     return Fragment(
@@ -102,10 +102,11 @@ def page_root(
             classes=[
                 "pt-20",
                 "flex",
-                "flex-row",
+                "flex-col",
                 "justify-between",
+                "items-center",
             ]
-        ).insert(child, hmr_script() if config.ENV == "dev" else None),
+        ).insert(child, hmr_script() if config.ENV == "DEV" else None),
     )
 
 
@@ -366,21 +367,25 @@ def section_separator(name: str) -> Element:
     )
 
 
-def commands_helper(*, key: str, display_hack: bool = False) -> Element:
+# TODO: reload the app is arguments to components change
+# TODO: if there are no arguments, still make sure that elements are unique
+@component()
+def commands_helper() -> Element:
     return aside(
         classes=[
-            "hidden",
             "sm:block",
             "px-8",
-            "max-h-full",
             "text-white",
-            "sm:max-w-lg",
-            "invisible" if display_hack is True else "",
+            "max-w-[calc(30vw)]",
+            "fixed",
+            "top-18",
+            "left-0",
+            "max-h-[80%]",
+            "overflow-y-scroll",
         ]
     ).insert(
         div(
             classes=[
-                "block",
                 "rounded-lg",
                 "text-center",
                 "border",
@@ -395,7 +400,6 @@ def commands_helper(*, key: str, display_hack: bool = False) -> Element:
                     "border-gray-600",
                     "px-6",
                     "py-3",
-                    key,
                 ]
             ).text("Keybindings"),
             div(classes=["pb-4", "space-y-1"]).insert(

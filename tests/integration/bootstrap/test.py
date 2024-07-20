@@ -9,7 +9,7 @@ import memecry.bootstrap
 
 @pytest.fixture()
 def _set_dev_env():
-    os.environ["ENV"] = "dev"
+    os.environ["ENV"] = "DEV"
     os.environ["DB_FILE"] = "test.db"
     # required configuration
     os.environ["SECRET_KEY"] = "some_secret"
@@ -22,7 +22,7 @@ def _set_dev_env():
 
 @pytest.fixture()
 def _set_prod_env():
-    os.environ["ENV"] = "prod"
+    os.environ["ENV"] = "PROD"
     os.environ["DB_FILE"] = "test.db"
     # required configuration
     os.environ["SECRET_KEY"] = "some_secret"

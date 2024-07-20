@@ -2847,10 +2847,6 @@ html {
   visibility: visible;
 }
 
-.invisible {
-  visibility: hidden;
-}
-
 .static {
   position: static;
 }
@@ -2957,10 +2953,6 @@ html {
   display: none;
 }
 
-.max-h-full {
-  max-height: 100%;
-}
-
 .w-10 {
   width: 2.5rem;
 }
@@ -2996,6 +2988,10 @@ html {
 
 .max-w-full {
   max-width: 100%;
+}
+
+.max-w-xs {
+  max-width: 20rem;
 }
 
 .flex-1 {

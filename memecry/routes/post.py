@@ -45,11 +45,10 @@ async def get_post(request: memecry.schema.Request, post_id: PathInt) -> HTMLRes
                 memecry.views.misc.page_nav(
                     user=request.user if request.user.is_authenticated else None,
                 ),
-                memecry.views.misc.commands_helper(key="visible", display_hack=False),
+                memecry.views.misc.commands_helper(),
                 div(classes=["sm:w-[32rem]"]).insert(
                     memecry.views.post.post_component(post=post)
                 ),
-                memecry.views.misc.commands_helper(display_hack=True, key="hidden"),
             ],
         ),
     )
@@ -185,7 +184,7 @@ async def get_homepage(
     view_context = retrieve_injectable(ViewContext)
     next_page_url = view_context.url_of(get_homepage)
     home_view = memecry.views.post.home_view(
-        str(next_page_url()) + f"?limit={limit}&offset={offset + limit}",
+        next_page_url(limit=limit, offset=offset + limit),
         posts,
         keep_scrolling=True,
         partial=request.scope["from_htmx"],
@@ -198,9 +197,8 @@ async def get_homepage(
                 memecry.views.misc.page_nav(
                     user=request.user if request.user.is_authenticated else None,
                 ),
-                memecry.views.misc.commands_helper(key="visibible", display_hack=False),
+                memecry.views.misc.commands_helper(),
                 home_view,
-                memecry.views.misc.commands_helper(key="hidden", display_hack=True),
             ],
         ),
     )
@@ -233,8 +231,7 @@ async def search_posts(
     view_context = retrieve_injectable(ViewContext)
     next_page_url = view_context.url_of(search_posts)
     home_view = memecry.views.post.home_view(
-        # TODO: implement query params in relax url getters
-        str(next_page_url()) + f"?limit={limit}&offset={offset + limit}&query={query}",  # type: ignore
+        next_page_url(query=query, limit=limit, offset=offset),
         posts,
         keep_scrolling=True,
         partial=request.scope["from_htmx"],
