@@ -103,8 +103,8 @@ async def update_tags(
                 else ", ".join(tags_from_request)
             )
         return HTMLResponse(
-            memecry.views.post.tags_component(
-                post_id=post_id, selected_tags=new_tags, editable=True
+            memecry.views.post.tags_button_component(
+                __post_id__=post_id, tags=new_tags, editable=True
             )
         )
 

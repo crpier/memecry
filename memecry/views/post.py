@@ -32,21 +32,50 @@ IMAGE_FORMATS = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
 VIDEO_FORMATS = [".mp4", ".webm"]
 
 
+@component(key=lambda __post_id__: __post_id__)
+def tags_button_component(
+    __post_id__: int,  # noqa: ARG001
+    tags: str,
+    *,
+    editable: bool,
+    id: str = Injected,
+) -> Element:
+    return div(
+        id=id,
+        attrs={
+            "tabindex": "0",
+            "role": "button",
+        },
+        classes=[
+            "btn",
+            "btn-sm",
+            "truncate",
+            "overflow-ellipsis",
+            "btn-outline",
+            "block",
+            "leading-8",
+            "pointer-events-none" if not editable else "",
+        ],
+        text=tags,
+    )
+
+
 @component(key=lambda post_id: post_id)
-def tags_component(  # noqa: PLR0913
+def tags_component(
     *,
     post_id: int,
     selected_tags: str = "no-tags",
     editable: bool = False,
     config: memecry.config.Config = Injected,
     context: ViewContext = Injected,
-    id: str = Injected,
 ) -> Element:
     update_tags_url = context.url_of(memecry.routes.post.update_tags)
-    text_div_id = f"tags-text-{id}"
-
     active_tags = selected_tags.split(", ")
     all_tags = config.DEFAULT_TAGS
+
+    tags_button = tags_button_component(
+        __post_id__=post_id, tags=", ".join(active_tags), editable=editable
+    )
 
     def option_input(tag: str, *, active: bool = False) -> input:
         attrs = {"aria-label": tag}
@@ -70,30 +99,15 @@ def tags_component(  # noqa: PLR0913
         )
 
     return (
-        form(classes=["dropdown", "dropdown-end"])
+        form(classes=["dropdown", "dropdown-end", "max-w-[50%]"])
         .hx_put(
             target=update_tags_url(post_id=post_id),
-            hx_target=f"#{text_div_id}",
+            hx_target=f"#{tags_button.id}",
             hx_trigger="change",
             hx_swap="outerHTML",
         )
         .insert(
-            div(
-                id=text_div_id,
-                attrs={
-                    "tabindex": "0",
-                    "role": "button",
-                },
-                classes=[
-                    "btn",
-                    "btn-sm",
-                    "btn-outline",
-                    "block",
-                    "leading-8",
-                    "pointer-events-none" if not editable else "",
-                ],
-                text=", ".join(active_tags),
-            ),
+            tags_button,
             ul(
                 attrs={"tabindex": "0"},
                 classes=[
@@ -277,14 +291,13 @@ def post_settings_pane(
         post=post, parent_post_id=parent_id
     )
     searcheable_content_input_name = f"content-input-{post.id}"
-    # return div(classes=["hidden", "m-auto"]).insert(
-    return div(classes=["m-auto"]).insert(
+    return div(classes=["hidden", "m-auto"]).insert(
         delete_confirmation_element,
         form(
             classes=[
                 *memecry.views.common.FLEX_COL_WRAPPER_CLASSES,
                 "!space-y-4",
-                "pb-4"
+                "pb-4",
             ],
         ).insert(
             textarea(
@@ -294,7 +307,16 @@ def post_settings_pane(
                 classes=["textarea", "textarea-bordered", "w-full", "mt-4"],
                 disabled=not post.editable,
             ).text(post.searchable_content),
-            div(classes=["space-x-4", "flex", "flex-row", "justify-end", "w-full", "px-2"]).insert(
+            div(
+                classes=[
+                    "space-x-4",
+                    "flex",
+                    "flex-row",
+                    "justify-end",
+                    "w-full",
+                    "px-2",
+                ]
+            ).insert(
                 button(
                     type="button",
                     classes=[*memecry.views.common.SIMPLE_BUTTON_CLASSES],
