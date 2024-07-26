@@ -9,7 +9,7 @@ IMAGE_FORMATS = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
 VIDEO_FORMATS = [".mp4", ".webm"]
 
 
-SIMPLE_BUTTON_CLASSES = ["btn", "btn-xs", "sm:btn-sm", "sm:btn-md"]
+SIMPLE_BUTTON_CLASSES = ["btn", "btn-sm", "md:btn-md"]
 
 
 NEUTRAL_BUTTON_CLASSES = [*SIMPLE_BUTTON_CLASSES, "btn-neutral"]

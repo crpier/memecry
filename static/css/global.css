@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 .post-component {
-  scroll-margin-top: 4.1rem;
+  scroll-margin-top: 5rem;
 }
 
 /* Hide scrollbars, because modals hiden them too and shifts the page

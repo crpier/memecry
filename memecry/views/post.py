@@ -57,7 +57,7 @@ def tags_component(  # noqa: PLR0913
             type="checkbox",
             classes=[
                 "btn",
-                "btn-xs",
+                "btn-sm",
                 "btn-ghost",
                 "text-left",
                 "m-0",
@@ -187,7 +187,7 @@ def post_interaction_pane(
                     "hover:text-green-700",
                     "hover:border-green-700",
                 ],
-            ).insert(i(classes=["fa", "fa-arrow-up"])),
+            ).insert(i(classes=["fa", "fa-arrow-up", "fa-lg"])),
             button(
                 type="button",
                 classes=[
@@ -198,7 +198,7 @@ def post_interaction_pane(
                     "hover:text-red-800",
                     "hover:border-red-800",
                 ],
-            ).insert(i(classes=["fa", "fa-arrow-down"])),
+            ).insert(i(classes=["fa", "fa-arrow-down", "fa-lg"])),
         ),
         div(classes=["flex-grow"]),
         tags.classes(["mr-2"]),
@@ -277,12 +277,14 @@ def post_settings_pane(
         post=post, parent_post_id=parent_id
     )
     searcheable_content_input_name = f"content-input-{post.id}"
-    return div(classes=["hidden", "m-auto"]).insert(
+    # return div(classes=["hidden", "m-auto"]).insert(
+    return div(classes=["m-auto"]).insert(
         delete_confirmation_element,
         form(
             classes=[
                 *memecry.views.common.FLEX_COL_WRAPPER_CLASSES,
                 "!space-y-4",
+                "pb-4"
             ],
         ).insert(
             textarea(
@@ -292,7 +294,7 @@ def post_settings_pane(
                 classes=["textarea", "textarea-bordered", "w-full", "mt-4"],
                 disabled=not post.editable,
             ).text(post.searchable_content),
-            div(classes=memecry.views.common.FLEX_ROW_WRAPPER_CLASSES).insert(
+            div(classes=["space-x-4", "flex", "flex-row", "justify-end", "w-full", "px-2"]).insert(
                 button(
                     type="button",
                     classes=[*memecry.views.common.SIMPLE_BUTTON_CLASSES],

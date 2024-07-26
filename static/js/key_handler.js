@@ -1,7 +1,45 @@
 import { CONSTANTS } from "./constants.js";
 
+function pressButton(buttonQuery) {
+  const button = document.querySelector(buttonQuery);
+  button.click();
+}
+
 function goToRandomPost() {
   location.href = "/random";
+}
+
+function focusOpenDialog() {
+  // try to get inputs in open dialogs first
+  const inputs = Array.from(
+    document.querySelectorAll('dialog[open] form input[type="text"]'),
+  );
+  if (inputs.length !== 0) {
+    inputs[0].focus();
+  } else {
+    // try to get an writeable visible textarea
+    const textareas = Array.from(
+      document.querySelectorAll(
+        "div:not(.hidden)>form>textarea:not([disabled])",
+      ),
+    );
+    for (let i = 0; i < textareas.length; i++) {
+      const rect = textareas[i].getBoundingClientRect();
+      // is in viewport
+      if (
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <=
+          (window.innerHeight || document.documentElement.clientHeight) &&
+        rect.right <=
+          (window.innerWidth || document.documentElement.clientWidth)
+      ) {
+        console.log(textareas[i]);
+        textareas[i].focus();
+        break;
+      }
+    }
+  }
 }
 
 function openSettingsPane() {
@@ -205,6 +243,11 @@ function scrollToBottom() {
   availablePosts[currentPostIdx].scrollIntoView({ behavior: "instant" });
 }
 
+function submitForm() {
+  const form = document.querySelectorAll("form[hx-post]");
+  console.log(form);
+}
+
 function updateCurrentPostIdx() {
   let newIdx;
   for (let i = 0; i < availablePosts.length; i++) {
@@ -310,7 +353,7 @@ function handleSimpleKey(key, event) {
       scrollToBottom();
       break;
     case "Q":
-      openForm("/signout");
+      pressButton('button[hx-get="/signout"]');
       break;
     case ",":
       event.preventDefault();
@@ -349,6 +392,10 @@ function handleSimpleKey(key, event) {
 function handleCompositeKey(key, event) {
   if (compositeKey === "g") {
     switch (key) {
+      case "i":
+        event.preventDefault();
+        focusOpenDialog();
+        break;
       case "g":
         scrollToTop();
         break;
