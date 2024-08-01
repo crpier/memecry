@@ -117,8 +117,9 @@ def tags_component(
                     "shadow",
                     "rounded-b-md",
                     "bg-base-100",
-                    "p-0",
-                    "hidden" if not editable else "",
+                    "pt-1",
+                    "px-0",
+                    "pb-0",
                 ],
             ).insert(
                 [option_input(tag, active=tag in active_tags) for tag in all_tags]

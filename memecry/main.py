@@ -105,6 +105,7 @@ def app_factory() -> App:
             name="static",
         ),
     )
+    # TODO: only allow static/favicon.ico in here
     app.routes.append(
         Mount(
             "/",

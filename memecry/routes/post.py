@@ -83,7 +83,14 @@ async def update_tags(
 ) -> HTMLResponse:
     async with request.form() as form:
         tags_from_request = list(form.keys())
-        if post_id != 0:
+        if post_id == 0:
+            config = retrieve_injectable(Config)
+            new_tags = (
+                config.NO_TAGS_STRING
+                if len(tags_from_request) == 0
+                else ", ".join(tags_from_request)
+            )
+        else:
             try:
                 new_tags = await memecry.posts_service.update_post_tags(
                     post_id=post_id,
@@ -95,13 +102,6 @@ async def update_tags(
                     memecry.views.common.error_element("Permission denied"),
                     status_code=403,
                 )
-        else:
-            config = retrieve_injectable(Config)
-            new_tags = (
-                config.NO_TAGS_STRING
-                if len(tags_from_request) == 0
-                else ", ".join(tags_from_request)
-            )
         return HTMLResponse(
             memecry.views.post.tags_button_component(
                 __post_id__=post_id, tags=new_tags, editable=True
@@ -151,16 +151,27 @@ class UploadForm:
 
 @router.path_function("POST", "/upload", auth_scopes=[AuthScope.Authenticated])
 async def upload(request: memecry.schema.Request) -> Response:
-    async with request.parse_form(UploadForm) as form_data:
+    no_tags_string = retrieve_injectable(Config).NO_TAGS_STRING
+    async with request.form() as form_data:
+        tags = (
+            ", ".join(
+                [
+                    key
+                    for key in form_data
+                    if key not in ["title", "file", "searchable_content"]
+                ]
+            )
+            or no_tags_string
+        )
         post_data = memecry.schema.PostCreate(
-            title=form_data.title,
-            tags=form_data.tags,
-            searchable_content=form_data.searchable_content,
+            title=cast(str, form_data["title"]),
+            tags=tags,
+            searchable_content=cast(str, form_data.get("searchable_content", "")),
             user_id=request.user.id,
         )
         new_post_id = await memecry.posts_service.upload_post(
             post_data=post_data,
-            uploaded_file=form_data.file,
+            uploaded_file=cast(UploadFile, form_data["file"]),
         )
 
     resp = Response()

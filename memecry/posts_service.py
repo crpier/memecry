@@ -87,7 +87,9 @@ async def get_posts(  # noqa: PLR0913
                     query = query.where(memecry.model.Post.tags.not_like(f"%{tag}%"))
             result = await session.execute(query)
             post_reads = [
-                memecry.schema.PostRead.from_model(post)
+                memecry.schema.PostRead.from_model(
+                    post, autoplayable=viewer.desktop_autoplay if viewer else False
+                )
                 for post in result.scalars().all()
             ]
             if viewer:

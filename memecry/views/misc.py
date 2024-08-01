@@ -374,7 +374,7 @@ def commands_helper() -> Element:
     return aside(
         classes=[
             "hidden",
-            "lg:block",
+            "xl:block",
             "xl:px-8",
             "text-white",
             "max-w-[calc(30vw)]",
@@ -446,11 +446,13 @@ def commands_helper() -> Element:
 @component()
 def upload_form(*, context: ViewContext = Injected, id: str = Injected) -> dialog:
     upload_error_placeholder = div(
-        id="signin-error", classes=["!m-0", "flex", "justify-center", "pt-4"]
+        id="signin-error",
+        classes=["!m-0", "flex", "justify-center", "pt-4"],
     )
     tags_element = memecry.views.post.tags_component(post_id=0, editable=True).classes(
-        ["mr-auto", "my-auto"]
+        ["w-max", "ml-auto", "mr-4"]
     )
+    form_id = f"form-{id}"
 
     return dialog(classes=["modal", "modal-bottom", "sm:modal-middle"]).insert(
         div(
@@ -489,14 +491,14 @@ def upload_form(*, context: ViewContext = Injected, id: str = Injected) -> dialo
             ),
             form(
                 classes=["form-control", "space-y-4", "flex"],
-                id=f"form-{id}",
+                id=form_id,
             )
             .hx_post(
                 context.url_of(memecry.routes.post.upload)(),
                 hx_encoding="multipart/form-data",
                 hx_target=f"#{upload_error_placeholder.id}",
                 hx_swap="innerHTML",
-                hx_include=f"#tags-text-{tags_element.id}",
+                hx_include=f"#{tags_element.id}",
             )
             .insert(
                 label(
@@ -526,17 +528,18 @@ def upload_form(*, context: ViewContext = Injected, id: str = Injected) -> dialo
                     ],
                     attrs={"onchange": "loadFile(event)"},
                 ),
-                div(classes=["flex", "align-center"]).insert(
-                    tags_element,
-                    button(
-                        type="submit",
-                        classes=["btn", "btn-primary"],
-                        text="Upload",
-                    ),
-                ),
-                img(id="preview_img", src="", alt="", classes=["hidden"]),
-                video(id="preview_video", src="", classes=["hidden"], controls=True),
             ),
+            div(classes=["flex", "flex-col", "align-center"]).insert(
+                tags_element,
+                button(
+                    type="submit",
+                    classes=["btn", "btn-primary", "mt-10", "w-max", "mx-auto"],
+                    text="Upload",
+                    attrs={"form": form_id},
+                ),
+            ),
+            img(id="preview_img", src="", alt="", classes=["hidden"]),
+            video(id="preview_video", src="", classes=["hidden"], controls=True),
             upload_error_placeholder,
             script(
                 js="""
