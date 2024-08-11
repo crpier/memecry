@@ -29,3 +29,7 @@
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
+
+:root {
+  --animation-btn: 0;
+}

@@ -40,6 +40,7 @@ def bootstrap() -> tuple[memecry.config.Config, ViewContext]:
     logger = getLogger("memecry")
     add_injectable(Logger, logger)
     getLogger("aiosqlite").setLevel("WARNING")
+    getLogger("multipart.multipart").setLevel("WARNING")
 
     # ensure media folder exists
     config.MEDIA_UPLOAD_STORAGE.mkdir(parents=True, exist_ok=True)

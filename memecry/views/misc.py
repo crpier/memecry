@@ -105,7 +105,8 @@ def page_root(
                 "flex-col",
                 "justify-between",
                 "items-center",
-            ]
+            ],
+            attrs={"hx-boost": "true"},
         ).insert(child, hmr_script() if config.ENV == "DEV" else None),
     )
 

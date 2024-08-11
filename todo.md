@@ -21,3 +21,10 @@
 - make video controls disapper after playing for a while
   (or maybe somehow make controls be outside the video?)
 - make input elements multi-row for long titles (also maybe make title text smaller)
+- make menu buttons larger
+- no hover on mobile
+
+### Bugs
+- login input fields look weird
+- unsupported format videos
+- "empty query was provided" at the end of search results

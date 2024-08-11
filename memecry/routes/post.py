@@ -37,8 +37,6 @@ async def get_post(request: memecry.schema.Request, post_id: PathInt) -> HTMLRes
     )
     if post is None:
         return HTMLResponse(memecry.views.common.error_element("Post not found"))
-    if request.scope["from_htmx"]:
-        return HTMLResponse(memecry.views.post.post_component(post=post))
     return HTMLResponse(
         memecry.views.misc.page_root(
             [
@@ -200,10 +198,8 @@ async def get_homepage(
         next_page_url(limit=limit, offset=offset + limit),
         posts,
         keep_scrolling=True,
-        partial=request.scope["from_htmx"],
+        partial=False,
     )
-    if request.scope["from_htmx"]:
-        return HTMLResponse(home_view)
     return HTMLResponse(
         memecry.views.misc.page_root(
             [
@@ -244,23 +240,22 @@ async def search_posts(
     view_context = retrieve_injectable(ViewContext)
     next_page_url = view_context.url_of(search_posts)
     home_view = memecry.views.post.home_view(
-        next_page_url(query=query, limit=limit, offset=offset),
+        next_page_url(query=query, limit=limit, offset=offset+limit),
         posts,
         keep_scrolling=True,
-        partial=request.scope["from_htmx"],
+        partial=False,
     )
     logger.debug(
         "Took %.2f seconds to build home view", time.time() - start_build_home_view
     )
     logger.debug("%s found posts: %s", len(posts), posts)
-    if request.scope["from_htmx"]:
-        return HTMLResponse(home_view)
     return HTMLResponse(
         memecry.views.misc.page_root(
             [
                 memecry.views.misc.page_nav(
                     user=request.user if request.user.is_authenticated else None,
                 ),
+                memecry.views.misc.commands_helper(),
                 home_view,
             ],
         ),

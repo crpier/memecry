@@ -45,6 +45,11 @@ def preferences_page(
             h2(classes=["card-title"], text="Preferences")
         ),
         form(classes=["form-control", "w-full"])
+        .hx_put(
+            context.url_of(memecry.routes.misc.update_user)(user_id=user.id),
+            hx_swap="none",
+        )
+        .hyperscript("on htmx:afterRequest go back")
         .insert(
             checkbox_option(
                 "Autoplay videos on desktop",
@@ -61,8 +66,5 @@ def preferences_page(
                 classes=["btn", "w-max", "m-auto", "mt-8"],
                 text="Save",
             ),
-        )
-        .hx_put(
-            context.url_of(memecry.routes.misc.update_user)(user_id=user.id),
         ),
     )

@@ -9,8 +9,8 @@ readme = "README.md"
 python = "^3.11"
 python-multipart = "^0.0.6"
 aiofiles = "^23.2.1"
-python-jose = {extras = ["cryptography"], version = "^3.3.0"}
-passlib = {extras = ["bcrypt"], version = "^1.7.4"}
+python-jose = { extras = ["cryptography"], version = "^3.3.0" }
+passlib = { extras = ["bcrypt"], version = "^1.7.4" }
 babel = "^2.11.0"
 gunicorn = "^21.2.0"
 sqlite-fts4 = "^1.0.3"
@@ -18,7 +18,7 @@ types-pillow = "^10.1.0.0"
 types-aiofiles = "^23.1.0.2"
 types-python-jose = "^3.3.4.7"
 types-passlib = "^1.7.7.12"
-sqlalchemy = {extras = ["asyncio"], version = "^2.0.20"}
+sqlalchemy = { extras = ["asyncio"], version = "^2.0.20" }
 aiosqlite = "^0.19.0"
 relax-py = "0.6.1"
 pendulum = "3.0.0b1"
@@ -33,31 +33,79 @@ ruff = "^0.1.1"
 pydeps = "^1.12.8"
 pre-commit = "^3.5.0"
 pytest = "^8.1.1"
+httpx = "^0.27.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
-extend-select = ["F", "E", "W", "C90", "I", "N", "UP", "YTT", "ANN", "S", "BLE", "FBT", "B", "A", "COM", "C4", "DTZ", "T10", "EM", "EXE", "ISC", "ICN", "G", "INP", "PIE", "T20", "PYI", "PT", "Q", "RSE", "RET", "SLF", "SIM", "TID", "TCH", "ARG", "PTH", "ERA", "PD", "PGH", "PL", "TRY", "RUF"]
+extend-select = [
+    "F",
+    "E",
+    "W",
+    "C90",
+    "I",
+    "N",
+    "UP",
+    "YTT",
+    "ANN",
+    "S",
+    "BLE",
+    "FBT",
+    "B",
+    "A",
+    "COM",
+    "C4",
+    "DTZ",
+    "T10",
+    "EM",
+    "EXE",
+    "ISC",
+    "ICN",
+    "G",
+    "INP",
+    "PIE",
+    "T20",
+    "PYI",
+    "PT",
+    "Q",
+    "RSE",
+    "RET",
+    "SLF",
+    "SIM",
+    "TID",
+    "TCH",
+    "ARG",
+    "PTH",
+    "ERA",
+    "PD",
+    "PGH",
+    "PL",
+    "TRY",
+    "RUF",
+]
 ignore = [
-"ANN101", # No need for type annotation on `self`
-"A002", # Allow me to use the "id" field
-"A003", # Allow me to use the "id" field
-"COM812",
-"ISC001",
-"PGH003",
-"PTH110", # Allow me to use os.path.exists
+    "ANN101", # No need for type annotation on `self`
+    "A002",   # Allow me to use the "id" field
+    "A003",   # Allow me to use the "id" field
+    "COM812",
+    "ISC001",
+    "PGH003",
+    "PTH110", # Allow me to use os.path.exists
 ]
 [tool.ruff.extend-per-file-ignores]
-"memecry/model.py" = ["TCH003"] # don't make me move imports into a type checking block as they are used by sqlalchemy
+"memecry/model.py" = [
+    "TCH003",
+] # don't make me move imports into a type checking block as they are used by sqlalchemy
 "tests/*" = [
-  "S101", # Allow using assert
-  "S105", # Allow possible hardcoded passwords in tests
-  "S106",# Allow possible hardcoded passwords in tests
-  "ANN201", # Don't ask for return type annotations
-  "ANN202" # Don't ask for return type annotations in private functions
+    "S101",   # Allow using assert
+    "S105",   # Allow possible hardcoded passwords in tests
+    "S106",   # Allow possible hardcoded passwords in tests
+    "ANN201", # Don't ask for return type annotations
+    "ANN202", # Don't ask for return type annotations in private functions
 ]
+"scripts/*" = ["T201"]
 
 [tool.isort]
 profile = "black"
@@ -67,9 +115,24 @@ disable_error_code = ["type-abstract"]
 
 # ignore missing stub for relax-py
 [[tool.mypy.overrides]]
-module = ["relax.app", "relax.html", "relax.injection", "uvicorn", "starlette.authentication", "starlette.middleware", "starlette.middleware.authentication", "starlette.requests", "starlette.routing", "starlette.staticfiles"]
+module = [
+    "relax.app",
+    "relax.html",
+    "relax.injection",
+    "uvicorn",
+    "starlette.authentication",
+    "starlette.middleware",
+    "starlette.middleware.authentication",
+    "starlette.requests",
+    "starlette.routing",
+    "starlette.staticfiles",
+]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = ["icecream", "sqlite_fts4"]
 ignore_missing_imports = "true"
+
+[tool.pyright]
+venvPath = "/home/cris/.cache/pypoetry/virtualenvs"
+venv = "memecry-tgMTmI-Q-py3.12"
