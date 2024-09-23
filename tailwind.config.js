@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  content: ["./memecry/**/*.py"],
+  content: ["./memecry/**/*.py", "./memecry/**/*.js"],
   theme: {
     extend: {},
   },

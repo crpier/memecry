@@ -1,4 +1,5 @@
 import logging
+import shlex
 import sqlite3
 import subprocess
 from logging import Logger, basicConfig, getLogger
@@ -65,7 +66,7 @@ def bootstrap() -> tuple[memecry.config.Config, ViewContext]:
     elif config.ENV == "DEV":
         with sync_engine.begin() as conn:
             memecry.model.Base.metadata.create_all(conn)
-        subprocess.Popen(["npx", "tailwindcss", "-o", "static/css/tailwind.css"])  # noqa: S603, S607
+        subprocess.Popen(shlex.split("tailwindcss-extra -o static/css/tailwind.css"))  # noqa: S603
 
     update_js_constants(config)
     return config, view_context
