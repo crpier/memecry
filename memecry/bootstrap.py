@@ -63,10 +63,10 @@ def bootstrap() -> tuple[memecry.config.Config, ViewContext]:
         run_migrations(
             "./memecry/alembic_migrations", f"sqlite:///{config.DB_FILE}", logger=logger
         )
+        subprocess.Popen(shlex.split("tailwindcss-extra -o static/css/tailwind.css"))  # noqa: S603
     elif config.ENV == "DEV":
         with sync_engine.begin() as conn:
             memecry.model.Base.metadata.create_all(conn)
-        subprocess.Popen(shlex.split("tailwindcss-extra -o static/css/tailwind.css"))  # noqa: S603
 
     update_js_constants(config)
     return config, view_context
