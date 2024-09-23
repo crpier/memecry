@@ -411,7 +411,6 @@ def commands_helper() -> Element:
                 keybind_helper("d", "focus on the previous 5th post"),
                 keybind_helper("gg", "focus on first post"),
                 keybind_helper("G", "focus last loaded post"),
-                #
                 section_separator("Post actions"),
                 keybind_helper("za", "open settings pane in post"),
                 keybind_helper("zc", "close settings pane in post"),
@@ -421,14 +420,12 @@ def commands_helper() -> Element:
                     "(but your browser might not support it)",
                 ),
                 keybind_helper("gy", "yank url to post media"),
-                #
                 section_separator("Video posts"),
                 keybind_helper("space", "play/pause video in focused"),
                 keybind_helper(",", "rewind 1 second of video"),
                 keybind_helper(".", "skip 1 second of video"),
                 keybind_helper(">", "increase volume of video"),
                 keybind_helper("<", "decrease volume of video"),
-                #
                 section_separator("Site navigation"),
                 keybind_helper("/", "focus search bar"),
                 keybind_helper("r", "Go to random post"),
@@ -446,13 +443,15 @@ def commands_helper() -> Element:
 @component()
 def upload_form(*, context: ViewContext = Injected, id: str = Injected) -> dialog:
     upload_error_placeholder = div(
-        id="signin-error",
+        id="upload-error",
         classes=["!m-0", "flex", "justify-center", "pt-4"],
     )
     tags_element = memecry.views.post.tags_component(post_id=0, editable=True).classes(
         ["w-max", "ml-auto", "mr-4"]
     )
     form_id = f"form-{id}"
+    video_preview = video(id="video-preview", src="", classes=["hidden"], controls=True)
+    image_preview = img(id="image-preview", src="", alt="", classes=["hidden"])
 
     return dialog(classes=["modal", "modal-bottom", "sm:modal-middle"]).insert(
         div(
@@ -526,7 +525,18 @@ def upload_form(*, context: ViewContext = Injected, id: str = Injected) -> dialo
                         "file-input-bordered",
                         "w-full",
                     ],
-                    attrs={"onchange": "loadFile(event)"},
+                    hyperscript=f"""
+                    on change
+                    if my.files[0].type.startsWith('image')
+                      set #{image_preview.id}.src to URL.createObjectURL(my.files[0])
+                      then remove .hidden from #{image_preview.id}
+                      then add .hidden to #{video_preview.id}
+                    else
+                      set #{video_preview.id}.src to URL.createObjectURL(my.files[0])
+                      then remove .hidden from #{video_preview.id}
+                      then add .hidden to #{image_preview.id}
+                    end
+                    """,
                 ),
             ),
             div(classes=["flex", "flex-col", "align-center"]).insert(
@@ -538,36 +548,9 @@ def upload_form(*, context: ViewContext = Injected, id: str = Injected) -> dialo
                     attrs={"form": form_id},
                 ),
             ),
-            img(id="preview_img", src="", alt="", classes=["hidden"]),
-            video(id="preview_video", src="", classes=["hidden"], controls=True),
+            image_preview,
+            video_preview,
             upload_error_placeholder,
-            script(
-                js="""
-           var loadFile = function(event) {
-               var input = event.target;
-               var file = input.files[0];
-               var type = file.type;
-               if (type.startsWith("image")) {
-                   var output = document.getElementById('preview_img');
-                   output.classList.remove("hidden")
-                   output.src = URL.createObjectURL(event.target.files[0]);
-                   output.onload = function() {
-                       URL.revokeObjectURL(output.src) // free memory
-                   }
-               } else if (type.startsWith("video")) {
-                   var output = document.getElementById('preview_video');
-                   output.classList.remove("hidden")
-                   output.src = URL.createObjectURL(event.target.files[0]);
-                   output.play()
-                   output.onload = function() {
-                       URL.revokeObjectURL(output.src) // free memory
-                   }
-               } else {
-                   console.error("Unsupported file type")
-               }
-
-        };"""
-            ),
         ),
     )
 
