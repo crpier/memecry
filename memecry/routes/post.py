@@ -244,7 +244,7 @@ async def search_posts(
     view_context = retrieve_injectable(ViewContext)
     next_page_url = view_context.url_of(search_posts)
     home_view = memecry.views.post.home_view(
-        next_page_url(query=query, limit=limit, offset=offset),
+        next_page_url(query=query, limit=limit, offset=limit + offset),
         posts,
         keep_scrolling=True,
         partial=request.scope["from_htmx"],
