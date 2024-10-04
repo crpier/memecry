@@ -1,7 +1,6 @@
 import contextlib
 from pathlib import Path
 
-from relax.app import ViewContext
 from relax.html import (
     Element,
     Fragment,
@@ -20,7 +19,7 @@ from relax.html import (
     video,
 )
 from relax.injection import Injected, component, injectable_sync
-from starlette.datastructures import URL
+from starlette.datastructures import URLPath
 
 import memecry.config
 import memecry.main
@@ -67,9 +66,7 @@ def tags_component(
     selected_tags: str = "no-tags",
     editable: bool = False,
     config: memecry.config.Config = Injected,
-    context: ViewContext = Injected,
 ) -> Element:
-    update_tags_url = context.url_of(memecry.routes.post.update_tags)
     active_tags = selected_tags.split(", ")
     all_tags = config.DEFAULT_TAGS
 
@@ -101,7 +98,7 @@ def tags_component(
     return (
         form(classes=["dropdown", "dropdown-end", "max-w-[50%]"])
         .hx_put(
-            target=update_tags_url(post_id=post_id),
+            target=memecry.routes.post.update_tags(post_id=post_id),
             hx_target=f"#{tags_button.id}",
             hx_trigger="change",
             hx_swap="outerHTML",
@@ -129,12 +126,10 @@ def tags_component(
 
 
 @component(key=lambda post: post.id)
-def post_title_section(
-    *, post: memecry.schema.PostRead, view_context: ViewContext = Injected
-) -> Element:
+def post_title_section(*, post: memecry.schema.PostRead) -> Element:
     return div(classes=["text-center", "p-2"]).insert(
         a(
-            href=view_context.url_of(memecry.routes.post.get_post)(post_id=post.id),
+            href=memecry.routes.post.get_post(post_id=post.id),
             classes=[
                 "text-lg",
                 "font-bold",
@@ -238,7 +233,6 @@ def delete_confirmation_modal(
     *,
     post: memecry.schema.PostRead,
     parent_post_id: str,
-    context: ViewContext = Injected,
 ) -> Element:
     return dialog(classes=["modal", "modal-bottom", "sm:modal-middle"]).insert(
         div(classes=["modal-box", "space-y-4", "max-w-full", "sm:max-w-lg"]).insert(
@@ -270,7 +264,7 @@ def delete_confirmation_modal(
                     ).text("Delete"),
                 )
                 .hx_delete(
-                    context.url_of(memecry.routes.post.delete_post)(post_id=post.id),
+                    memecry.routes.post.delete_post(post_id=post.id),
                     hx_trigger="click",
                     hx_swap="delete",
                     hx_target=f"#{parent_post_id}",
@@ -286,7 +280,6 @@ def post_settings_pane(
     parent_id: str,
     *,
     id: str = Injected,
-    context: ViewContext = Injected,
 ) -> Element:
     delete_confirmation_element = delete_confirmation_modal(
         post=post, parent_post_id=parent_id
@@ -334,7 +327,7 @@ def post_settings_pane(
                 )
                 .text("Save")
                 .hx_put(
-                    context.url_of(memecry.routes.post.update_searchable_content)(
+                    memecry.routes.post.update_searchable_content(
                         post_id=post.id
                     ),
                     hx_trigger="click",
@@ -395,7 +388,7 @@ def post_component(*, post: memecry.schema.PostRead, id: str = Injected) -> div:
 
 @injectable_sync
 def home_view(
-    next_page_url: URL,
+    next_page_url: URLPath,
     posts: list[memecry.schema.PostRead],
     *,
     keep_scrolling: bool = False,

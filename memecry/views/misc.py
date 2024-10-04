@@ -1,4 +1,3 @@
-from relax.app import ViewContext
 from relax.html import (
     Element,
     Fragment,
@@ -115,7 +114,6 @@ def page_nav(
     *,
     user: memecry.schema.UserRead | None = None,
     config: memecry.config.Config = Injected,
-    context: ViewContext = Injected,
 ) -> Element:
     upload_form_element = upload_form()
     large_upload_button = (
@@ -140,7 +138,7 @@ def page_nav(
     large_signout_button = (
         li().insert(
             button(text="Sign out").hx_get(
-                target=context.url_of(memecry.routes.auth.signout)(),
+                target=memecry.routes.auth.signout(),
                 hx_target="body",
                 hx_swap="beforeend",
             )
@@ -151,7 +149,7 @@ def page_nav(
     small_signout_button = (
         li().insert(
             button(text="Sign out").hx_get(
-                target=context.url_of(memecry.routes.auth.signout)(),
+                target=memecry.routes.auth.signout(),
                 hx_target="body",
                 hx_swap="beforeend",
             )
@@ -441,7 +439,7 @@ def commands_helper() -> Element:
 
 
 @component()
-def upload_form(*, context: ViewContext = Injected, id: str = Injected) -> dialog:
+def upload_form(*, id: str = Injected) -> dialog:
     upload_error_placeholder = div(
         id="upload-error",
         classes=["!m-0", "flex", "justify-center", "pt-4"],
@@ -493,7 +491,7 @@ def upload_form(*, context: ViewContext = Injected, id: str = Injected) -> dialo
                 id=form_id,
             )
             .hx_post(
-                context.url_of(memecry.routes.post.upload)(),
+                memecry.routes.post.upload(),
                 hx_encoding="multipart/form-data",
                 hx_target=f"#{upload_error_placeholder.id}",
                 hx_swap="innerHTML",
@@ -556,7 +554,7 @@ def upload_form(*, context: ViewContext = Injected, id: str = Injected) -> dialo
 
 
 @component()
-def signin_form(*, context: ViewContext = Injected) -> dialog:
+def signin_form() -> dialog:
     signin_error_placeholder = div(
         id="signin-error", classes=["!m-0", "flex", "justify-center", "pt-4"]
     )
@@ -592,7 +590,7 @@ def signin_form(*, context: ViewContext = Injected) -> dialog:
             ),
             form(classes=["form-control", "space-y-4"])
             .hx_post(
-                context.url_of(memecry.routes.auth.signin)(),
+                memecry.routes.auth.signin(),
                 hx_encoding="multipart/form-data",
                 hx_target=f"#{signin_error_placeholder.id}",
                 hx_swap="innerHTML",
@@ -645,7 +643,7 @@ def signin_form(*, context: ViewContext = Injected) -> dialog:
 
 
 @component()
-def signup_form(*, view_context: ViewContext = Injected) -> dialog:
+def signup_form() -> dialog:
     signup_error_placeholder = div(
         id="signup-error", classes=["!m-0", "flex", "justify-center", "pt-4"]
     )
@@ -681,7 +679,7 @@ def signup_form(*, view_context: ViewContext = Injected) -> dialog:
             ),
             form(classes=["form-control", "space-y-4"])
             .hx_post(
-                view_context.url_of(memecry.routes.auth.signup)(),
+                memecry.routes.auth.signup(),
                 hx_encoding="multipart/form-data",
                 hx_target=f"#{signup_error_placeholder.id}",
             )

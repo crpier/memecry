@@ -12,7 +12,6 @@ from relax.app import (
     QueryInt,
     QueryStr,
     Router,
-    ViewContext,
 )
 from relax.html import div
 from relax.injection import retrieve_injectable
@@ -194,10 +193,8 @@ async def get_homepage(
         limit=limit,
         offset=offset,
     )
-    view_context = retrieve_injectable(ViewContext)
-    next_page_url = view_context.url_of(get_homepage)
     home_view = memecry.views.post.home_view(
-        next_page_url(limit=limit, offset=offset + limit),
+        get_homepage(limit=limit, offset=offset + limit),
         posts,
         keep_scrolling=True,
         partial=request.scope["from_htmx"],
@@ -241,10 +238,8 @@ async def search_posts(
         limit=limit,
     )
     start_build_home_view = time.time()
-    view_context = retrieve_injectable(ViewContext)
-    next_page_url = view_context.url_of(search_posts)
     home_view = memecry.views.post.home_view(
-        next_page_url(query=query, limit=limit, offset=limit + offset),
+        search_posts(query=query, limit=limit, offset=limit + offset),
         posts,
         keep_scrolling=True,
         partial=request.scope["from_htmx"],

@@ -1,6 +1,5 @@
-from relax.app import ViewContext
 from relax.html import Element, button, div, form, h2, input, label, span
-from relax.injection import Injected, component
+from relax.injection import component
 
 import memecry.routes.misc
 import memecry.schema
@@ -28,9 +27,7 @@ def checkbox_option(text: str, name: str, *, checked: bool) -> Element:
 
 
 @component()
-def preferences_page(
-    user: memecry.schema.UserRead, *, context: ViewContext = Injected
-) -> Element:
+def preferences_page(user: memecry.schema.UserRead) -> Element:
     return div(
         classes=[
             "card",
@@ -63,6 +60,6 @@ def preferences_page(
             ),
         )
         .hx_put(
-            context.url_of(memecry.routes.misc.update_user)(user_id=user.id),
+            memecry.routes.misc.update_user(user_id=user.id),
         ),
     )

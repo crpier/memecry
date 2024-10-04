@@ -6,7 +6,7 @@ from logging import Logger, basicConfig, getLogger
 
 import alembic.command
 import alembic.config
-from relax.app import ViewContext, update_js_constants
+from relax.app import update_js_constants
 from relax.injection import add_injectable
 from sqlalchemy.engine import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -28,12 +28,9 @@ def run_migrations(script_location: str, dsn: str, logger: Logger) -> None:
     alembic.command.upgrade(alembic_cfg, "head")
 
 
-def bootstrap() -> tuple[memecry.config.Config, ViewContext]:
+def bootstrap() -> memecry.config.Config:
     config = memecry.config.Config()
     add_injectable(memecry.config.Config, config)
-
-    view_context = ViewContext()
-    add_injectable(ViewContext, view_context)
 
     basicConfig(
         level=logging.WARNING if config.ENV == "PROD" else logging.DEBUG, force=True
@@ -69,4 +66,4 @@ def bootstrap() -> tuple[memecry.config.Config, ViewContext]:
             memecry.model.Base.metadata.create_all(conn)
 
     update_js_constants(config)
-    return config, view_context
+    return config

@@ -79,12 +79,11 @@ class RestrictedAccessStaticFiles(StaticFiles):
 
 
 def app_factory() -> App:
-    config, view_context = memecry.bootstrap.bootstrap()
+    config = memecry.bootstrap.bootstrap()
     middleware = Middleware(AuthenticationMiddleware, backend=BasicAuthBackend())
     app = App(
         middleware=[middleware],
         config=config,
-        view_context=view_context,
     )
 
     app.add_router(memecry.routes.auth.router)
