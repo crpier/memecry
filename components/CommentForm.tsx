@@ -9,11 +9,11 @@ import { useUser } from "@clerk/nextjs"
 interface CommentFormProps {
   memeId: string
   parentId?: string | null
-  onCommentAddedAction: () => void
+  onCommentAdded: () => void
   isReply?: boolean
 }
 
-export function CommentForm({ memeId, parentId = null, onCommentAddedAction, isReply = false }: CommentFormProps) {
+export function CommentForm({ memeId, parentId = null, onCommentAdded, isReply = false }: CommentFormProps) {
   const [content, setContent] = useState("")
   const [error, setError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -43,7 +43,7 @@ export function CommentForm({ memeId, parentId = null, onCommentAddedAction, isR
       }
 
       setContent("")
-      onCommentAddedAction()
+      onCommentAdded()
     } catch (err) {
       console.log(err)
       setError("Failed to post comment. Please try again.")

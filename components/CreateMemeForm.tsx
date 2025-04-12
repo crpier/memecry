@@ -9,10 +9,10 @@ import { PlusCircle, Loader2 } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
 
 interface CreateMemeFormProps {
-  onMemeCreatedAction: () => void
+  onMemeCreated: () => void
 }
 
-export function CreateMemeForm({ onMemeCreatedAction }: CreateMemeFormProps) {
+export function CreateMemeForm({ onMemeCreated }: CreateMemeFormProps) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [imageUrl, setImageUrl] = useState("")
@@ -45,7 +45,7 @@ export function CreateMemeForm({ onMemeCreatedAction }: CreateMemeFormProps) {
       }
 
       setOpen(false)
-      onMemeCreatedAction()
+      onMemeCreated()
     } catch {
       setError("Failed to create meme. Please try again.")
     } finally {

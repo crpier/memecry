@@ -1,36 +1,42 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Search, Shuffle, Sun, Moon, X } from "lucide-react"
-import { CreateMemeForm } from "./CreateMemeForm"
-import { useUser, SignInButton, SignUpButton } from "@clerk/nextjs"
-import { UserProfile } from "@/components/UserProfile"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Search, Shuffle, Sun, Moon, X } from "lucide-react";
+import { CreateMemeForm } from "./CreateMemeForm";
+import { useUser, SignInButton, SignUpButton } from "@clerk/nextjs";
+import { UserProfile } from "@/components/UserProfile";
 
 interface NavbarProps {
-  darkMode: boolean
-  toggleDarkMode: () => void
-  onSearch: (query: string) => void
-  onRandomMeme: () => void
-  onMemeCreated: () => void
+  darkMode: boolean;
+  toggleDarkMode: () => void;
+  onSearch: (query: string) => void;
+  onRandomMeme: () => void;
+  onMemeCreated: () => void;
 }
 
-export function Navbar({ darkMode, toggleDarkMode, onSearch, onRandomMeme, onMemeCreated }: NavbarProps) {
-  const [searchQuery, setSearchQuery] = useState("")
-  const { isSignedIn } = useUser()
+export function Navbar({
+  darkMode,
+  toggleDarkMode,
+  onSearch,
+  onRandomMeme,
+  onMemeCreated,
+}: NavbarProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const { isSignedIn } = useUser();
 
   const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    onSearch(searchQuery)
-  }
+    e.preventDefault();
+    onSearch(searchQuery);
+  };
 
   const clearSearch = () => {
-    setSearchQuery("")
-    onSearch("")
-  }
+    setSearchQuery("");
+    onSearch("");
+  };
 
   return (
     <div className="sticky top-0 z-10 bg-secondary dark:bg-secondary shadow-md">
@@ -85,7 +91,11 @@ export function Navbar({ darkMode, toggleDarkMode, onSearch, onRandomMeme, onMem
             ) : (
               <>
                 <SignUpButton mode="modal">
-                  <Button variant="outline" size="sm" className="hidden sm:inline-flex nav-button">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="hidden sm:inline-flex nav-button"
+                  >
                     Sign Up
                   </Button>
                 </SignUpButton>
@@ -97,7 +107,11 @@ export function Navbar({ darkMode, toggleDarkMode, onSearch, onRandomMeme, onMem
               </>
             )}
             <Button variant="ghost" size="icon" onClick={toggleDarkMode}>
-              {darkMode ? <Sun className="h-5 w-5 text-brand" /> : <Moon className="h-5 w-5" />}
+              {darkMode ? (
+                <Sun className="h-5 w-5 text-brand" />
+              ) : (
+                <Moon className="h-5 w-5" />
+              )}
             </Button>
           </div>
         </div>
@@ -128,5 +142,5 @@ export function Navbar({ darkMode, toggleDarkMode, onSearch, onRandomMeme, onMem
         </div>
       </div>
     </div>
-  )
+  );
 }
