@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Loader2 } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
@@ -10,11 +9,11 @@ import { useUser } from "@clerk/nextjs"
 interface CommentFormProps {
   memeId: string
   parentId?: string | null
-  onCommentAdded: () => void
+  onCommentAddedAction: () => void
   isReply?: boolean
 }
 
-export function CommentForm({ memeId, parentId = null, onCommentAdded, isReply = false }: CommentFormProps) {
+export function CommentForm({ memeId, parentId = null, onCommentAddedAction, isReply = false }: CommentFormProps) {
   const [content, setContent] = useState("")
   const [error, setError] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -44,7 +43,7 @@ export function CommentForm({ memeId, parentId = null, onCommentAdded, isReply =
       }
 
       setContent("")
-      onCommentAdded()
+      onCommentAddedAction()
     } catch (err) {
       console.log(err)
       setError("Failed to post comment. Please try again.")

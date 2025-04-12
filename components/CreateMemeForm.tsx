@@ -9,10 +9,10 @@ import { PlusCircle, Loader2 } from "lucide-react"
 import { useUser } from "@clerk/nextjs"
 
 interface CreateMemeFormProps {
-  onMemeCreated: () => void
+  onMemeCreatedAction: () => void
 }
 
-export function CreateMemeForm({ onMemeCreated }: CreateMemeFormProps) {
+export function CreateMemeForm({ onMemeCreatedAction }: CreateMemeFormProps) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [imageUrl, setImageUrl] = useState("")
@@ -45,8 +45,8 @@ export function CreateMemeForm({ onMemeCreated }: CreateMemeFormProps) {
       }
 
       setOpen(false)
-      onMemeCreated()
-    } catch (err) {
+      onMemeCreatedAction()
+    } catch {
       setError("Failed to create meme. Please try again.")
     } finally {
       setIsSubmitting(false)
@@ -67,7 +67,7 @@ export function CreateMemeForm({ onMemeCreated }: CreateMemeFormProps) {
           <DialogHeader>
             <DialogTitle>Create New Meme</DialogTitle>
             <DialogDescription className="text-muted-foreground">
-              Fill out the form below to create a new meme. Click save when you're done.
+              Fill out the form below to create a new meme. Click save when you are done.
             </DialogDescription>
           </DialogHeader>
 

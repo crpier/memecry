@@ -1,12 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { UserButton, useUser } from "@clerk/nextjs"
+import { UserButton } from "@clerk/nextjs"
 import { UsernameDialog } from "./UsernameDialog"
 
 export function UserProfile() {
     const [isUsernameDialogOpen, setIsUsernameDialogOpen] = useState(false)
-    const { user } = useUser()
 
     return (
         <>

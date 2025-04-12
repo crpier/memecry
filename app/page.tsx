@@ -8,7 +8,6 @@ import { Separator } from "@/components/ui/separator"
 import { ArrowUpFromLine, ArrowDownToLine, MessageSquare, Loader2 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { CommentTree } from "@/components/CommentTree"
-import { Navbar } from "@/components/Navbar"
 import { TagFilter } from "@/components/TagFilter"
 import { supabase, type DbMeme, type DbComment } from "@/lib/supabase"
 import { formatDistanceToNow } from "date-fns"
@@ -17,7 +16,6 @@ import { formatDistanceToNow } from "date-fns"
 const PAGE_SIZE = 5
 
 export default function MemeViewer() {
-  const [darkMode, setDarkMode] = useState(true)
   const [memes, setMemes] = useState<DbMeme[]>([])
   const [filteredMemes, setFilteredMemes] = useState<DbMeme[]>([])
   const [comments, setComments] = useState<Record<string, DbComment[]>>({})
@@ -35,18 +33,9 @@ export default function MemeViewer() {
   const sentinelRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
-    document.body.classList.toggle("dark", darkMode)
-  }, [darkMode])
-
-  useEffect(() => {
     // Initial load
     fetchMemes(0, true)
   }, [])
-
-  useEffect(() => {
-    // Apply filters when search query or selected tag changes
-    applyFilters()
-  }, [searchQuery, selectedTag, memes])
 
   const applyFilters = () => {
     let filtered = [...memes]
@@ -71,6 +60,11 @@ export default function MemeViewer() {
     // Disable infinite scrolling when filtering
     setHasMore(!searchQuery && !selectedTag && memes.length % PAGE_SIZE === 0 && memes.length > 0)
   }
+  useEffect(() => {
+    // Apply filters when search query or selected tag changes
+    applyFilters()
+  }, [searchQuery, selectedTag, memes])
+
 
   // Setup intersection observer for infinite scrolling
   const lastMemeElementRef = useCallback(
@@ -171,10 +165,6 @@ export default function MemeViewer() {
   const handleCommentAdded = async (memeId: string) => {
     // Refresh comments for this meme
     await fetchComments(memeId)
-  }
-
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode)
   }
 
   const handleVote = async (id: string, type: "like" | "dislike") => {
@@ -361,51 +351,16 @@ export default function MemeViewer() {
     setExpandedComments((prev) => (prev.includes(id) ? prev.filter((memeId) => memeId !== id) : [...prev, id]))
   }
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query)
-    // Reset to first page when searching
-    if (query !== searchQuery) {
-      setPage(0)
-    }
-  }
-
   const handleTagSelect = (tag: string | null) => {
     setSelectedTag(tag)
     // Reset to first page when changing tag filter
     setPage(0)
   }
 
-  const handleRandomMeme = () => {
-    if (memes.length > 0) {
-      const randomIndex = Math.floor(Math.random() * memes.length)
-      const randomMeme = memes[randomIndex]
-
-      // Scroll to the random meme
-      const memeElement = document.getElementById(`meme-${randomMeme.id}`)
-      if (memeElement) {
-        memeElement.scrollIntoView({ behavior: "smooth" })
-      }
-
-      // Highlight the meme briefly
-      if (memeElement) {
-        memeElement.classList.add("highlight-meme")
-        setTimeout(() => {
-          memeElement.classList.remove("highlight-meme")
-        }, 2000)
-      }
-    }
-  }
-
-  const handleMemeCreated = () => {
-    // Refresh the memes list after a new meme is created
-    setPage(0)
-    fetchMemes(0, true)
-  }
-
   const formatTimeAgo = (dateString: string) => {
     try {
       return formatDistanceToNow(new Date(dateString), { addSuffix: true })
-    } catch (e) {
+    } catch {
       return dateString
     }
   }
@@ -551,7 +506,7 @@ export default function MemeViewer() {
 
             {/* End of content message */}
             {!hasMore && !loadingMore && filteredMemes.length > 0 && !searchQuery && !selectedTag && (
-              <div className="text-center py-4 text-muted-foreground">You've reached the end of the memes!</div>
+              <div className="text-center py-4 text-muted-foreground">You have reached the end of the memes!</div>
             )}
           </div>
         )}
